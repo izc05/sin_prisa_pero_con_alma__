@@ -5,7 +5,7 @@ on:
     paths:
       - "admin.html"
       - "admin-data.js"
-      - "site-v2.js"
+      - "admin-v2-page.js"
       - "site-v2.css"
       - "scripts/**"
       - "docs/ADMIN_V2_PLAN.md"
@@ -32,7 +32,7 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check admin-data.js
-          node --check site-v2.js
+          node --check admin-v2-page.js
           node --check scripts/build.mjs
           node --check scripts/validate-admin-v2.mjs
           node --check scripts/test-admin-data.mjs
@@ -50,5 +50,5 @@ jobs:
         run: |
           test -f dist/admin.html
           test -f dist/admin-data.js
-          test -f dist/site-v2.js
+          test -f dist/admin-v2-page.js
           test -f dist/site-v2.css
