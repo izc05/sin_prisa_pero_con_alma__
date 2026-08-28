@@ -10,6 +10,7 @@
   const PRODUCT_STATUSES = new Set(["draft", "published", "hidden", "archived"]);
   const PRICE_MODES = new Set(["fixed", "from", "quote"]);
   const STOCK_MODES = new Set(["available", "made_to_order", "sold_out"]);
+  const COLLECTION_STATUSES = new Set(["draft", "published", "hidden", "archived"]);
 
   function clone(value) {
     if (typeof structuredClone === "function") return structuredClone(value);
@@ -94,11 +95,19 @@
 
   function normalizeCollections(collections) {
     if (!Array.isArray(collections)) throw new TypeError("collections debe ser un array");
+    const names = new Set();
     const normalized = collections.map((collection, index) => {
       if (!plainObject(collection)) throw new TypeError("cada colección debe ser un objeto");
       const id = String(collection.id || "").trim();
+      const name = String(collection.name || "").trim();
+      const status = String(collection.status || "draft");
       if (!id) throw new TypeError("cada colección necesita id");
-      return { ...clone(collection), id, position: index };
+      if (!name) throw new TypeError("cada colección necesita nombre");
+      if (!COLLECTION_STATUSES.has(status)) throw new TypeError("status de colección inválido");
+      const normalizedName = name.toLocaleLowerCase("es-ES");
+      if (names.has(normalizedName)) throw new Error("collections contiene nombres duplicados");
+      names.add(normalizedName);
+      return { ...clone(collection), id, name, status, position: index };
     });
     uniqueIds(normalized, "collections");
     return normalized;
@@ -224,8 +233,8 @@
         const collections = await this.listCollections();
         if (collections.some(item => item.id === collection.id)) throw new Error("ya existe una colección con ese id");
         const next = { ...clone(collection), position: collections.length };
-        await this.saveCollections([...collections, next]);
-        return clone(next);
+        const saved = await this.saveCollections([...collections, next]);
+        return clone(saved.find(item => item.id === next.id));
       },
 
       async updateCollection(collectionId, patch) {

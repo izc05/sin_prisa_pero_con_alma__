@@ -12,6 +12,12 @@
     { id: "bastidor-botanico", name: "Bastidor Botánico", category: "hogar", description: "Pequeño paisaje floral para guardar un recuerdo.", price: 35, priceMode: "fixed", image: "assets/detalle-bordado.jpeg", badge: "Hecho a mano", stock: true, stockMode: "available", status: "published", featured: false },
     { id: "encargo-personal", name: "Bordado a medida", category: "encargo", description: "Una pieza creada desde tu historia, nombre o idea.", price: null, priceMode: "quote", image: "assets/encargo-bordado.jpeg", badge: "Por encargo", stock: true, stockMode: "made_to_order", status: "published", featured: true }
   ];
+  const seedCollections = [
+    { id: "bebé", name: "Bebé", status: "published" },
+    { id: "regalo", name: "Regalo", status: "published" },
+    { id: "hogar", name: "Hogar", status: "published" },
+    { id: "encargo", name: "Encargo", status: "published" }
+  ];
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -30,7 +36,7 @@
     return;
   }
 
-  const adminData = window.AlmaAdminData.createLocalDriver({ seedProducts });
+  const adminData = window.AlmaAdminData.createLocalDriver({ seedProducts, seedCollections });
 
   function readLocal(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -105,11 +111,22 @@
     </article>`;
   }
 
+  function collectionMarkup(collection) {
+    return `<article class="admin-collection-row" data-collection-row="${escapeHtml(collection.id)}">
+      <div class="admin-collection-copy"><strong>${escapeHtml(collection.name)}</strong><small>Posición ${Number(collection.position) + 1}</small></div>
+      <label class="admin-row-field"><span>Nombre</span><input data-collection-name value="${escapeHtml(collection.name)}"></label>
+      <label class="admin-row-field"><span>Estado</span><select data-collection-status="${escapeHtml(collection.id)}"><option value="draft" ${collection.status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${collection.status === "published" ? "selected" : ""}>Publicada</option><option value="hidden" ${collection.status === "hidden" ? "selected" : ""}>Oculta</option></select></label>
+      <button class="button button--outline" type="button" data-save-collection="${escapeHtml(collection.id)}">Guardar</button>
+      <button class="button danger" type="button" data-delete-collection="${escapeHtml(collection.id)}">Eliminar</button>
+    </article>`;
+  }
+
   async function renderAdmin() {
-    const [products, orders, messages] = await Promise.all([
+    const [products, orders, messages, collections] = await Promise.all([
       adminData.listProducts(),
       adminData.listOrders(),
-      adminData.listMessages()
+      adminData.listMessages(),
+      adminData.listCollections()
     ]);
     const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
@@ -120,6 +137,7 @@
     $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} publicables`;
 
     $("#admin-products").innerHTML = products.length ? products.map(productMarkup).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
+    $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
     $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
       <span class="status">${escapeHtml(message.status || "Nuevo")}</span>
@@ -219,9 +237,29 @@
       toast("Nueva pieza guardada en el catálogo local");
     });
 
+    $("#collection-form")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const data = new FormData(form);
+      try {
+        await adminData.createCollection({
+          id: uid("COL"),
+          name: String(data.get("name") || "").trim(),
+          status: String(data.get("status") || "draft")
+        });
+      } catch (error) {
+        toast(error.message || "No se pudo crear la colección");
+        return;
+      }
+      form.reset();
+      await renderAdmin();
+      toast("Colección creada en el catálogo local");
+    });
+
     document.addEventListener("change", async event => {
       const orderStatus = event.target.closest("[data-order-status]");
       const productStatus = event.target.closest("[data-product-status]");
+      const collectionStatus = event.target.closest("[data-collection-status]");
       if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
         await renderAdmin();
         toast("Estado del pedido actualizado");
@@ -230,12 +268,18 @@
         await renderAdmin();
         toast("Estado de publicación actualizado");
       }
+      if (collectionStatus && await adminData.updateCollection(collectionStatus.dataset.collectionStatus, { status: collectionStatus.value })) {
+        await renderAdmin();
+        toast("Estado de la colección actualizado");
+      }
     });
 
     document.addEventListener("click", async event => {
       const stock = event.target.closest("[data-toggle-stock]");
       const remove = event.target.closest("[data-delete-product]");
       const readMessage = event.target.closest("[data-read-message]");
+      const saveCollection = event.target.closest("[data-save-collection]");
+      const removeCollection = event.target.closest("[data-delete-collection]");
 
       if (stock) {
         const product = (await adminData.listProducts()).find(item => item.id === stock.dataset.toggleStock);
@@ -257,6 +301,28 @@
       if (readMessage && await adminData.markMessageRead(readMessage.dataset.readMessage)) {
         await renderAdmin();
         toast("Mensaje marcado como leído");
+      }
+
+      if (saveCollection) {
+        const row = saveCollection.closest("[data-collection-row]");
+        const name = row?.querySelector("[data-collection-name]")?.value || "";
+        try {
+          await adminData.updateCollection(saveCollection.dataset.saveCollection, { name: String(name).trim() });
+          await renderAdmin();
+          toast("Colección actualizada");
+        } catch (error) {
+          toast(error.message || "No se pudo actualizar la colección");
+        }
+      }
+
+      if (removeCollection && window.confirm("¿Eliminar esta colección? Las piezas asociadas deben moverse antes a otra colección.")) {
+        try {
+          await adminData.deleteCollection(removeCollection.dataset.deleteCollection);
+          await renderAdmin();
+          toast("Colección eliminada");
+        } catch (error) {
+          toast(error.message || "No se pudo eliminar la colección");
+        }
       }
     });
   }

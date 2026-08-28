@@ -88,6 +88,9 @@ await driver.createCollection({ id: "col-3", name: "Hogar", status: "draft" });
 assert.deepEqual(await collectionIds(), ["col-1", "col-2", "col-3"]);
 assert.deepEqual(Array.from(await driver.listCollections(), item => item.position), [0, 1, 2]);
 await assert.rejects(driver.createCollection({ id: "col-2", name: "Duplicada" }), /ya existe/);
+await assert.rejects(driver.createCollection({ id: "col-4", name: "" }), /necesita nombre/);
+await assert.rejects(driver.createCollection({ id: "col-4", name: "Hogar" }), /nombres duplicados/);
+await assert.rejects(driver.createCollection({ id: "col-4", name: "Otra", status: "visible" }), /status/);
 
 const collectionUpdated = await driver.updateCollection("col-2", { name: "Regalos con alma", id: "tampered", position: 999, status: "published" });
 assert.equal(collectionUpdated.id, "col-2");
