@@ -99,6 +99,16 @@
     </article>`;
   }
 
+  function galleryMarkup(product) {
+    const images = productImages(product);
+    const items = images.map((image, index) => `<article class="admin-gallery__item">
+      <img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}">
+      <label class="field"><span>Texto alternativo</span><input maxlength="160" value="${escapeHtml(image.alt)}" data-image-alt="${escapeHtml(image.id)}" data-product-image-alt="${escapeHtml(product.id)}"></label>
+      <div class="admin-gallery__actions">${index === 0 ? `<span class="admin-product-state admin-product-state--featured">Portada</span>` : `<button class="button button--quiet" type="button" data-make-primary="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Portada</button>`}<button class="button danger" type="button" data-remove-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Quitar</button></div>
+    </article>`).join("");
+    return `<div class="admin-gallery"><div class="admin-gallery__head"><strong>Galería</strong><label class="button button--quiet"><span>Añadir fotos</span><input type="file" accept="image/*" multiple data-add-product-images="${escapeHtml(product.id)}"></label></div>${items || `<p class="empty-state">Aún no hay fotografías.</p>`}</div>`;
+  }
+
   function productMarkup(product) {
     const available = product.stock !== false && product.stockMode !== "sold_out";
     const status = product.status || "published";
@@ -111,6 +121,7 @@
       <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option></select></label>
       <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Marcar agotado" : "Reactivar"}</button>
       ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
+      ${galleryMarkup(product)}
     </article>`;
   }
 
@@ -275,6 +286,8 @@
       const orderStatus = event.target.closest("[data-order-status]");
       const productStatus = event.target.closest("[data-product-status]");
       const collectionStatus = event.target.closest("[data-collection-status]");
+      const imageAlt = event.target.closest("[data-image-alt]");
+      const imageFiles = event.target.closest("[data-add-product-images]");
       if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
         await renderAdmin();
         toast("Estado del pedido actualizado");
@@ -287,6 +300,32 @@
         await renderAdmin();
         toast("Estado de la colección actualizado");
       }
+      if (imageAlt) {
+        const product = (await adminData.listProducts()).find(item => item.id === imageAlt.dataset.productImageAlt);
+        if (product) {
+          const images = productImages(product).map(image => image.id === imageAlt.dataset.imageAlt ? { ...image, alt: imageAlt.value.trim() } : image);
+          await adminData.setProductImages(product.id, images);
+          toast("Texto alternativo actualizado");
+        }
+      }
+      if (imageFiles?.files?.length) {
+        const product = (await adminData.listProducts()).find(item => item.id === imageFiles.dataset.addProductImages);
+        const files = Array.from(imageFiles.files);
+        if (!product) return;
+        if (productImages(product).length + files.length > MAX_IMAGES_PER_PRODUCT || files.some(file => file.size > MAX_IMAGE_BYTES)) {
+          toast(`Máximo ${MAX_IMAGES_PER_PRODUCT} fotos de 2 MB cada una`);
+          imageFiles.value = "";
+          return;
+        }
+        try {
+          const added = await Promise.all(files.map(async file => ({ id: uid("IMG"), src: await fileToDataUrl(file), alt: "" })));
+          await adminData.setProductImages(product.id, [...productImages(product), ...added]);
+          await renderAdmin();
+          toast("Fotografías añadidas");
+        } catch {
+          toast("No se pudieron añadir las fotografías");
+        }
+      }
     });
 
     document.addEventListener("click", async event => {
@@ -295,6 +334,8 @@
       const readMessage = event.target.closest("[data-read-message]");
       const saveCollection = event.target.closest("[data-save-collection]");
       const removeCollection = event.target.closest("[data-delete-collection]");
+      const makePrimary = event.target.closest("[data-make-primary]");
+      const removeImage = event.target.closest("[data-remove-image]");
 
       if (stock) {
         const product = (await adminData.listProducts()).find(item => item.id === stock.dataset.toggleStock);
@@ -337,6 +378,28 @@
           toast("Colección eliminada");
         } catch (error) {
           toast(error.message || "No se pudo eliminar la colección");
+        }
+      }
+
+      if (makePrimary) {
+        const product = (await adminData.listProducts()).find(item => item.id === makePrimary.dataset.productImages);
+        if (product) {
+          const images = productImages(product);
+          const selected = images.find(image => image.id === makePrimary.dataset.makePrimary);
+          if (selected) {
+            await adminData.setProductImages(product.id, [selected, ...images.filter(image => image.id !== selected.id)]);
+            await renderAdmin();
+            toast("Portada actualizada");
+          }
+        }
+      }
+
+      if (removeImage && window.confirm("¿Quitar esta fotografía de la galería?")) {
+        const product = (await adminData.listProducts()).find(item => item.id === removeImage.dataset.productImages);
+        if (product) {
+          await adminData.setProductImages(product.id, productImages(product).filter(image => image.id !== removeImage.dataset.removeImage));
+          await renderAdmin();
+          toast("Fotografía eliminada");
         }
       }
     });
