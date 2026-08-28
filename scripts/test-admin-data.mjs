@@ -35,7 +35,7 @@ assert.equal(typeof window.AlmaAdminData.createLocalDriver, "function");
 const driver = window.AlmaAdminData.createLocalDriver({
   storage,
   seedProducts: [
-    { id: "seed-1", name: "Semilla", stock: true }
+    { id: "seed-1", name: "Semilla", stock: true, status: "published" }
   ]
 });
 
@@ -45,8 +45,14 @@ assert.equal(driver.kind, "local");
 assert.equal(driver.isRemote, false);
 assert.deepEqual(productIds(), ["seed-1"]);
 
-driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true });
+driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true, status: "draft" });
 assert.deepEqual(productIds(), ["prod-2", "seed-1"]);
+
+const updated = driver.updateProduct("prod-2", { status: "published", featured: true, id: "tampered" });
+assert.equal(updated.id, "prod-2");
+assert.equal(updated.status, "published");
+assert.equal(updated.featured, true);
+assert.equal(driver.updateProduct("missing", { status: "hidden" }), false);
 
 assert.equal(driver.setProductAvailability("prod-2", false), true);
 assert.equal(driver.listProducts()[0].stock, false);
