@@ -21,6 +21,8 @@ const requiredAdminFragments = [
   'name="stockMode"',
   'name="status"',
   'name="featured"',
+  'name="imageAlt"',
+  'multiple',
   'id="admin-orders"',
   'id="admin-messages"',
   'id="metric-visible"',

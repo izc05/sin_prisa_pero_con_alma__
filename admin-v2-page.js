@@ -5,6 +5,8 @@
     session: "alma-v2-session",
     adminPin: "alma-v2-admin-pin"
   };
+  const MAX_IMAGES_PER_PRODUCT = 4;
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 
   const seedProducts = [
     { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, priceMode: "fixed", image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true, stockMode: "available", status: "published", featured: true },
@@ -102,13 +104,19 @@
     const status = product.status || "published";
     const priceMode = product.priceMode || (product.price == null ? "quote" : "fixed");
     const stockMode = product.stockMode || (available ? "available" : "sold_out");
+    const imageCount = productImages(product).length;
     return `<article class="admin-product-row">
       <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
-      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${priceMode === "quote" ? "Consultar" : `${priceModeLabel(priceMode)} · ${money(product.price)}`}</small><div class="admin-product-tags"><span class="admin-product-state ${available ? "" : "is-hidden"}">${stockModeLabel(stockMode)}</span><span class="admin-product-state admin-product-state--status">${statusLabel(status)}</span>${product.featured ? `<span class="admin-product-state admin-product-state--featured">Destacado</span>` : ""}</div></div>
+      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${priceMode === "quote" ? "Consultar" : `${priceModeLabel(priceMode)} · ${money(product.price)}`} · ${imageCount} ${imageCount === 1 ? "foto" : "fotos"}</small><div class="admin-product-tags"><span class="admin-product-state ${available ? "" : "is-hidden"}">${stockModeLabel(stockMode)}</span><span class="admin-product-state admin-product-state--status">${statusLabel(status)}</span>${product.featured ? `<span class="admin-product-state admin-product-state--featured">Destacado</span>` : ""}</div></div>
       <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option></select></label>
       <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Marcar agotado" : "Reactivar"}</button>
       ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
     </article>`;
+  }
+
+  function productImages(product) {
+    if (Array.isArray(product.images)) return product.images;
+    return product.image ? [{ id: `${product.id}-legacy`, src: product.image, alt: "", position: 0, primary: true }] : [];
   }
 
   function collectionMarkup(collection) {
@@ -202,12 +210,18 @@
       event.preventDefault();
       const form = event.currentTarget;
       const data = new FormData(form);
-      const file = data.get("image");
+      const files = Array.from(data.getAll("image")).filter(file => file && file.size);
       const priceMode = String(data.get("priceMode") || "fixed");
       const stockMode = String(data.get("stockMode") || "available");
-      let image = "assets/detalle-bordado.jpeg";
+      let images = [];
       try {
-        if (file && file.size) image = await fileToDataUrl(file);
+        if (files.length > MAX_IMAGES_PER_PRODUCT) throw new Error("Demasiadas fotografías");
+        if (files.some(file => file.size > MAX_IMAGE_BYTES)) throw new Error("Una fotografía supera 2 MB");
+        images = await Promise.all(files.map(async (file, index) => ({
+          id: uid("IMG"),
+          src: await fileToDataUrl(file),
+          alt: index === 0 ? String(data.get("imageAlt") || "").trim() : ""
+        })));
       } catch {
         toast("No se pudo leer la fotografía");
         return;
@@ -220,7 +234,8 @@
           description: String(data.get("description") || "").trim(),
           price: priceMode === "quote" || !data.get("price") ? null : Number(data.get("price")),
           priceMode,
-          image,
+          image: images[0]?.src || "assets/detalle-bordado.jpeg",
+          images,
           badge: "Nueva pieza",
           stock: stockMode !== "sold_out",
           stockMode,
