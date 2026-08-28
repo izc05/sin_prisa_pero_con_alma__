@@ -1,0 +1,40 @@
+name: Admin V2 Check
+
+on:
+  pull_request:
+    paths:
+      - "admin.html"
+      - "site-v2.js"
+      - "site-v2.css"
+      - "scripts/**"
+      - "docs/ADMIN_V2_PLAN.md"
+      - "docs/POCKETBASE_SCHEMA_V1.md"
+      - "package.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Admin V2 contract
+        run: node scripts/validate-admin-v2.mjs
+
+      - name: Build static site
+        run: npm run build
+
+      - name: Verify admin output
+        run: |
+          test -f dist/admin.html
+          test -f dist/site-v2.js
+          test -f dist/site-v2.css
