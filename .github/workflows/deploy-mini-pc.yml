@@ -1,0 +1,46 @@
+name: Sincronizar mini PC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar la web
+        run: npm run build
+
+      - name: Configurar acceso seguro al mini PC
+        env:
+          MINI_PC_HOST: ${{ secrets.MINI_PC_HOST }}
+          MINI_PC_PORT: ${{ secrets.MINI_PC_PORT }}
+          MINI_PC_SSH_KEY: ${{ secrets.MINI_PC_SSH_KEY }}
+        run: |
+          test -n "$MINI_PC_HOST"
+          test -n "$MINI_PC_SSH_KEY"
+          DEPLOY_PORT="${MINI_PC_PORT:-22}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$MINI_PC_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "$DEPLOY_PORT" "$MINI_PC_HOST" >> ~/.ssh/known_hosts
+
+      - name: Sincronizar archivos publicados
+        env:
+          MINI_PC_HOST: ${{ secrets.MINI_PC_HOST }}
+          MINI_PC_PORT: ${{ secrets.MINI_PC_PORT }}
+          MINI_PC_USER: ${{ secrets.MINI_PC_USER }}
+          MINI_PC_PATH: ${{ secrets.MINI_PC_PATH }}
+        run: |
+          test -n "$MINI_PC_USER"
+          test -n "$MINI_PC_PATH"
+          DEPLOY_PORT="${MINI_PC_PORT:-22}"
+          rsync -az --chmod=D755,F644 -e "ssh -p $DEPLOY_PORT" dist/ "$MINI_PC_USER@$MINI_PC_HOST:$MINI_PC_PATH/"

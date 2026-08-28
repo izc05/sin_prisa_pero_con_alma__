@@ -1,0 +1,422 @@
+(function () {
+  "use strict";
+
+  const KEYS = {
+    products: "alma-v2-products",
+    cart: "alma-v2-cart",
+    users: "alma-v2-users",
+    session: "alma-v2-session",
+    orders: "alma-v2-orders",
+    messages: "alma-v2-messages",
+    adminPin: "alma-v2-admin-pin"
+  };
+
+  const seedProducts = [
+    { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true },
+    { id: "bolsa-jardin", name: "Bolsa Jardín", category: "regalo", description: "Bolsa de lino bordada puntada a puntada.", price: 22, image: "assets/bolsa-flores.jpeg", badge: "Pieza única", stock: true },
+    { id: "bastidor-botanico", name: "Bastidor Botánico", category: "hogar", description: "Pequeño paisaje floral para guardar un recuerdo.", price: 35, image: "assets/detalle-bordado.jpeg", badge: "Hecho a mano", stock: true },
+    { id: "encargo-personal", name: "Bordado a medida", category: "encargo", description: "Una pieza creada desde tu historia, nombre o idea.", price: null, image: "assets/encargo-bordado.jpeg", badge: "Por encargo", stock: true }
+  ];
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const read = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  };
+  const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const uid = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const money = (value) => value == null ? "Consultar" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
+  const dateText = (value) => new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
+  const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+
+  if (!localStorage.getItem(KEYS.products)) write(KEYS.products, seedProducts);
+  if (!localStorage.getItem(KEYS.orders)) write(KEYS.orders, []);
+  if (!localStorage.getItem(KEYS.messages)) write(KEYS.messages, []);
+
+  const getProducts = () => read(KEYS.products, seedProducts);
+  const getCart = () => read(KEYS.cart, []);
+  const getSession = () => read(KEYS.session, null);
+
+  function toast(message) {
+    let node = $("#site-toast");
+    if (!node) {
+      node = document.createElement("div");
+      node.id = "site-toast";
+      node.className = "toast";
+      node.setAttribute("role", "status");
+      document.body.appendChild(node);
+    }
+    node.textContent = message;
+    node.classList.add("is-visible");
+    window.clearTimeout(toast.timer);
+    toast.timer = window.setTimeout(() => node.classList.remove("is-visible"), 2800);
+  }
+
+  function setupNavigation() {
+    const toggle = $(".menu-toggle");
+    const nav = $(".main-nav");
+    if (toggle && nav) {
+      toggle.addEventListener("click", () => {
+        const open = nav.classList.toggle("is-open");
+        toggle.setAttribute("aria-expanded", String(open));
+      });
+      $$('a', nav).forEach(link => link.addEventListener("click", () => nav.classList.remove("is-open")));
+    }
+  }
+
+  function setupWelcome() {
+    const welcome = $("#welcome");
+    const enter = $("#enter-site");
+    if (!welcome || !enter) return;
+    document.body.classList.add("no-scroll");
+    enter.addEventListener("click", () => {
+      welcome.classList.add("is-hidden");
+      document.body.classList.remove("no-scroll");
+      window.setTimeout(() => welcome.remove(), 650);
+    });
+  }
+
+  function productCard(product) {
+    const action = product.price == null
+      ? `<a class="button button--outline" href="encargos.html">Contar mi idea</a>`
+      : `<button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
+    return `<article class="product-card" data-category="${escapeHtml(product.category)}">
+      <div class="product-image-wrap">
+        <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy">
+        <span class="product-badge">${escapeHtml(product.badge || "Hecho a mano")}</span>
+      </div>
+      <div class="product-info">
+        <h3>${escapeHtml(product.name)}</h3>
+        <span class="product-price">${money(product.price)}</span>
+        <p>${escapeHtml(product.description)}</p>
+        ${action}
+      </div>
+    </article>`;
+  }
+
+  function renderProducts() {
+    $$("[data-product-grid]").forEach(grid => {
+      const limit = Number(grid.dataset.limit || 0);
+      const products = getProducts().filter(product => product.stock !== false);
+      grid.innerHTML = (limit ? products.slice(0, limit) : products).map(productCard).join("");
+    });
+  }
+
+  function setupShopFilters() {
+    const grid = $("#shop-grid");
+    if (!grid) return;
+    const filters = $$("[data-filter]");
+    const search = $("#shop-search");
+    const sort = $("#shop-sort");
+    let active = "todos";
+    const update = () => {
+      const term = (search?.value || "").trim().toLowerCase();
+      let products = getProducts().filter(p => p.stock !== false && (active === "todos" || p.category === active) && `${p.name} ${p.description}`.toLowerCase().includes(term));
+      if (sort?.value === "price-asc") products.sort((a,b) => (a.price ?? 9999) - (b.price ?? 9999));
+      if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
+      grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state">No hay piezas con estos filtros.</div>`;
+    };
+    filters.forEach(button => button.addEventListener("click", () => {
+      active = button.dataset.filter;
+      filters.forEach(item => item.classList.toggle("is-active", item === button));
+      update();
+    }));
+    search?.addEventListener("input", update);
+    sort?.addEventListener("change", update);
+  }
+
+  function addToCart(id) {
+    const cart = getCart();
+    const existing = cart.find(item => item.id === id);
+    if (existing) existing.quantity += 1;
+    else cart.push({ id, quantity: 1 });
+    write(KEYS.cart, cart);
+    renderCart();
+    toast("Pieza añadida a la cesta");
+  }
+
+  function removeFromCart(id) {
+    write(KEYS.cart, getCart().filter(item => item.id !== id));
+    renderCart();
+  }
+
+  function renderCart() {
+    const root = $("#cart-root");
+    if (!root) return;
+    const products = getProducts();
+    const cart = getCart();
+    const items = cart.map(item => ({ ...item, product: products.find(product => product.id === item.id) })).filter(item => item.product);
+    const count = items.reduce((total, item) => total + item.quantity, 0);
+    const total = items.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0);
+    $$(".cart-count").forEach(node => node.textContent = count);
+    root.innerHTML = `<aside class="cart-drawer" id="cart-drawer" aria-label="Cesta" aria-hidden="true">
+      <button class="cart-backdrop" type="button" data-close-cart aria-label="Cerrar la cesta"></button>
+      <div class="cart-panel">
+        <div class="cart-head"><h2>Tu cesta</h2><button type="button" data-close-cart>Cerrar</button></div>
+        <div class="cart-items">
+          ${items.length ? items.map(item => `<div class="cart-item">
+            <img src="${escapeHtml(item.product.image)}" alt="">
+            <div><strong>${escapeHtml(item.product.name)}</strong><small>${item.quantity} × ${money(item.product.price)}</small></div>
+            <span>${money((item.product.price || 0) * item.quantity)}</span>
+            <button type="button" data-remove-cart="${escapeHtml(item.id)}">Quitar</button>
+          </div>`).join("") : `<div class="empty-state">La cesta está vacía.<br>Elige una pieza hecha con alma.</div>`}
+        </div>
+        <div class="cart-footer">
+          <div class="cart-total"><strong>Total</strong><strong>${money(total)}</strong></div>
+          <button class="button button--primary" type="button" id="checkout-button" ${items.length ? "" : "disabled"}>Confirmar pedido por Bizum</button>
+          <p class="form-note">El pedido queda pendiente hasta que confirmemos disponibilidad y pago.</p>
+        </div>
+      </div>
+    </aside>`;
+  }
+
+  function openCart() {
+    const drawer = $("#cart-drawer");
+    if (!drawer) return;
+    drawer.classList.add("is-open");
+    drawer.setAttribute("aria-hidden", "false");
+    document.body.classList.add("no-scroll");
+  }
+
+  function closeCart() {
+    const drawer = $("#cart-drawer");
+    drawer?.classList.remove("is-open");
+    drawer?.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("no-scroll");
+  }
+
+  function checkout() {
+    const session = getSession();
+    if (!session) {
+      toast("Entra en tu cuenta para asociar el pedido");
+      window.setTimeout(() => { window.location.href = "cuenta.html?checkout=1"; }, 700);
+      return;
+    }
+    const cart = getCart();
+    const products = getProducts();
+    const items = cart.map(item => ({ ...item, product: products.find(p => p.id === item.id) })).filter(i => i.product);
+    if (!items.length) return;
+    const order = {
+      id: uid("ALMA"),
+      type: "Compra",
+      email: session.email,
+      customer: session.name,
+      createdAt: new Date().toISOString(),
+      status: "Pendiente de Bizum",
+      total: items.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0),
+      items: items.map(item => ({ id: item.id, name: item.product.name, price: item.product.price, quantity: item.quantity }))
+    };
+    const orders = read(KEYS.orders, []);
+    orders.unshift(order);
+    write(KEYS.orders, orders);
+    write(KEYS.cart, []);
+    renderCart();
+    closeCart();
+    toast(`Pedido ${order.id} creado. Falta confirmar el Bizum.`);
+  }
+
+  function setupCartEvents() {
+    document.addEventListener("click", event => {
+      const add = event.target.closest("[data-add-cart]");
+      const remove = event.target.closest("[data-remove-cart]");
+      if (add) addToCart(add.dataset.addCart);
+      if (remove) removeFromCart(remove.dataset.removeCart);
+      if (event.target.closest("[data-cart-open]")) openCart();
+      if (event.target.closest("[data-close-cart]")) closeCart();
+      if (event.target.closest("#checkout-button")) checkout();
+    });
+  }
+
+  async function hash(value) {
+    if (!window.crypto?.subtle) return btoa(unescape(encodeURIComponent(value)));
+    const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(bytes)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function orderMarkup(order, admin = false) {
+    const details = order.items?.length ? order.items.map(item => `${escapeHtml(item.name)} × ${item.quantity}`).join(" · ") : escapeHtml(order.details || "Encargo personalizado");
+    return `<article class="order-card">
+      <div class="order-head"><div><h3>${escapeHtml(order.id)}</h3><span class="status">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
+      <p>${escapeHtml(order.type)} · ${dateText(order.createdAt)}${admin ? ` · ${escapeHtml(order.email)}` : ""}</p>
+      <p>${details}</p>
+      ${admin ? `<label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}"><option ${order.status === "Solicitud recibida" ? "selected" : ""}>Solicitud recibida</option><option ${order.status === "Pendiente de Bizum" ? "selected" : ""}>Pendiente de Bizum</option><option ${order.status === "En preparación" ? "selected" : ""}>En preparación</option><option ${order.status === "Enviado" ? "selected" : ""}>Enviado</option><option ${order.status === "Completado" ? "selected" : ""}>Completado</option></select></label>` : ""}
+    </article>`;
+  }
+
+  function renderAccount() {
+    const page = $("#account-page");
+    if (!page) return;
+    const session = getSession();
+    const auth = $("#auth-panel");
+    const dashboard = $("#account-dashboard");
+    auth.hidden = Boolean(session);
+    dashboard.hidden = !session;
+    if (!session) return;
+    $("#account-name").textContent = session.name;
+    $("#account-email").textContent = session.email;
+    const orders = read(KEYS.orders, []).filter(order => order.email.toLowerCase() === session.email.toLowerCase());
+    $("#account-orders").innerHTML = orders.length ? orders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">Todavía no tienes pedidos. Cuando hagas uno aparecerá aquí.</div>`;
+  }
+
+  function setupAccount() {
+    if (!$("#account-page")) return;
+    const tabs = $$("[data-auth-tab]");
+    tabs.forEach(tab => tab.addEventListener("click", () => {
+      tabs.forEach(item => item.classList.toggle("is-active", item === tab));
+      $("#login-form").hidden = tab.dataset.authTab !== "login";
+      $("#register-form").hidden = tab.dataset.authTab !== "register";
+    }));
+    $("#register-form")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      const email = String(data.get("email")).trim().toLowerCase();
+      const users = read(KEYS.users, []);
+      if (users.some(user => user.email === email)) { $("#auth-feedback").textContent = "Ese correo ya está registrado en este navegador."; return; }
+      const user = { id: uid("USR"), name: String(data.get("name")).trim(), email, passwordHash: await hash(String(data.get("password"))) };
+      users.push(user);
+      write(KEYS.users, users);
+      write(KEYS.session, { id: user.id, name: user.name, email: user.email });
+      renderAccount();
+      toast("Cuenta creada");
+    });
+    $("#login-form")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      const email = String(data.get("email")).trim().toLowerCase();
+      const passwordHash = await hash(String(data.get("password")));
+      const user = read(KEYS.users, []).find(item => item.email === email && item.passwordHash === passwordHash);
+      if (!user) { $("#auth-feedback").textContent = "No encuentro esa combinación en este navegador."; return; }
+      write(KEYS.session, { id: user.id, name: user.name, email: user.email });
+      renderAccount();
+      toast("Sesión iniciada");
+    });
+    $("#logout-button")?.addEventListener("click", () => { localStorage.removeItem(KEYS.session); renderAccount(); });
+    renderAccount();
+  }
+
+  function setupCustomOrder() {
+    const form = $("#custom-order-form");
+    if (!form) return;
+    const session = getSession();
+    if (session) {
+      form.elements.name.value = session.name;
+      form.elements.email.value = session.email;
+    }
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const data = new FormData(form);
+      const order = {
+        id: uid("ENC"),
+        type: "Encargo",
+        email: String(data.get("email")).trim().toLowerCase(),
+        customer: String(data.get("name")).trim(),
+        createdAt: new Date().toISOString(),
+        status: "Solicitud recibida",
+        total: null,
+        details: `${data.get("piece")} · ${data.get("details")}`,
+        occasion: String(data.get("occasion") || "")
+      };
+      const orders = read(KEYS.orders, []);
+      orders.unshift(order);
+      write(KEYS.orders, orders);
+      const messages = read(KEYS.messages, []);
+      messages.unshift({ id: uid("MSG"), createdAt: order.createdAt, name: order.customer, email: order.email, subject: `Nuevo encargo ${order.id}`, body: order.details, status: "Nuevo" });
+      write(KEYS.messages, messages);
+      $("#custom-feedback").textContent = `Solicitud ${order.id} guardada. Te responderemos para concretar diseño y presupuesto.`;
+      form.reset();
+    });
+  }
+
+  function fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderAdmin() {
+    const orders = read(KEYS.orders, []);
+    const messages = read(KEYS.messages, []);
+    const products = getProducts();
+    $("#metric-products").textContent = products.length;
+    $("#metric-orders").textContent = orders.length;
+    $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
+    $("#admin-orders").innerHTML = orders.length ? orders.map(order => orderMarkup(order, true)).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
+    $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card"><span class="status">${escapeHtml(message.status)}</span><h3>${escapeHtml(message.subject)}</h3><p>${escapeHtml(message.name)} · ${escapeHtml(message.email)} · ${dateText(message.createdAt)}</p><p>${escapeHtml(message.body)}</p><button class="button button--quiet" type="button" data-read-message="${escapeHtml(message.id)}">Marcar como leído</button></article>`).join("") : `<div class="empty-state">No hay mensajes todavía.</div>`;
+    $("#admin-products").innerHTML = products.map(product => `<article class="admin-product-row"><img src="${escapeHtml(product.image)}" alt=""><div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category)} · ${money(product.price)}</small></div><button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${product.stock === false ? "Activar" : "Ocultar"}</button>${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}</article>`).join("");
+  }
+
+  function unlockAdmin() {
+    $("#admin-lock").hidden = true;
+    $("#admin-dashboard").hidden = false;
+    renderAdmin();
+  }
+
+  function setupAdmin() {
+    if (!$("#admin-page")) return;
+    const hasPin = Boolean(localStorage.getItem(KEYS.adminPin));
+    $("#admin-lock-title").textContent = hasPin ? "Entrar en administración" : "Crear acceso local";
+    $("#admin-pin-hint").textContent = hasPin ? "Introduce el PIN creado en este navegador." : "Crea un PIN de al menos 4 cifras para proteger esta demo local.";
+    $("#admin-pin-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      const pin = String(new FormData(event.currentTarget).get("pin"));
+      if (pin.length < 4) { $("#admin-lock-feedback").textContent = "El PIN debe tener al menos 4 caracteres."; return; }
+      const digest = await hash(pin);
+      const saved = localStorage.getItem(KEYS.adminPin);
+      if (!saved) { localStorage.setItem(KEYS.adminPin, digest); unlockAdmin(); return; }
+      if (saved !== digest) { $("#admin-lock-feedback").textContent = "PIN incorrecto."; return; }
+      unlockAdmin();
+    });
+    $$("[data-admin-view]").forEach(button => button.addEventListener("click", () => {
+      $$("[data-admin-view]").forEach(item => item.classList.toggle("is-active", item === button));
+      $$(".admin-view").forEach(view => view.hidden = view.id !== `admin-view-${button.dataset.adminView}`);
+    }));
+    $("#product-form")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const data = new FormData(event.currentTarget);
+      const file = data.get("image");
+      const image = file && file.size ? await fileToDataUrl(file) : "assets/detalle-bordado.jpeg";
+      const products = getProducts();
+      products.unshift({ id: uid("PROD"), name: String(data.get("name")), category: String(data.get("category")), description: String(data.get("description")), price: data.get("price") ? Number(data.get("price")) : null, image, badge: "Nueva pieza", stock: true, custom: true });
+      write(KEYS.products, products);
+      event.currentTarget.reset();
+      renderAdmin();
+      toast("Producto añadido al catálogo local");
+    });
+    document.addEventListener("change", event => {
+      if (!event.target.matches("[data-order-status]")) return;
+      const orders = read(KEYS.orders, []);
+      const order = orders.find(item => item.id === event.target.dataset.orderStatus);
+      if (order) order.status = event.target.value;
+      write(KEYS.orders, orders);
+      toast("Estado actualizado");
+    });
+    document.addEventListener("click", event => {
+      const stock = event.target.closest("[data-toggle-stock]");
+      const remove = event.target.closest("[data-delete-product]");
+      const readMessage = event.target.closest("[data-read-message]");
+      if (stock) { const products = getProducts(); const product = products.find(item => item.id === stock.dataset.toggleStock); if (product) product.stock = product.stock === false; write(KEYS.products, products); renderAdmin(); }
+      if (remove) { write(KEYS.products, getProducts().filter(item => item.id !== remove.dataset.deleteProduct)); renderAdmin(); }
+      if (readMessage) { const messages = read(KEYS.messages, []); const message = messages.find(item => item.id === readMessage.dataset.readMessage); if (message) message.status = "Leído"; write(KEYS.messages, messages); renderAdmin(); }
+    });
+  }
+
+  function updateIdentityLinks() {
+    const session = getSession();
+    $$(".account-link").forEach(link => link.textContent = session ? `Hola, ${session.name.split(" ")[0]}` : "Mi cuenta");
+  }
+
+  setupNavigation();
+  setupWelcome();
+  renderProducts();
+  setupShopFilters();
+  renderCart();
+  setupCartEvents();
+  setupAccount();
+  setupCustomOrder();
+  setupAdmin();
+  updateIdentityLinks();
+})();

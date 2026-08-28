@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Accede a tu cuenta y consulta tus pedidos."><title>Mi cuenta — Sin prisa, pero con alma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="site-v2.css"><script src="site-v2.js" defer></script>
+</head>
+<body data-page="account">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="site-header"><a class="brand-link" href="index.html"><img src="assets/logo-alma-hd.png" alt=""><span class="brand-wordmark">sin prisa,<span>pero con alma</span></span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menú</button><nav class="main-nav" id="main-nav"><a href="tienda.html">Tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></nav><div class="header-tools"><a class="account-link" href="cuenta.html" aria-current="page">Mi cuenta</a><a class="cart-link" href="#cart" data-cart-open>Cesta <span class="cart-count">0</span></a></div></header>
+  <main id="contenido">
+    <section class="page-hero"><div class="page-hero-inner"><div><p class="eyebrow">Tu espacio</p><h1 class="display-title">Tus piezas, tus <em>historias.</em></h1></div><p class="section-copy">Crea una cuenta para guardar tus pedidos, revisar su estado y tener tus encargos reunidos en un mismo lugar.</p></div></section>
+    <section class="section" id="account-page">
+      <div class="account-layout" id="auth-panel">
+        <div><p class="eyebrow">Acceso</p><h2 class="section-title">Bienvenida.</h2><p class="section-copy">Esta versión guarda la cuenta únicamente en tu navegador mientras preparamos el servidor seguro definitivo.</p><p class="notice">Demo local: tus datos no salen de este dispositivo y no se comparten entre móviles u ordenadores.</p></div>
+        <div class="panel"><div class="tabs"><button class="tab is-active" type="button" data-auth-tab="login">Entrar</button><button class="tab" type="button" data-auth-tab="register">Crear cuenta</button></div>
+          <form class="auth-form" id="login-form"><div class="form-grid"><div class="field field--full"><label for="login-email">Correo</label><input id="login-email" name="email" type="email" required autocomplete="email"></div><div class="field field--full"><label for="login-password">Contraseña</label><input id="login-password" name="password" type="password" required autocomplete="current-password"></div><div class="field field--full"><button class="button button--primary" type="submit">Entrar en mi cuenta</button></div></div></form>
+          <form class="auth-form" id="register-form" hidden><div class="form-grid"><div class="field field--full"><label for="register-name">Nombre</label><input id="register-name" name="name" required autocomplete="name"></div><div class="field field--full"><label for="register-email">Correo</label><input id="register-email" name="email" type="email" required autocomplete="email"></div><div class="field field--full"><label for="register-password">Contraseña</label><input id="register-password" name="password" type="password" minlength="6" required autocomplete="new-password"></div><div class="field field--full"><button class="button button--primary" type="submit">Crear mi cuenta</button></div></div></form>
+          <p class="form-feedback" id="auth-feedback" role="status"></p>
+        </div>
+      </div>
+      <div class="account-dashboard" id="account-dashboard" hidden><div class="section-head"><div><p class="eyebrow">Mi cuenta</p><h2 class="section-title">Hola, <span id="account-name"></span>.</h2><p class="section-copy" id="account-email"></p></div><button class="button button--outline" id="logout-button" type="button">Cerrar sesión</button></div><div class="panel"><h3>Mis pedidos y encargos</h3><div class="order-list" id="account-orders"></div></div></div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="footer-grid"><div class="footer-brand"><img src="assets/logo-alma-hd.png" alt=""><p>Bordamos piezas únicas para guardar historias, celebrar momentos y regalar con intención.</p></div><div class="footer-column"><strong>Explorar</strong><a href="tienda.html">Tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></div><div class="footer-column"><strong>Tu pedido</strong><a href="cuenta.html">Mi cuenta</a><a href="cuenta.html">Estado de pedidos</a></div><div class="footer-column"><strong>Contacto</strong><a href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Instagram</a><a href="legal.html">Información legal</a><a href="admin.html">Administración</a></div></div><div class="footer-bottom"><span>© 2026 Sin prisa, pero con alma</span><span>Hecho a mano en Jaén · Envíos a toda España</span></div></footer><div id="cart-root"></div>
+</body>
+</html>

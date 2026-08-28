@@ -1,0 +1,17 @@
+dist/
+node_modules/
+.wrangler/
+.dev.vars
+.env
+*.log
+qa/
+design-qa.md
+/imagens para modificar en el catalogo/
+/admin.css
+/app.js
+/entrance.css
+/formal.css
+/mood.css
+/storefront.css
+/styles.css
+/welcome.css

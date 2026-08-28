@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bordados hechos a mano para regalar, vivir y recordar. Piezas únicas y encargos personalizados desde Jaén.">
+  <title>Sin prisa, pero con alma — Bordado hecho a mano</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site-v2.css">
+  <script src="site-v2.js" defer></script>
+</head>
+<body data-page="home">
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <section class="welcome" id="welcome" aria-label="Bienvenida">
+    <div class="welcome-inner">
+      <img class="welcome-logo" src="assets/logo-alma-hd.png" alt="Sin prisa, pero con alma">
+      <p class="welcome-kicker">Bordado · hecho a mano · Jaén</p>
+      <h1 class="welcome-title">Cada puntada guarda algo tuyo.</h1>
+      <button class="button button--primary" id="enter-site" type="button">Entrar al atelier</button>
+    </div>
+    <p class="welcome-note">Piezas creadas despacio, para quedarse</p>
+  </section>
+
+  <header class="site-header">
+    <a class="brand-link" href="index.html" aria-label="Inicio — Sin prisa, pero con alma">
+      <img src="assets/logo-alma-hd.png" alt="">
+      <span class="brand-wordmark">sin prisa,<span>pero con alma</span></span>
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menú</button>
+    <nav class="main-nav" id="main-nav" aria-label="Principal">
+      <a href="tienda.html">Tienda</a>
+      <a href="encargos.html">Encargos</a>
+      <a href="diario.html">Diario</a>
+      <a href="marca.html">La marca</a>
+    </nav>
+    <div class="header-tools">
+      <a class="account-link" href="cuenta.html">Mi cuenta</a>
+      <a class="cart-link" href="#cart" data-cart-open>Cesta <span class="cart-count">0</span></a>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="home-hero">
+      <div class="hero-content">
+        <img class="hero-logo" src="assets/logo-alma-hd.png" alt="Sin prisa, pero con alma">
+        <p class="eyebrow">Bordado hecho a mano · Jaén</p>
+        <h2 class="display-title">Piezas que cuentan una <em>historia.</em></h2>
+        <p class="hero-copy">Objetos textiles únicos, bordados con calma y detalle para convertir los pequeños momentos en recuerdos que permanecen.</p>
+        <div class="hero-actions">
+          <a class="button button--primary" href="tienda.html">Descubrir la colección</a>
+          <a class="button button--light" href="encargos.html">Crear un encargo</a>
+        </div>
+      </div>
+      <p class="hero-stamp">Cada puntada tiene su historia</p>
+    </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>Hecho a mano en Jaén</span><span>Piezas únicas</span><span>Encargos personalizados</span><span>Envíos a toda España</span>
+        <span>Hecho a mano en Jaén</span><span>Piezas únicas</span><span>Encargos personalizados</span><span>Envíos a toda España</span>
+      </div>
+    </div>
+
+    <section class="section section--ivory">
+      <div class="section-head">
+        <div><p class="eyebrow">Elige cómo empezar</p><h2 class="section-title">Algo hecho para ti, o para alguien especial.</h2></div>
+        <p class="section-copy">Piezas listas para enviar, regalos bordados y encargos nacidos de una historia personal.</p>
+      </div>
+      <div class="category-grid">
+        <a class="category-card" href="tienda.html">
+          <img src="assets/babero-danna.jpeg" alt="Babero blanco bordado a mano">
+          <div class="category-card-body"><h3>La colección</h3><p>Piezas disponibles para comprar ahora.</p></div>
+        </a>
+        <a class="category-card" href="encargos.html">
+          <img src="assets/encargo-bordado.jpeg" alt="Detalle de un bordado floral personalizado">
+          <div class="category-card-body"><h3>Tu historia</h3><p>Un encargo creado contigo, desde cero.</p></div>
+        </a>
+        <a class="category-card" href="diario.html">
+          <img src="assets/bolsa-flores.jpeg" alt="Bolsa de lino con flores bordadas">
+          <div class="category-card-body"><h3>El diario</h3><p>Procesos, puntadas y vida de taller.</p></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div><p class="eyebrow">Piezas escogidas</p><h2 class="section-title">Pequeños objetos, grandes recuerdos.</h2></div>
+        <a class="button button--quiet" href="tienda.html">Ver toda la tienda</a>
+      </div>
+      <div class="product-grid" data-product-grid data-limit="3"></div>
+    </section>
+
+    <section class="values-grid" aria-label="Valores de la marca">
+      <div class="value"><strong>Una a una</strong><p>Ninguna pieza sale de una cadena. Cada puntada pasa por nuestras manos.</p></div>
+      <div class="value"><strong>Con intención</strong><p>Diseños pensados para la persona y el momento que los hace especiales.</p></div>
+      <div class="value"><strong>Sin prisa</strong><p>Respetamos el tiempo del oficio para crear objetos que duren muchos años.</p></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand"><img src="assets/logo-alma-hd.png" alt=""><p>Bordamos piezas únicas para guardar historias, celebrar momentos y regalar con intención.</p></div>
+      <div class="footer-column"><strong>Explorar</strong><a href="tienda.html">Tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></div>
+      <div class="footer-column"><strong>Tu pedido</strong><a href="cuenta.html">Mi cuenta</a><a href="cuenta.html">Estado de pedidos</a><a href="encargos.html">Solicitar presupuesto</a></div>
+      <div class="footer-column"><strong>Contacto</strong><a href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Instagram</a><a href="legal.html">Información legal</a><a href="admin.html">Administración</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Sin prisa, pero con alma</span><span>Hecho a mano en Jaén · Envíos a toda España</span></div>
+  </footer>
+  <div id="cart-root"></div>
+</body>
+</html>
