@@ -165,6 +165,14 @@
     $("#admin-products").innerHTML = filteredProducts.length ? filteredProducts.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">No hay piezas que coincidan con los filtros.</div>`;
   }
 
+  function renderProductCategoryOptions(collections) {
+    const categoryInput = $("#product-category");
+    if (!categoryInput) return;
+    const selectedCollection = categoryInput.value;
+    categoryInput.required = true;
+    categoryInput.innerHTML = `<option value="">Selecciona una colección</option>${collections.map(collection => `<option value="${escapeHtml(collection.id)}" ${collection.id === selectedCollection ? "selected" : ""}>${escapeHtml(collection.name)}</option>`).join("")}`;
+  }
+
   async function renderAdmin() {
     const [products, orders, messages, collections] = await Promise.all([
       adminData.listProducts(),
@@ -179,6 +187,7 @@
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
     renderProductCatalog(products, collections);
+    renderProductCategoryOptions(collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
     $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
