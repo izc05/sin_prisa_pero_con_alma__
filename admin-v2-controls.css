@@ -196,6 +196,18 @@ body[data-page="admin"] .admin-product-row {
   .admin-gallery__actions { grid-column: 1 / -1; }
 }
 
+.admin-catalog-filters {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) repeat(3, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.admin-catalog-filters .field { margin: 0; }
+
 @media (max-width: 760px) {
   body[data-page="admin"] .admin-product-row {
     grid-template-columns: 68px minmax(0, 1fr);
@@ -218,6 +230,8 @@ body[data-page="admin"] .admin-product-row {
 
   .admin-gallery__item { grid-template-columns: 1fr; }
   .admin-gallery__item > img { width: 100%; height: 160px; }
+
+  .admin-catalog-filters { grid-template-columns: 1fr; }
 
   body[data-page="admin"] .admin-product-row .button {
     grid-column: 1 / -1;

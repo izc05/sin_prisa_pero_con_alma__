@@ -141,6 +141,30 @@
     </article>`;
   }
 
+  function renderProductCatalog(products, collections) {
+    const search = String($("#product-search")?.value || "").trim().toLocaleLowerCase("es-ES");
+    const selectedCollection = $("#product-filter-collection")?.value || "";
+    const selectedStatus = $("#product-filter-status")?.value || "";
+    const selectedStock = $("#product-filter-stock")?.value || "";
+    const collectionFilter = $("#product-filter-collection");
+
+    if (collectionFilter) {
+      collectionFilter.innerHTML = `<option value="">Todas</option>${collections.map(collection => `<option value="${escapeHtml(collection.id)}" ${collection.id === selectedCollection ? "selected" : ""}>${escapeHtml(collection.name)}</option>`).join("")}`;
+    }
+
+    const filteredProducts = products.filter(product => {
+      const text = `${product.name || ""} ${product.description || ""}`.toLocaleLowerCase("es-ES");
+      const stockMode = product.stockMode || (product.stock === false ? "sold_out" : "available");
+      return (!search || text.includes(search))
+        && (!selectedCollection || product.category === selectedCollection)
+        && (!selectedStatus || (product.status || "draft") === selectedStatus)
+        && (!selectedStock || stockMode === selectedStock);
+    });
+
+    $("#product-list-meta").textContent = `${filteredProducts.length} de ${products.length} ${products.length === 1 ? "pieza" : "piezas"}`;
+    $("#admin-products").innerHTML = filteredProducts.length ? filteredProducts.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">No hay piezas que coincidan con los filtros.</div>`;
+  }
+
   async function renderAdmin() {
     const [products, orders, messages, collections] = await Promise.all([
       adminData.listProducts(),
@@ -154,9 +178,7 @@
     $("#metric-visible").textContent = visibleProducts;
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
-    $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} publicables`;
-
-    $("#admin-products").innerHTML = products.length ? products.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
+    renderProductCatalog(products, collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
     $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
@@ -281,6 +303,13 @@
       form.reset();
       await renderAdmin();
       toast("Colección creada en el catálogo local");
+    });
+
+    ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock"].forEach(selector => {
+      $(selector)?.addEventListener(selector === "#product-search" ? "input" : "change", async () => {
+        const [products, collections] = await Promise.all([adminData.listProducts(), adminData.listCollections()]);
+        renderProductCatalog(products, collections);
+      });
     });
 
     document.addEventListener("change", async event => {
