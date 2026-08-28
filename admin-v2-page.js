@@ -29,7 +29,7 @@
   const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
   const priceModeLabel = (mode) => ({ fixed: "Precio fijo", from: "Desde", quote: "Consultar" })[mode] || "Precio fijo";
   const stockModeLabel = (mode) => ({ available: "Disponible", made_to_order: "Bajo pedido", sold_out: "Agotado" })[mode] || "Disponible";
-  const statusLabel = (status) => ({ draft: "Borrador", published: "Publicado", hidden: "Oculto" })[status] || "Publicado";
+  const statusLabel = (status) => ({ draft: "Borrador", published: "Publicado", hidden: "Oculto", archived: "Archivado" })[status] || "Publicado";
 
   if (!window.AlmaAdminData?.createLocalDriver) {
     console.error("Admin V2: no se encontró el gateway de datos.");
@@ -109,7 +109,7 @@
     return `<div class="admin-gallery"><div class="admin-gallery__head"><strong>Galería</strong><label class="button button--quiet"><span>Añadir fotos</span><input type="file" accept="image/*" multiple data-add-product-images="${escapeHtml(product.id)}"></label></div>${items || `<p class="empty-state">Aún no hay fotografías.</p>`}</div>`;
   }
 
-  function productMarkup(product) {
+  function productMarkup(product, collections) {
     const available = product.stock !== false && product.stockMode !== "sold_out";
     const status = product.status || "published";
     const priceMode = product.priceMode || (product.price == null ? "quote" : "fixed");
@@ -118,9 +118,10 @@
     return `<article class="admin-product-row">
       <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
       <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${priceMode === "quote" ? "Consultar" : `${priceModeLabel(priceMode)} · ${money(product.price)}`} · ${imageCount} ${imageCount === 1 ? "foto" : "fotos"}</small><div class="admin-product-tags"><span class="admin-product-state ${available ? "" : "is-hidden"}">${stockModeLabel(stockMode)}</span><span class="admin-product-state admin-product-state--status">${statusLabel(status)}</span>${product.featured ? `<span class="admin-product-state admin-product-state--featured">Destacado</span>` : ""}</div></div>
-      <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option></select></label>
+      <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option><option value="archived" ${status === "archived" ? "selected" : ""}>Archivado</option></select></label>
       <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Marcar agotado" : "Reactivar"}</button>
       ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
+      <details class="admin-product-editor" data-product-editor="${escapeHtml(product.id)}"><summary>Editar pieza</summary><div class="form-grid"><div class="field"><label>Nombre<input data-product-name value="${escapeHtml(product.name)}"></label></div><div class="field"><label>Colección<select data-product-category><option value="">Sin colección</option>${collections.map(collection => `<option value="${escapeHtml(collection.id)}" ${product.category === collection.id ? "selected" : ""}>${escapeHtml(collection.name)}</option>`).join("")}</select></label></div><div class="field"><label>Tipo de precio<select data-product-price-mode><option value="fixed" ${priceMode === "fixed" ? "selected" : ""}>Precio fijo</option><option value="from" ${priceMode === "from" ? "selected" : ""}>Desde</option><option value="quote" ${priceMode === "quote" ? "selected" : ""}>Consultar</option></select></label></div><div class="field"><label>Precio<input data-product-price type="number" min="0" step="0.01" value="${product.price == null ? "" : escapeHtml(product.price)}"></label></div><div class="field"><label>Disponibilidad<select data-product-stock-mode><option value="available" ${stockMode === "available" ? "selected" : ""}>Disponible</option><option value="made_to_order" ${stockMode === "made_to_order" ? "selected" : ""}>Bajo pedido</option><option value="sold_out" ${stockMode === "sold_out" ? "selected" : ""}>Agotado</option></select></label></div><div class="field"><label>Estado<select data-product-edit-status><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option><option value="archived" ${status === "archived" ? "selected" : ""}>Archivado</option></select></label></div><div class="field field--full"><label>Descripción<textarea data-product-description>${escapeHtml(product.description || "")}</textarea></label></div><label class="admin-check field--full"><input data-product-featured type="checkbox" ${product.featured ? "checked" : ""}><span><strong>Destacar esta pieza</strong></span></label><div class="field field--full"><button class="button button--primary" type="button" data-save-product="${escapeHtml(product.id)}">Guardar cambios</button></div></div></details>
       ${galleryMarkup(product)}
     </article>`;
   }
@@ -155,7 +156,7 @@
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
     $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} publicables`;
 
-    $("#admin-products").innerHTML = products.length ? products.map(productMarkup).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
+    $("#admin-products").innerHTML = products.length ? products.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
     $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
@@ -336,6 +337,7 @@
       const removeCollection = event.target.closest("[data-delete-collection]");
       const makePrimary = event.target.closest("[data-make-primary]");
       const removeImage = event.target.closest("[data-remove-image]");
+      const saveProduct = event.target.closest("[data-save-product]");
 
       if (stock) {
         const product = (await adminData.listProducts()).find(item => item.id === stock.dataset.toggleStock);
@@ -400,6 +402,29 @@
           await adminData.setProductImages(product.id, productImages(product).filter(image => image.id !== removeImage.dataset.removeImage));
           await renderAdmin();
           toast("Fotografía eliminada");
+        }
+      }
+
+      if (saveProduct) {
+        const editor = saveProduct.closest("[data-product-editor]");
+        const value = selector => editor?.querySelector(selector)?.value || "";
+        const priceMode = value("[data-product-price-mode]");
+        const rawPrice = value("[data-product-price]");
+        try {
+          await adminData.updateProduct(saveProduct.dataset.saveProduct, {
+            name: value("[data-product-name]").trim(),
+            category: value("[data-product-category]"),
+            description: value("[data-product-description]").trim(),
+            priceMode,
+            price: priceMode === "quote" ? null : rawPrice === "" ? Number.NaN : Number(rawPrice),
+            stockMode: value("[data-product-stock-mode]"),
+            status: value("[data-product-edit-status]"),
+            featured: Boolean(editor?.querySelector("[data-product-featured]")?.checked)
+          });
+          await renderAdmin();
+          toast("Pieza actualizada");
+        } catch (error) {
+          toast(error.message || "No se pudo actualizar la pieza");
         }
       }
     });

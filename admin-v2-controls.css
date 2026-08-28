@@ -15,6 +15,24 @@ body[data-page="admin"] .admin-product-row {
   padding-top: 4px;
 }
 
+.admin-product-editor {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.admin-product-editor summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--rose-dark);
+  font: 500 0.66rem/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-product-editor .form-grid { margin-top: 16px; }
+.admin-product-editor textarea { min-height: 96px; }
+
 .admin-gallery__head,
 .admin-gallery__actions {
   display: flex;
