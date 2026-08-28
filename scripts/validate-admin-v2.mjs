@@ -4,6 +4,7 @@ const admin = readFileSync(new URL("../admin.html", import.meta.url), "utf8");
 const controller = readFileSync(new URL("../admin-v2-page.js", import.meta.url), "utf8");
 const dataGateway = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
 const adminStyles = readFileSync(new URL("../admin-v2.css", import.meta.url), "utf8");
+const adminControls = readFileSync(new URL("../admin-v2-controls.css", import.meta.url), "utf8");
 
 const requiredAdminFragments = [
   'id="admin-page"',
@@ -13,11 +14,16 @@ const requiredAdminFragments = [
   'data-admin-view="orders"',
   'data-admin-view="messages"',
   'id="product-form"',
+  'name="priceMode"',
+  'name="stockMode"',
+  'name="status"',
+  'name="featured"',
   'id="admin-orders"',
   'id="admin-messages"',
   'id="metric-visible"',
   'id="product-list-meta"',
   'href="admin-v2.css"',
+  'href="admin-v2-controls.css"',
   'src="admin-data.js"',
   'src="admin-v2-page.js"'
 ];
@@ -41,12 +47,15 @@ const requiredControllerFragments = [
   'adminData.listOrders()',
   'adminData.listMessages()',
   'adminData.createProduct(',
-  'adminData.setProductAvailability(',
+  'adminData.updateProduct(',
   'adminData.deleteProduct(',
   'adminData.updateOrderStatus(',
   'adminData.markMessageRead(',
   'metric-visible',
-  'product-list-meta'
+  'product-list-meta',
+  'priceMode',
+  'stockMode',
+  'featured'
 ];
 
 for (const fragment of requiredControllerFragments) {
@@ -65,6 +74,7 @@ const requiredGatewayFragments = [
   'listMessages()',
   'saveMessages(messages)',
   'createProduct(product)',
+  'updateProduct(productId, patch)',
   'setProductAvailability(productId, available)',
   'deleteProduct(productId)',
   'updateOrderStatus(orderId, status)',
@@ -92,6 +102,19 @@ for (const fragment of requiredStyleFragments) {
   }
 }
 
+const requiredControlFragments = [
+  '.admin-product-tags',
+  '.admin-row-field',
+  '.admin-check',
+  '.admin-product-state--featured'
+];
+
+for (const fragment of requiredControlFragments) {
+  if (!adminControls.includes(fragment)) {
+    throw new Error(`Admin V2 control style contract missing: ${fragment}`);
+  }
+}
+
 const forbiddenPatterns = [
   /sk-[A-Za-z0-9_-]{16,}/,
   /ghp_[A-Za-z0-9]{20,}/,
@@ -100,7 +123,7 @@ const forbiddenPatterns = [
 ];
 
 for (const pattern of forbiddenPatterns) {
-  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(adminStyles)) {
+  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(adminStyles) || pattern.test(adminControls)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
 }
