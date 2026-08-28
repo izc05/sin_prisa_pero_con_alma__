@@ -14,6 +14,7 @@ const files = [
   "legal.html",
   "site-v2.css",
   "site-v2.js",
+  "admin-data.js",
   "_headers",
   ".nojekyll"
 ];
