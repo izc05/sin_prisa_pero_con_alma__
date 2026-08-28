@@ -15,6 +15,7 @@ const files = [
   "site-v2.css",
   "site-v2.js",
   "admin-v2.css",
+  "admin-v2-controls.css",
   "admin-data.js",
   "admin-v2-page.js",
   "_headers",
