@@ -97,105 +97,105 @@
       kind: "local",
       isRemote: false,
 
-      listProducts() {
+      async listProducts() {
         return safeArray(read(keys.products, seedProducts));
       },
 
-      saveProducts(products) {
+      async saveProducts(products) {
         if (!Array.isArray(products)) throw new TypeError("products debe ser un array");
         return write(keys.products, products);
       },
 
-      listCollections() {
+      async listCollections() {
         return safeArray(read(keys.collections, normalizeCollections(seedCollections)));
       },
 
-      saveCollections(collections) {
+      async saveCollections(collections) {
         return write(keys.collections, normalizeCollections(collections));
       },
 
-      listOrders() {
+      async listOrders() {
         return safeArray(read(keys.orders, []));
       },
 
-      saveOrders(orders) {
+      async saveOrders(orders) {
         if (!Array.isArray(orders)) throw new TypeError("orders debe ser un array");
         return write(keys.orders, orders);
       },
 
-      listMessages() {
+      async listMessages() {
         return safeArray(read(keys.messages, []));
       },
 
-      saveMessages(messages) {
+      async saveMessages(messages) {
         if (!Array.isArray(messages)) throw new TypeError("messages debe ser un array");
         return write(keys.messages, messages);
       },
 
-      createProduct(product) {
+      async createProduct(product) {
         if (!plainObject(product)) throw new TypeError("product debe ser un objeto");
-        const products = this.listProducts();
+        const products = await this.listProducts();
         if (products.some(item => item.id === product.id)) throw new Error("ya existe un producto con ese id");
         const next = clone(product);
         if (Array.isArray(next.images)) next.images = normalizeImages(next.images);
         products.unshift(next);
-        this.saveProducts(products);
+        await this.saveProducts(products);
         return clone(next);
       },
 
-      updateProduct(productId, patch) {
+      async updateProduct(productId, patch) {
         if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
-        const products = this.listProducts();
+        const products = await this.listProducts();
         const product = products.find(item => item.id === productId);
         if (!product) return false;
         const safePatch = clone(patch);
         if (Object.hasOwn(safePatch, "images")) safePatch.images = normalizeImages(safePatch.images);
         Object.assign(product, safePatch, { id: product.id });
-        this.saveProducts(products);
+        await this.saveProducts(products);
         return clone(product);
       },
 
-      setProductImages(productId, images) {
+      async setProductImages(productId, images) {
         const normalized = normalizeImages(images);
-        const result = this.updateProduct(productId, { images: normalized, image: normalized[0]?.src || "" });
+        const result = await this.updateProduct(productId, { images: normalized, image: normalized[0]?.src || "" });
         return result || false;
       },
 
-      setProductAvailability(productId, available) {
-        return Boolean(this.updateProduct(productId, { stock: Boolean(available) }));
+      async setProductAvailability(productId, available) {
+        return Boolean(await this.updateProduct(productId, { stock: Boolean(available) }));
       },
 
-      deleteProduct(productId) {
-        const products = this.listProducts();
+      async deleteProduct(productId) {
+        const products = await this.listProducts();
         const next = products.filter(item => item.id !== productId);
         if (next.length === products.length) return false;
-        this.saveProducts(next);
+        await this.saveProducts(next);
         return true;
       },
 
-      createCollection(collection) {
+      async createCollection(collection) {
         if (!plainObject(collection)) throw new TypeError("collection debe ser un objeto");
-        const collections = this.listCollections();
+        const collections = await this.listCollections();
         if (collections.some(item => item.id === collection.id)) throw new Error("ya existe una colección con ese id");
         const next = { ...clone(collection), position: collections.length };
-        this.saveCollections([...collections, next]);
+        await this.saveCollections([...collections, next]);
         return clone(next);
       },
 
-      updateCollection(collectionId, patch) {
+      async updateCollection(collectionId, patch) {
         if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
-        const collections = this.listCollections();
+        const collections = await this.listCollections();
         const collection = collections.find(item => item.id === collectionId);
         if (!collection) return false;
         const position = collection.position;
         Object.assign(collection, clone(patch), { id: collection.id, position });
-        this.saveCollections(collections);
-        return clone(this.listCollections().find(item => item.id === collectionId));
+        await this.saveCollections(collections);
+        return clone((await this.listCollections()).find(item => item.id === collectionId));
       },
 
-      reorderCollections(collectionIds) {
+      async reorderCollections(collectionIds) {
         if (!Array.isArray(collectionIds)) throw new TypeError("collectionIds debe ser un array");
-        const collections = this.listCollections();
+        const collections = await this.listCollections();
         if (collectionIds.length !== collections.length) throw new Error("el orden debe incluir todas las colecciones");
         const requested = collectionIds.map(id => String(id));
         if (new Set(requested).size !== requested.length) throw new Error("el orden contiene ids duplicados");
@@ -204,29 +204,29 @@
         return this.saveCollections(requested.map(id => byId.get(id)));
       },
 
-      deleteCollection(collectionId) {
-        const collections = this.listCollections();
+      async deleteCollection(collectionId) {
+        const collections = await this.listCollections();
         const next = collections.filter(item => item.id !== collectionId);
         if (next.length === collections.length) return false;
-        this.saveCollections(next);
+        await this.saveCollections(next);
         return true;
       },
 
-      updateOrderStatus(orderId, status) {
-        const orders = this.listOrders();
+      async updateOrderStatus(orderId, status) {
+        const orders = await this.listOrders();
         const order = orders.find(item => item.id === orderId);
         if (!order) return false;
         order.status = String(status);
-        this.saveOrders(orders);
+        await this.saveOrders(orders);
         return true;
       },
 
-      markMessageRead(messageId) {
-        const messages = this.listMessages();
+      async markMessageRead(messageId) {
+        const messages = await this.listMessages();
         const message = messages.find(item => item.id === messageId);
         if (!message) return false;
         message.status = "Leído";
-        this.saveMessages(messages);
+        await this.saveMessages(messages);
         return true;
       }
     });

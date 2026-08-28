@@ -41,7 +41,7 @@ if (admin.includes('src="site-v2.js"')) {
 const requiredControllerFragments = [
   'window.AlmaAdminData.createLocalDriver',
   'function setupAdmin()',
-  'function renderAdmin()',
+  'async function renderAdmin()',
   'function productMarkup(product)',
   'adminData.listProducts()',
   'adminData.listOrders()',
@@ -67,6 +67,9 @@ for (const fragment of requiredControllerFragments) {
 const requiredGatewayFragments = [
   'global.AlmaAdminData',
   'createLocalDriver',
+  'async listProducts()',
+  'async createProduct(product)',
+  'async updateProduct(productId, patch)',
   'listProducts()',
   'saveProducts(products)',
   'listOrders()',

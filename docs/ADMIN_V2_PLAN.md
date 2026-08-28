@@ -88,8 +88,8 @@ Convertir el panel local actual en una administración real para **Sin prisa, pe
 
 Checkpoint 0 cerrado: arquitectura, esquema y gate versionados.
 
-Checkpoint 1 en curso: `admin-data.js` define un gateway local sustituible y ya dispone de prueba de comportamiento independiente. El gateway todavía no está conectado a `admin.html`, por lo que este checkpoint no cambia la experiencia visible ni la web oficial.
+Checkpoint 1 cerrado: `admin-data.js` está conectado al controlador aislado y expone un contrato asíncrono tanto para el driver local como para el futuro driver PocketBase. La interfaz mantiene datos locales mientras no exista backend.
 
 ## Siguiente cambio funcional
 
-Conectar únicamente los flujos internos de `renderAdmin()` y `setupAdmin()` a `admin-data.js`, manteniendo las mismas claves locales y el mismo comportamiento observable. Después de validar equivalencia se añadirá el driver PocketBase y el login real.
+Completar la validación de dominio, los estados de carga/error y la interfaz de colecciones y galerías antes de implementar el driver PocketBase y el login real.

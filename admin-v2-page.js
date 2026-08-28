@@ -105,10 +105,12 @@
     </article>`;
   }
 
-  function renderAdmin() {
-    const products = adminData.listProducts();
-    const orders = adminData.listOrders();
-    const messages = adminData.listMessages();
+  async function renderAdmin() {
+    const [products, orders, messages] = await Promise.all([
+      adminData.listProducts(),
+      adminData.listOrders(),
+      adminData.listMessages()
+    ]);
     const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
     $("#metric-products").textContent = products.length;
@@ -128,10 +130,10 @@
     </article>`).join("") : `<div class="empty-state">No hay mensajes todavía.</div>`;
   }
 
-  function unlockAdmin() {
+  async function unlockAdmin() {
     $("#admin-lock").hidden = true;
     $("#admin-dashboard").hidden = false;
-    renderAdmin();
+    await renderAdmin();
   }
 
   function setupIdentity() {
@@ -159,14 +161,14 @@
       const saved = localStorage.getItem(KEYS.adminPin);
       if (!saved) {
         localStorage.setItem(KEYS.adminPin, digest);
-        unlockAdmin();
+        await unlockAdmin();
         return;
       }
       if (saved !== digest) {
         $("#admin-lock-feedback").textContent = "PIN incorrecto.";
         return;
       }
-      unlockAdmin();
+      await unlockAdmin();
     });
 
     $$("[data-admin-view]").forEach(button => button.addEventListener("click", () => {
@@ -192,7 +194,7 @@
         toast("No se pudo leer la fotografía");
         return;
       }
-      adminData.createProduct({
+      await adminData.createProduct({
         id: uid("PROD"),
         name: String(data.get("name") || "").trim(),
         category: String(data.get("category") || "regalo"),
@@ -208,47 +210,47 @@
         custom: true
       });
       form.reset();
-      renderAdmin();
+      await renderAdmin();
       toast("Nueva pieza guardada en el catálogo local");
     });
 
-    document.addEventListener("change", event => {
+    document.addEventListener("change", async event => {
       const orderStatus = event.target.closest("[data-order-status]");
       const productStatus = event.target.closest("[data-product-status]");
-      if (orderStatus && adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
-        renderAdmin();
+      if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
+        await renderAdmin();
         toast("Estado del pedido actualizado");
       }
-      if (productStatus && adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
-        renderAdmin();
+      if (productStatus && await adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
+        await renderAdmin();
         toast("Estado de publicación actualizado");
       }
     });
 
-    document.addEventListener("click", event => {
+    document.addEventListener("click", async event => {
       const stock = event.target.closest("[data-toggle-stock]");
       const remove = event.target.closest("[data-delete-product]");
       const readMessage = event.target.closest("[data-read-message]");
 
       if (stock) {
-        const product = adminData.listProducts().find(item => item.id === stock.dataset.toggleStock);
+        const product = (await adminData.listProducts()).find(item => item.id === stock.dataset.toggleStock);
         if (product) {
           const available = product.stock !== false && product.stockMode !== "sold_out";
           const patch = available ? { stock: false, stockMode: "sold_out" } : { stock: true, stockMode: "available" };
-          if (adminData.updateProduct(product.id, patch)) {
-            renderAdmin();
+          if (await adminData.updateProduct(product.id, patch)) {
+            await renderAdmin();
             toast(available ? "Producto marcado como agotado" : "Producto disponible de nuevo");
           }
         }
       }
 
-      if (remove && adminData.deleteProduct(remove.dataset.deleteProduct)) {
-        renderAdmin();
+      if (remove && await adminData.deleteProduct(remove.dataset.deleteProduct)) {
+        await renderAdmin();
         toast("Producto eliminado del catálogo local");
       }
 
-      if (readMessage && adminData.markMessageRead(readMessage.dataset.readMessage)) {
-        renderAdmin();
+      if (readMessage && await adminData.markMessageRead(readMessage.dataset.readMessage)) {
+        await renderAdmin();
         toast("Mensaje marcado como leído");
       }
     });
