@@ -26,6 +26,7 @@ Incluido:
 - Operaciones de negocio actuales: crear/eliminar producto, cambiar disponibilidad, actualizar estado de pedido y marcar mensaje como leído.
 - Copias defensivas al leer/escribir para evitar mutaciones accidentales fuera del gateway.
 - `scripts/test-admin-data.mjs` con pruebas de comportamiento en memoria.
+- El workflow ejecuta sintaxis, prueba del gateway, contrato y build.
 - El build incluye `admin-data.js` como artefacto, pero la interfaz actual todavía no lo carga: el comportamiento visible permanece sin cambios en este checkpoint.
 
 Estado: implementación base completada; pendiente confirmar CI del HEAD y conectar la UI del admin al gateway.
