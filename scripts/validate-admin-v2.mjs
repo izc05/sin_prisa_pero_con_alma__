@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const admin = readFileSync(new URL("../admin.html", import.meta.url), "utf8");
-const site = readFileSync(new URL("../site-v2.js", import.meta.url), "utf8");
+const controller = readFileSync(new URL("../admin-v2-page.js", import.meta.url), "utf8");
 const dataGateway = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
 
 const requiredAdminFragments = [
@@ -13,7 +13,9 @@ const requiredAdminFragments = [
   'data-admin-view="messages"',
   'id="product-form"',
   'id="admin-orders"',
-  'id="admin-messages"'
+  'id="admin-messages"',
+  'src="admin-data.js"',
+  'src="admin-v2-page.js"'
 ];
 
 for (const fragment of requiredAdminFragments) {
@@ -22,17 +24,27 @@ for (const fragment of requiredAdminFragments) {
   }
 }
 
-const requiredDataFragments = [
-  'products: "alma-v2-products"',
-  'orders: "alma-v2-orders"',
-  'messages: "alma-v2-messages"',
-  'adminPin: "alma-v2-admin-pin"',
-  'function setupAdmin()'
+if (admin.includes('src="site-v2.js"')) {
+  throw new Error("Admin V2 must not load the storefront runtime");
+}
+
+const requiredControllerFragments = [
+  'window.AlmaAdminData.createLocalDriver',
+  'function setupAdmin()',
+  'function renderAdmin()',
+  'adminData.listProducts()',
+  'adminData.listOrders()',
+  'adminData.listMessages()',
+  'adminData.createProduct(',
+  'adminData.setProductAvailability(',
+  'adminData.deleteProduct(',
+  'adminData.updateOrderStatus(',
+  'adminData.markMessageRead('
 ];
 
-for (const fragment of requiredDataFragments) {
-  if (!site.includes(fragment)) {
-    throw new Error(`Current admin data contract missing: ${fragment}`);
+for (const fragment of requiredControllerFragments) {
+  if (!controller.includes(fragment)) {
+    throw new Error(`Admin V2 controller contract missing: ${fragment}`);
   }
 }
 
@@ -66,7 +78,7 @@ const forbiddenPatterns = [
 ];
 
 for (const pattern of forbiddenPatterns) {
-  if (pattern.test(admin) || pattern.test(site) || pattern.test(dataGateway)) {
+  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
 }
