@@ -39,12 +39,14 @@ const driver = window.AlmaAdminData.createLocalDriver({
   ]
 });
 
+const productIds = () => Array.from(driver.listProducts(), item => item.id);
+
 assert.equal(driver.kind, "local");
 assert.equal(driver.isRemote, false);
-assert.deepEqual(driver.listProducts().map(item => item.id), ["seed-1"]);
+assert.deepEqual(productIds(), ["seed-1"]);
 
 driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true });
-assert.deepEqual(driver.listProducts().map(item => item.id), ["prod-2", "seed-1"]);
+assert.deepEqual(productIds(), ["prod-2", "seed-1"]);
 
 assert.equal(driver.setProductAvailability("prod-2", false), true);
 assert.equal(driver.listProducts()[0].stock, false);
@@ -61,7 +63,7 @@ assert.equal(driver.listMessages()[0].status, "Leído");
 assert.equal(driver.markMessageRead("missing"), false);
 
 assert.equal(driver.deleteProduct("prod-2"), true);
-assert.deepEqual(driver.listProducts().map(item => item.id), ["seed-1"]);
+assert.deepEqual(productIds(), ["seed-1"]);
 assert.equal(driver.deleteProduct("missing"), false);
 
 const isolatedCopy = driver.listProducts();
