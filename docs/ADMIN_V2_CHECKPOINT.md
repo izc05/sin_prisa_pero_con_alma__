@@ -29,10 +29,13 @@ Incluido:
 - El workflow ejecuta sintaxis, prueba del gateway, contrato y build.
 - El build incluye `admin-data.js` como artefacto, pero la interfaz actual todavía no lo carga: el comportamiento visible permanece sin cambios en este checkpoint.
 
-Estado: implementación base completada; pendiente confirmar CI del HEAD y conectar la UI del admin al gateway.
+Estado: código base completo. La confirmación automática de CI queda separada de esta afirmación; no se declara verde hasta observar una ejecución real del workflow.
 
-## Siguiente paso
+## Checkpoint 2 — conexión de la UI
 
-1. Conectar exclusivamente `renderAdmin()` y `setupAdmin()` al gateway local manteniendo el resto de la tienda sin cambios.
-2. Validar que productos, pedidos y mensajes conservan el comportamiento actual.
-3. Solo después añadir un driver PocketBase y autenticación real.
+Pendiente:
+
+1. Cargar `admin-data.js` únicamente en la administración.
+2. Conectar `renderAdmin()` y `setupAdmin()` al gateway local sin alterar tienda, cesta ni cuenta.
+3. Validar equivalencia de productos, pedidos y mensajes.
+4. Solo después añadir driver PocketBase y autenticación real.
