@@ -30,7 +30,7 @@ assert.equal(typeof window.AlmaAdminData.createLocalDriver, "function");
 const driver = window.AlmaAdminData.createLocalDriver({
   storage,
   seedProducts: [{ id: "seed-1", name: "Semilla", stock: true, status: "published" }],
-  seedCollections: [{ id: "col-1", name: "Bebé", status: "published", position: 0 }]
+  seedCollections: [{ id: "col-1", name: "Bebé", status: "published", position: 8 }]
 });
 
 const productIds = () => Array.from(driver.listProducts(), item => item.id);
@@ -40,6 +40,7 @@ assert.equal(driver.kind, "local");
 assert.equal(driver.isRemote, false);
 assert.deepEqual(productIds(), ["seed-1"]);
 assert.deepEqual(collectionIds(), ["col-1"]);
+assert.equal(driver.listCollections()[0].position, 0);
 
 driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true, status: "draft" });
 assert.deepEqual(productIds(), ["prod-2", "seed-1"]);
@@ -62,22 +63,39 @@ assert.deepEqual(Array.from(mediaUpdated.images, item => [item.id, item.position
 ]);
 assert.equal(mediaUpdated.images[0].alt, "Detalle del bordado");
 assert.throws(() => driver.setProductImages("prod-2", [{ id: "bad", alt: "Sin fuente" }]), /src/);
+assert.throws(() => driver.setProductImages("prod-2", [
+  { id: "same", src: "assets/uno.jpeg" },
+  { id: "same", src: "assets/dos.jpeg" }
+]), /duplicados/);
 assert.equal(driver.setProductImages("missing", []), false);
 
 assert.equal(driver.setProductAvailability("prod-2", false), true);
 assert.equal(driver.listProducts()[0].stock, false);
 assert.equal(driver.setProductAvailability("missing", true), false);
 
-driver.createCollection({ id: "col-2", name: "Regalos", status: "draft", position: 1 });
-assert.deepEqual(collectionIds(), ["col-1", "col-2"]);
+driver.createCollection({ id: "col-2", name: "Regalos", status: "draft", position: 99 });
+driver.createCollection({ id: "col-3", name: "Hogar", status: "draft" });
+assert.deepEqual(collectionIds(), ["col-1", "col-2", "col-3"]);
+assert.deepEqual(Array.from(driver.listCollections(), item => item.position), [0, 1, 2]);
 assert.throws(() => driver.createCollection({ id: "col-2", name: "Duplicada" }), /ya existe/);
-const collectionUpdated = driver.updateCollection("col-2", { name: "Regalos con alma", id: "tampered", status: "published" });
+
+const collectionUpdated = driver.updateCollection("col-2", { name: "Regalos con alma", id: "tampered", position: 999, status: "published" });
 assert.equal(collectionUpdated.id, "col-2");
 assert.equal(collectionUpdated.name, "Regalos con alma");
 assert.equal(collectionUpdated.status, "published");
+assert.equal(collectionUpdated.position, 1);
 assert.equal(driver.updateCollection("missing", { status: "hidden" }), false);
+
+const reordered = driver.reorderCollections(["col-3", "col-1", "col-2"]);
+assert.deepEqual(Array.from(reordered, item => item.id), ["col-3", "col-1", "col-2"]);
+assert.deepEqual(Array.from(reordered, item => item.position), [0, 1, 2]);
+assert.throws(() => driver.reorderCollections(["col-3", "col-3", "col-2"]), /duplicados/);
+assert.throws(() => driver.reorderCollections(["col-3", "col-1"]), /todas/);
+assert.throws(() => driver.reorderCollections(["col-3", "col-1", "missing"]), /desconocidas/);
+
 assert.equal(driver.deleteCollection("col-2"), true);
-assert.deepEqual(collectionIds(), ["col-1"]);
+assert.deepEqual(collectionIds(), ["col-3", "col-1"]);
+assert.deepEqual(Array.from(driver.listCollections(), item => item.position), [0, 1]);
 assert.equal(driver.deleteCollection("missing"), false);
 
 driver.saveOrders([{ id: "order-1", status: "Solicitud recibida" }]);
@@ -100,6 +118,6 @@ assert.equal(driver.listProducts()[0].name, "Semilla");
 
 const isolatedCollections = driver.listCollections();
 isolatedCollections[0].name = "Mutada fuera";
-assert.equal(driver.listCollections()[0].name, "Bebé");
+assert.equal(driver.listCollections()[0].name, "Hogar");
 
 console.log("Admin data gateway behavior OK");
