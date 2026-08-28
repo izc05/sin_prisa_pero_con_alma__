@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Sin prisa, pero con alma — bordados, complementos y detalles para eventos creados con mimo." />
+  <meta name="theme-color" content="#f6f1eb" />
+  <title>Sin prisa, pero con alma</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="site-header" id="inicio">
+    <div class="shell header-inner">
+      <a class="brand" href="#inicio" aria-label="Ir al inicio">
+        <span class="brand-mark">SP</span>
+        <span>
+          <strong>Sin prisa,</strong>
+          <em>pero con alma</em>
+        </span>
+      </a>
+
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">
+        <span></span><span></span><span></span>
+        <span class="sr-only">Abrir menú</span>
+      </button>
+
+      <nav class="main-nav" id="main-nav" aria-label="Principal">
+        <a href="#colecciones">Colecciones</a>
+        <a href="#novedades">Blog</a>
+        <a href="#encargos">Encargos</a>
+        <a href="#sobre-mi">Sobre mí</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenido">
+    <section class="hero shell">
+      <div class="hero-copy">
+        <p class="eyebrow">Hecho a mano · hecho para recordar</p>
+        <h1>Pequeños detalles con una historia detrás.</h1>
+        <p class="hero-text">Bordados, complementos y detalles para eventos creados despacio, con mimo y pensando en la persona que los va a recibir.</p>
+        <div class="hero-actions">
+          <a class="button primary" href="#colecciones">Ver colecciones</a>
+          <a class="button ghost" href="#encargos">Hacer un encargo</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="Espacio reservado para fotografía principal de la marca">
+        <div class="stitched-frame">
+          <span>Tu fotografía principal</span>
+          <small>Bordado · detalle · proceso</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shell" id="colecciones">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Colecciones</p>
+          <h2>Creaciones para regalar, celebrar y guardar.</h2>
+        </div>
+        <p>Una selección sencilla que iremos construyendo con tus piezas reales.</p>
+      </div>
+
+      <div class="collection-grid">
+        <article class="collection-card featured">
+          <div class="card-image placeholder"><span>Bordados</span></div>
+          <div class="card-copy">
+            <p class="card-kicker">Colección 01</p>
+            <h3>Bordados</h3>
+            <p>Nombres, iniciales, recuerdos y piezas personalizadas.</p>
+            <a href="#catalogo">Descubrir <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+
+        <article class="collection-card">
+          <div class="card-image placeholder warm"><span>Complementos</span></div>
+          <div class="card-copy">
+            <p class="card-kicker">Colección 02</p>
+            <h3>Complementos</h3>
+            <p>Piezas especiales para completar un look o hacer un regalo.</p>
+            <a href="#catalogo">Descubrir <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+
+        <article class="collection-card">
+          <div class="card-image placeholder blush"><span>Eventos</span></div>
+          <div class="card-copy">
+            <p class="card-kicker">Colección 03</p>
+            <h3>Detalles para eventos</h3>
+            <p>Bodas, comuniones, bautizos y celebraciones con identidad propia.</p>
+            <a href="#catalogo">Descubrir <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section catalog-section" id="catalogo">
+      <div class="shell">
+        <div class="section-heading compact">
+          <div>
+            <p class="eyebrow">Catálogo</p>
+            <h2>Últimas piezas</h2>
+          </div>
+          <div class="filters" role="group" aria-label="Filtrar catálogo">
+            <button class="filter is-active" data-filter="all" type="button">Todo</button>
+            <button class="filter" data-filter="bordados" type="button">Bordados</button>
+            <button class="filter" data-filter="complementos" type="button">Complementos</button>
+            <button class="filter" data-filter="eventos" type="button">Eventos</button>
+          </div>
+        </div>
+        <div class="product-grid" id="product-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="section shell" id="novedades">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Blog · cuaderno</p>
+          <h2>Lo que ocurre entre puntada y puntada.</h2>
+        </div>
+        <p>Este espacio puede recoger procesos, nuevos trabajos, eventos y pequeñas historias detrás de cada pieza.</p>
+      </div>
+      <div class="journal-grid">
+        <article class="journal-card">
+          <p class="journal-date">Próximamente</p>
+          <h3>Del boceto a la pieza terminada</h3>
+          <p>Una entrada para enseñar el proceso y todo lo que no se ve en la fotografía final.</p>
+        </article>
+        <article class="journal-card">
+          <p class="journal-date">Próximamente</p>
+          <h3>Detalles que hablan de una celebración</h3>
+          <p>Ideas para convertir un evento en algo más personal sin recargarlo.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="commission" id="encargos">
+      <div class="shell commission-grid">
+        <div class="commission-intro">
+          <p class="eyebrow">Encargos</p>
+          <h2>¿Tienes una idea que todavía no existe?</h2>
+          <p>Cuéntame qué necesitas, para cuándo y qué te gustaría que tuviera de especial. Prepararemos esta sección para que puedas enviar el encargo directamente desde la web.</p>
+          <ol class="steps">
+            <li><span>01</span> Cuéntame la idea</li>
+            <li><span>02</span> Definimos detalles y fecha</li>
+            <li><span>03</span> Te confirmo propuesta y disponibilidad</li>
+          </ol>
+        </div>
+
+        <form class="commission-form" id="commission-form">
+          <label>
+            ¿Qué te gustaría encargar?
+            <input name="idea" type="text" placeholder="Ej. bastidor personalizado" required />
+          </label>
+          <div class="form-row">
+            <label>
+              Para qué fecha
+              <input name="fecha" type="date" />
+            </label>
+            <label>
+              Cantidad
+              <input name="cantidad" type="number" min="1" placeholder="1" />
+            </label>
+          </div>
+          <label>
+            Cuéntame un poco más
+            <textarea name="detalles" rows="5" placeholder="Colores, nombres, medidas, tipo de evento, inspiración..."></textarea>
+          </label>
+          <label>
+            Tu nombre
+            <input name="nombre" type="text" autocomplete="name" required />
+          </label>
+          <button class="button primary full" type="submit">Preparar solicitud</button>
+          <p class="form-note">En esta primera versión no se envían datos a ningún servidor. El mini PC será quien gestione los encargos cuando conectemos la segunda fase.</p>
+          <div class="request-result" id="request-result" hidden></div>
+        </form>
+      </div>
+    </section>
+
+    <section class="section shell about" id="sobre-mi">
+      <div class="about-visual placeholder"><span>Foto del taller / proceso</span></div>
+      <div class="about-copy">
+        <p class="eyebrow">Sobre mí</p>
+        <h2>Sin prisa, pero con alma.</h2>
+        <p>Hay piezas que no necesitan salir de una cadena de producción. Necesitan tiempo, manos y una intención.</p>
+        <p>Este será el lugar para contar quién está detrás de cada creación, cómo nace el proyecto y por qué cada encargo se trabaja de forma personal.</p>
+      </div>
+    </section>
+
+    <section class="section shell contact" id="contacto">
+      <div>
+        <p class="eyebrow">Contacto</p>
+        <h2>Hablemos de tu idea.</h2>
+        <p>Dejaremos aquí tu Instagram, correo y, si quieres, WhatsApp. Por ahora no publicamos ningún dato de contacto que no nos hayas confirmado.</p>
+      </div>
+      <div class="contact-links">
+        <span>Instagram · pendiente de enlazar</span>
+        <span>Correo · pendiente de configurar</span>
+        <span>WhatsApp · opcional</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div>
+        <strong>Sin prisa, pero con alma</strong>
+        <p>Bordados · complementos · detalles para eventos</p>
+      </div>
+      <p>© <span id="year"></span> · Hecho con calma.</p>
+    </div>
+  </footer>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
