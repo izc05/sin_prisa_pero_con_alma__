@@ -13,13 +13,31 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      - name: Comprobar configuración
+        id: config
+        env:
+          MINI_PC_HOST: ${{ secrets.MINI_PC_HOST }}
+          MINI_PC_USER: ${{ secrets.MINI_PC_USER }}
+          MINI_PC_PATH: ${{ secrets.MINI_PC_PATH }}
+          MINI_PC_SSH_KEY: ${{ secrets.MINI_PC_SSH_KEY }}
+        run: |
+          if [ -n "$MINI_PC_HOST" ] && [ -n "$MINI_PC_USER" ] && [ -n "$MINI_PC_PATH" ] && [ -n "$MINI_PC_SSH_KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::La sincronización del mini PC se activará cuando estén configurados los secretos del entorno production."
+          fi
+
       - name: Descargar el repositorio
+        if: steps.config.outputs.ready == 'true'
         uses: actions/checkout@v4
 
       - name: Preparar la web
+        if: steps.config.outputs.ready == 'true'
         run: npm run build
 
       - name: Configurar acceso seguro al mini PC
+        if: steps.config.outputs.ready == 'true'
         env:
           MINI_PC_HOST: ${{ secrets.MINI_PC_HOST }}
           MINI_PC_PORT: ${{ secrets.MINI_PC_PORT }}
@@ -34,6 +52,7 @@ jobs:
           ssh-keyscan -p "$DEPLOY_PORT" "$MINI_PC_HOST" >> ~/.ssh/known_hosts
 
       - name: Sincronizar archivos publicados
+        if: steps.config.outputs.ready == 'true'
         env:
           MINI_PC_HOST: ${{ secrets.MINI_PC_HOST }}
           MINI_PC_PORT: ${{ secrets.MINI_PC_PORT }}
