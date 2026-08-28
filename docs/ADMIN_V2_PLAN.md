@@ -81,13 +81,15 @@ Convertir el panel local actual en una administración real para **Sin prisa, pe
 5. Cada cambio del admin debe conservar responsive y accesibilidad.
 6. Cada nueva fase debe incluir una validación ejecutable cuando sea posible.
 7. No integrar el antiguo PR #2 de forma ciega: reutilizar únicamente las ideas compatibles con la web actual.
+8. La capa de datos debe poder cambiar de driver sin reescribir las pantallas del admin.
+9. Antes de conectar PocketBase, el driver local debe conservar exactamente los flujos actuales.
 
-## Primer checkpoint
+## Estado actual
 
-El primer checkpoint del Admin V2 queda cerrado cuando:
+Checkpoint 0 cerrado: arquitectura, esquema y gate versionados.
 
-- existe una rama aislada basada en `main` actual;
-- el plan y el esquema de datos están versionados;
-- hay un gate automático para build y contrato mínimo del admin;
-- la web oficial permanece sin cambios;
-- el siguiente cambio funcional puede centrarse en una capa de datos sustituible por PocketBase.
+Checkpoint 1 en curso: `admin-data.js` define un gateway local sustituible y ya dispone de prueba de comportamiento independiente. El gateway todavía no está conectado a `admin.html`, por lo que este checkpoint no cambia la experiencia visible ni la web oficial.
+
+## Siguiente cambio funcional
+
+Conectar únicamente los flujos internos de `renderAdmin()` y `setupAdmin()` a `admin-data.js`, manteniendo las mismas claves locales y el mismo comportamiento observable. Después de validar equivalencia se añadirá el driver PocketBase y el login real.
