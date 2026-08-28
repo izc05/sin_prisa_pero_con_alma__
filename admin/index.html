@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Admin · Sin prisa, pero con alma</title>
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <aside class="sidebar">
+      <a class="brand" href="../index.html">
+        <span class="brand-mark">SP</span>
+        <span><strong>Sin prisa,</strong><em>pero con alma</em></span>
+      </a>
+      <p class="mode-badge">Borrador local · sin servidor</p>
+      <nav aria-label="Administración">
+        <button class="nav-item is-active" data-view="dashboard">Resumen</button>
+        <button class="nav-item" data-view="products">Productos</button>
+        <button class="nav-item" disabled>Colecciones · próximamente</button>
+        <button class="nav-item" disabled>Pedidos · próximamente</button>
+        <button class="nav-item" disabled>Encargos · próximamente</button>
+        <button class="nav-item" disabled>Contenido · próximamente</button>
+      </nav>
+      <a class="store-link" href="../index.html">Ver tienda ↗</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Panel de administración</p>
+          <h1 id="view-title">Resumen</h1>
+        </div>
+        <div class="connection-state" aria-live="polite">
+          <span class="dot"></span>
+          Mini PC no conectado
+        </div>
+      </header>
+
+      <section class="view is-visible" data-panel="dashboard">
+        <div class="notice">
+          <strong>Modo seguro de preparación.</strong>
+          Los cambios se guardan únicamente en este navegador. Cuando conectemos PocketBase en el mini PC, esta misma interfaz trabajará contra la base de datos real.
+        </div>
+
+        <div class="stats">
+          <article><span>Productos</span><strong id="stat-products">0</strong></article>
+          <article><span>Publicados</span><strong id="stat-published">0</strong></article>
+          <article><span>Borradores</span><strong id="stat-drafts">0</strong></article>
+          <article><span>Destacados</span><strong id="stat-featured">0</strong></article>
+        </div>
+
+        <div class="quick-actions">
+          <button class="primary" id="new-product-dashboard">+ Añadir producto</button>
+          <button class="secondary" id="reset-draft">Recargar catálogo publicado</button>
+          <button class="secondary" id="export-json">Exportar borrador JSON</button>
+        </div>
+      </section>
+
+      <section class="view" data-panel="products">
+        <div class="products-layout">
+          <div class="product-list-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">Catálogo</p>
+                <h2>Productos</h2>
+              </div>
+              <button class="primary" id="new-product">+ Nuevo</button>
+            </div>
+            <div class="product-list" id="product-list"></div>
+          </div>
+
+          <form class="editor" id="product-form">
+            <input type="hidden" name="id" />
+            <div class="editor-head">
+              <div>
+                <p class="eyebrow">Ficha</p>
+                <h2 id="editor-title">Nuevo producto</h2>
+              </div>
+              <button class="danger-text" id="delete-product" type="button" hidden>Eliminar</button>
+            </div>
+
+            <label>Nombre
+              <input name="name" required maxlength="120" placeholder="Ej. Bastidor floral personalizado" />
+            </label>
+
+            <div class="field-grid">
+              <label>Categoría
+                <select name="category">
+                  <option value="bordados">Bordados</option>
+                  <option value="complementos">Complementos</option>
+                  <option value="eventos">Eventos</option>
+                </select>
+              </label>
+              <label>Estado
+                <select name="status">
+                  <option value="draft">Borrador</option>
+                  <option value="published">Publicado</option>
+                  <option value="hidden">Oculto</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Descripción corta
+              <textarea name="shortDescription" rows="4" maxlength="280" placeholder="Texto breve que aparecerá en la tarjeta del producto"></textarea>
+            </label>
+
+            <div class="field-grid">
+              <label>Precio (€)
+                <input name="price" type="number" min="0" step="0.01" placeholder="25.00" />
+              </label>
+              <label>Tipo de precio
+                <select name="priceMode">
+                  <option value="fixed">Precio fijo</option>
+                  <option value="from">Desde</option>
+                  <option value="quote">Consultar</option>
+                </select>
+              </label>
+            </div>
+
+            <label>Ruta de imagen publicada
+              <input name="image" placeholder="./assets/products/mi-producto.webp" />
+              <small>La subida real de imágenes se activará al conectar el mini PC.</small>
+            </label>
+
+            <label class="check-row">
+              <input name="featured" type="checkbox" />
+              Mostrar como producto destacado
+            </label>
+
+            <div class="editor-actions">
+              <button class="primary" type="submit">Guardar borrador</button>
+              <button class="secondary" id="cancel-edit" type="button">Limpiar</button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="./admin.js"></script>
+</body>
+</html>
