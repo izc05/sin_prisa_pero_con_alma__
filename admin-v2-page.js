@@ -89,22 +89,29 @@
     </article>`;
   }
 
+  function productMarkup(product) {
+    const available = product.stock !== false;
+    return `<article class="admin-product-row">
+      <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
+      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${money(product.price)}</small><span class="admin-product-state ${available ? "" : "is-hidden"}">${available ? "Visible en catálogo" : "Oculto"}</span></div>
+      <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Ocultar" : "Activar"}</button>
+      ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
+    </article>`;
+  }
+
   function renderAdmin() {
     const products = adminData.listProducts();
     const orders = adminData.listOrders();
     const messages = adminData.listMessages();
+    const visibleProducts = products.filter(product => product.stock !== false).length;
 
     $("#metric-products").textContent = products.length;
+    $("#metric-visible").textContent = visibleProducts;
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
+    $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} visibles`;
 
-    $("#admin-products").innerHTML = products.length ? products.map(product => `<article class="admin-product-row">
-      <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
-      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${money(product.price)}</small></div>
-      <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${product.stock === false ? "Activar" : "Ocultar"}</button>
-      ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
-    </article>`).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
-
+    $("#admin-products").innerHTML = products.length ? products.map(productMarkup).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
     $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
       <span class="status">${escapeHtml(message.status || "Nuevo")}</span>
@@ -125,9 +132,6 @@
     const session = readLocal(KEYS.session, null);
     const account = $(".account-link");
     if (account && session?.name) account.textContent = `Hola, ${String(session.name).split(" ")[0]}`;
-    const cart = readLocal(KEYS.cart, []);
-    const count = Array.isArray(cart) ? cart.reduce((total, item) => total + (Number(item.quantity) || 0), 0) : 0;
-    $$(".cart-count").forEach(node => { node.textContent = String(count); });
   }
 
   function setupAdmin() {
@@ -160,7 +164,11 @@
     });
 
     $$("[data-admin-view]").forEach(button => button.addEventListener("click", () => {
-      $$("[data-admin-view]").forEach(item => item.classList.toggle("is-active", item === button));
+      $$("[data-admin-view]").forEach(item => {
+        const active = item === button;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-pressed", String(active));
+      });
       $$(".admin-view").forEach(view => { view.hidden = view.id !== `admin-view-${button.dataset.adminView}`; });
     }));
 
