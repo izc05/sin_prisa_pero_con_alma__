@@ -2,17 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Administración — Sin prisa, pero con alma</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="site-v2.css"><script src="site-v2.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="site-v2.css"><script src="admin-data.js" defer></script><script src="admin-v2-page.js" defer></script>
 </head>
 <body data-page="admin">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
-  <header class="site-header"><a class="brand-link" href="index.html"><img src="assets/logo-alma-hd.png" alt=""><span class="brand-wordmark">sin prisa,<span>pero con alma</span></span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menú</button><nav class="main-nav" id="main-nav"><a href="index.html">Inicio</a><a href="tienda.html">Ver tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></nav><div class="header-tools"><a class="account-link" href="cuenta.html">Mi cuenta</a><a class="cart-link" href="#cart" data-cart-open>Cesta <span class="cart-count">0</span></a></div></header>
+  <header class="site-header"><a class="brand-link" href="index.html"><img src="assets/logo-alma-hd.png" alt=""><span class="brand-wordmark">sin prisa,<span>pero con alma</span></span></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menú</button><nav class="main-nav" id="main-nav"><a href="index.html">Inicio</a><a href="tienda.html">Ver tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></nav><div class="header-tools"><a class="account-link" href="cuenta.html">Mi cuenta</a></div></header>
   <main id="contenido">
     <section class="page-hero"><div class="page-hero-inner"><div><p class="eyebrow">Gestión privada</p><h1 class="display-title">Panel de <em>atelier.</em></h1></div><p class="section-copy">Gestiona catálogo, solicitudes y pedidos desde un único espacio.</p></div></section>
     <section class="section" id="admin-page">
       <div class="admin-lock panel" id="admin-lock"><h2 id="admin-lock-title">Crear acceso local</h2><p id="admin-pin-hint" class="section-copy"></p><form id="admin-pin-form"><div class="field"><label for="admin-pin">PIN</label><input id="admin-pin" name="pin" type="password" minlength="4" required autocomplete="current-password"></div><p><button class="button button--primary" type="submit">Acceder al panel</button></p><p class="form-feedback" id="admin-lock-feedback" role="status"></p></form><p class="notice">Este PIN protege solo esta demostración en el navegador. Antes de publicar, el panel deberá conectarse a autenticación y base de datos seguras.</p></div>
       <div class="admin-dashboard" id="admin-dashboard" hidden>
-        <p class="notice">Modo local: catálogo, pedidos y mensajes se guardan en este navegador. La interfaz y los flujos ya están preparados; la sincronización entre dispositivos necesita un backend seguro.</p>
+        <p class="notice">Modo de desarrollo: el panel ya usa una capa de datos independiente. Hoy conserva los datos en este navegador; el siguiente driver será PocketBase en el mini PC.</p>
         <div class="admin-grid" style="margin-top: 28px;">
           <aside class="panel admin-sidebar"><h2>Gestionar</h2><nav class="admin-nav" aria-label="Secciones de administración"><button class="is-active" type="button" data-admin-view="summary">Resumen</button><button type="button" data-admin-view="products">Productos</button><button type="button" data-admin-view="orders">Pedidos</button><button type="button" data-admin-view="messages">Mensajes</button></nav></aside>
           <div>
@@ -25,6 +25,6 @@
       </div>
     </section>
   </main>
-  <footer class="site-footer"><div class="footer-bottom" style="margin-top:0"><span>Área de administración local</span><a href="index.html">Volver a la web</a></div></footer><div id="cart-root"></div>
+  <footer class="site-footer"><div class="footer-bottom" style="margin-top:0"><span>Área de administración en desarrollo</span><a href="index.html">Volver a la web</a></div></footer>
 </body>
 </html>
