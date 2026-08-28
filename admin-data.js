@@ -21,20 +21,44 @@
     return Boolean(value) && typeof value === "object" && !Array.isArray(value);
   }
 
+  function uniqueIds(items, label) {
+    const ids = new Set();
+    for (const item of items) {
+      const id = String(item.id || "").trim();
+      if (!id) throw new TypeError(`${label} necesita id`);
+      if (ids.has(id)) throw new Error(`${label} contiene ids duplicados`);
+      ids.add(id);
+    }
+  }
+
   function normalizeImages(images) {
     if (!Array.isArray(images)) throw new TypeError("images debe ser un array");
-    return images.map((image, index) => {
+    const normalized = images.map((image, index) => {
       if (!plainObject(image)) throw new TypeError("cada imagen debe ser un objeto");
       const src = String(image.src || "").trim();
       if (!src) throw new TypeError("cada imagen necesita src");
       return {
-        id: String(image.id || `image-${index + 1}`),
+        id: String(image.id || `image-${index + 1}`).trim(),
         src,
         alt: String(image.alt || "").trim(),
         position: index,
         primary: index === 0
       };
     });
+    uniqueIds(normalized, "images");
+    return normalized;
+  }
+
+  function normalizeCollections(collections) {
+    if (!Array.isArray(collections)) throw new TypeError("collections debe ser un array");
+    const normalized = collections.map((collection, index) => {
+      if (!plainObject(collection)) throw new TypeError("cada colección debe ser un objeto");
+      const id = String(collection.id || "").trim();
+      if (!id) throw new TypeError("cada colección necesita id");
+      return { ...clone(collection), id, position: index };
+    });
+    uniqueIds(normalized, "collections");
+    return normalized;
   }
 
   function createLocalDriver(options = {}) {
@@ -62,7 +86,7 @@
 
     function ensureSeed() {
       if (storage.getItem(keys.products) == null) write(keys.products, seedProducts);
-      if (storage.getItem(keys.collections) == null) write(keys.collections, seedCollections);
+      if (storage.getItem(keys.collections) == null) write(keys.collections, normalizeCollections(seedCollections));
       if (storage.getItem(keys.orders) == null) write(keys.orders, []);
       if (storage.getItem(keys.messages) == null) write(keys.messages, []);
     }
@@ -83,12 +107,11 @@
       },
 
       listCollections() {
-        return safeArray(read(keys.collections, seedCollections));
+        return safeArray(read(keys.collections, normalizeCollections(seedCollections)));
       },
 
       saveCollections(collections) {
-        if (!Array.isArray(collections)) throw new TypeError("collections debe ser un array");
-        return write(keys.collections, collections);
+        return write(keys.collections, normalizeCollections(collections));
       },
 
       listOrders() {
@@ -154,9 +177,8 @@
         if (!plainObject(collection)) throw new TypeError("collection debe ser un objeto");
         const collections = this.listCollections();
         if (collections.some(item => item.id === collection.id)) throw new Error("ya existe una colección con ese id");
-        const next = clone(collection);
-        collections.push(next);
-        this.saveCollections(collections);
+        const next = { ...clone(collection), position: collections.length };
+        this.saveCollections([...collections, next]);
         return clone(next);
       },
 
@@ -165,9 +187,21 @@
         const collections = this.listCollections();
         const collection = collections.find(item => item.id === collectionId);
         if (!collection) return false;
-        Object.assign(collection, clone(patch), { id: collection.id });
+        const position = collection.position;
+        Object.assign(collection, clone(patch), { id: collection.id, position });
         this.saveCollections(collections);
-        return clone(collection);
+        return clone(this.listCollections().find(item => item.id === collectionId));
+      },
+
+      reorderCollections(collectionIds) {
+        if (!Array.isArray(collectionIds)) throw new TypeError("collectionIds debe ser un array");
+        const collections = this.listCollections();
+        if (collectionIds.length !== collections.length) throw new Error("el orden debe incluir todas las colecciones");
+        const requested = collectionIds.map(id => String(id));
+        if (new Set(requested).size !== requested.length) throw new Error("el orden contiene ids duplicados");
+        const byId = new Map(collections.map(collection => [collection.id, collection]));
+        if (requested.some(id => !byId.has(id))) throw new Error("el orden contiene colecciones desconocidas");
+        return this.saveCollections(requested.map(id => byId.get(id)));
       },
 
       deleteCollection(collectionId) {
