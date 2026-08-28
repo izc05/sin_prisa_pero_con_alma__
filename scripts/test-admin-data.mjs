@@ -20,33 +20,30 @@ class MemoryStorage {
 
 const storage = new MemoryStorage();
 const window = { localStorage: storage };
-const context = vm.createContext({
-  window,
-  console,
-  structuredClone
-});
-
+const context = vm.createContext({ window, console, structuredClone });
 const source = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
 vm.runInContext(source, context, { filename: "admin-data.js" });
 
-assert.equal(window.AlmaAdminData.version, 1);
+assert.equal(window.AlmaAdminData.version, 2);
 assert.equal(typeof window.AlmaAdminData.createLocalDriver, "function");
 
 const driver = window.AlmaAdminData.createLocalDriver({
   storage,
-  seedProducts: [
-    { id: "seed-1", name: "Semilla", stock: true, status: "published" }
-  ]
+  seedProducts: [{ id: "seed-1", name: "Semilla", stock: true, status: "published" }],
+  seedCollections: [{ id: "col-1", name: "Bebé", status: "published", position: 0 }]
 });
 
 const productIds = () => Array.from(driver.listProducts(), item => item.id);
+const collectionIds = () => Array.from(driver.listCollections(), item => item.id);
 
 assert.equal(driver.kind, "local");
 assert.equal(driver.isRemote, false);
 assert.deepEqual(productIds(), ["seed-1"]);
+assert.deepEqual(collectionIds(), ["col-1"]);
 
 driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true, status: "draft" });
 assert.deepEqual(productIds(), ["prod-2", "seed-1"]);
+assert.throws(() => driver.createProduct({ id: "prod-2", name: "Duplicado" }), /ya existe/);
 
 const updated = driver.updateProduct("prod-2", { status: "published", featured: true, id: "tampered" });
 assert.equal(updated.id, "prod-2");
@@ -54,9 +51,34 @@ assert.equal(updated.status, "published");
 assert.equal(updated.featured, true);
 assert.equal(driver.updateProduct("missing", { status: "hidden" }), false);
 
+const mediaUpdated = driver.setProductImages("prod-2", [
+  { id: "img-b", src: "assets/segunda.jpeg", alt: "Detalle del bordado" },
+  { id: "img-a", src: "assets/primera.jpeg", alt: "Vista completa" }
+]);
+assert.equal(mediaUpdated.image, "assets/segunda.jpeg");
+assert.deepEqual(Array.from(mediaUpdated.images, item => [item.id, item.position, item.primary]), [
+  ["img-b", 0, true],
+  ["img-a", 1, false]
+]);
+assert.equal(mediaUpdated.images[0].alt, "Detalle del bordado");
+assert.throws(() => driver.setProductImages("prod-2", [{ id: "bad", alt: "Sin fuente" }]), /src/);
+assert.equal(driver.setProductImages("missing", []), false);
+
 assert.equal(driver.setProductAvailability("prod-2", false), true);
 assert.equal(driver.listProducts()[0].stock, false);
 assert.equal(driver.setProductAvailability("missing", true), false);
+
+driver.createCollection({ id: "col-2", name: "Regalos", status: "draft", position: 1 });
+assert.deepEqual(collectionIds(), ["col-1", "col-2"]);
+assert.throws(() => driver.createCollection({ id: "col-2", name: "Duplicada" }), /ya existe/);
+const collectionUpdated = driver.updateCollection("col-2", { name: "Regalos con alma", id: "tampered", status: "published" });
+assert.equal(collectionUpdated.id, "col-2");
+assert.equal(collectionUpdated.name, "Regalos con alma");
+assert.equal(collectionUpdated.status, "published");
+assert.equal(driver.updateCollection("missing", { status: "hidden" }), false);
+assert.equal(driver.deleteCollection("col-2"), true);
+assert.deepEqual(collectionIds(), ["col-1"]);
+assert.equal(driver.deleteCollection("missing"), false);
 
 driver.saveOrders([{ id: "order-1", status: "Solicitud recibida" }]);
 assert.equal(driver.updateOrderStatus("order-1", "En preparación"), true);
@@ -75,5 +97,9 @@ assert.equal(driver.deleteProduct("missing"), false);
 const isolatedCopy = driver.listProducts();
 isolatedCopy[0].name = "Mutado fuera";
 assert.equal(driver.listProducts()[0].name, "Semilla");
+
+const isolatedCollections = driver.listCollections();
+isolatedCollections[0].name = "Mutada fuera";
+assert.equal(driver.listCollections()[0].name, "Bebé");
 
 console.log("Admin data gateway behavior OK");
