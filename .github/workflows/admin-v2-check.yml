@@ -6,6 +6,7 @@ on:
       - "admin.html"
       - "admin-data.js"
       - "admin-v2-page.js"
+      - "admin-v2.css"
       - "site-v2.css"
       - "scripts/**"
       - "docs/ADMIN_V2_PLAN.md"
@@ -51,4 +52,5 @@ jobs:
           test -f dist/admin.html
           test -f dist/admin-data.js
           test -f dist/admin-v2-page.js
+          test -f dist/admin-v2.css
           test -f dist/site-v2.css
