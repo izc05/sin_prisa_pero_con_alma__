@@ -194,21 +194,26 @@
         toast("No se pudo leer la fotografía");
         return;
       }
-      await adminData.createProduct({
-        id: uid("PROD"),
-        name: String(data.get("name") || "").trim(),
-        category: String(data.get("category") || "regalo"),
-        description: String(data.get("description") || "").trim(),
-        price: priceMode === "quote" || !data.get("price") ? null : Number(data.get("price")),
-        priceMode,
-        image,
-        badge: "Nueva pieza",
-        stock: stockMode !== "sold_out",
-        stockMode,
-        status: String(data.get("status") || "draft"),
-        featured: data.get("featured") === "on",
-        custom: true
-      });
+      try {
+        await adminData.createProduct({
+          id: uid("PROD"),
+          name: String(data.get("name") || "").trim(),
+          category: String(data.get("category") || "regalo"),
+          description: String(data.get("description") || "").trim(),
+          price: priceMode === "quote" || !data.get("price") ? null : Number(data.get("price")),
+          priceMode,
+          image,
+          badge: "Nueva pieza",
+          stock: stockMode !== "sold_out",
+          stockMode,
+          status: String(data.get("status") || "draft"),
+          featured: data.get("featured") === "on",
+          custom: true
+        });
+      } catch (error) {
+        toast(error.message || "No se pudo guardar la pieza");
+        return;
+      }
       form.reset();
       await renderAdmin();
       toast("Nueva pieza guardada en el catálogo local");

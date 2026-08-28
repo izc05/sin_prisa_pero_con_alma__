@@ -50,12 +50,17 @@ assert.equal((await driver.listCollections())[0].position, 0);
 await driver.createProduct({ id: "prod-2", name: "Producto dos", stock: true, status: "draft" });
 assert.deepEqual(await productIds(), ["prod-2", "seed-1"]);
 await assert.rejects(driver.createProduct({ id: "prod-2", name: "Duplicado" }), /ya existe/);
+await assert.rejects(driver.createProduct({ id: "", name: "Sin id" }), /necesita id/);
+await assert.rejects(driver.createProduct({ id: "sin-nombre", name: "" }), /necesita nombre/);
+await assert.rejects(driver.createProduct({ id: "precio-inválido", name: "Precio", priceMode: "fixed", price: -1 }), /precio inválido/);
+await assert.rejects(driver.createProduct({ id: "estado-inválido", name: "Estado", status: "borrador" }), /status/);
 
 const updated = await driver.updateProduct("prod-2", { status: "published", featured: true, id: "tampered" });
 assert.equal(updated.id, "prod-2");
 assert.equal(updated.status, "published");
 assert.equal(updated.featured, true);
 assert.equal(await driver.updateProduct("missing", { status: "hidden" }), false);
+await assert.rejects(driver.updateProduct("prod-2", { stockMode: "agotado" }), /stockMode/);
 
 const mediaUpdated = await driver.setProductImages("prod-2", [
   { id: "img-b", src: "assets/segunda.jpeg", alt: "Detalle del bordado" },
@@ -98,6 +103,9 @@ await assert.rejects(driver.reorderCollections(["col-3", "col-3", "col-2"]), /du
 await assert.rejects(driver.reorderCollections(["col-3", "col-1"]), /todas/);
 await assert.rejects(driver.reorderCollections(["col-3", "col-1", "missing"]), /desconocidas/);
 
+await driver.updateProduct("prod-2", { category: "col-2" });
+await assert.rejects(driver.deleteCollection("col-2"), /productos asociados/);
+await driver.updateProduct("prod-2", { category: "" });
 assert.equal(await driver.deleteCollection("col-2"), true);
 assert.deepEqual(await collectionIds(), ["col-3", "col-1"]);
 assert.deepEqual(Array.from(await driver.listCollections(), item => item.position), [0, 1]);

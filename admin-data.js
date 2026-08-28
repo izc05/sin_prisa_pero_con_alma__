@@ -7,6 +7,9 @@
     orders: "alma-v2-orders",
     messages: "alma-v2-messages"
   });
+  const PRODUCT_STATUSES = new Set(["draft", "published", "hidden", "archived"]);
+  const PRICE_MODES = new Set(["fixed", "from", "quote"]);
+  const STOCK_MODES = new Set(["available", "made_to_order", "sold_out"]);
 
   function clone(value) {
     if (typeof structuredClone === "function") return structuredClone(value);
@@ -46,6 +49,46 @@
       };
     });
     uniqueIds(normalized, "images");
+    return normalized;
+  }
+
+  function normalizeProduct(product) {
+    if (!plainObject(product)) throw new TypeError("product debe ser un objeto");
+    const normalized = clone(product);
+    const id = String(normalized.id || "").trim();
+    const name = String(normalized.name || "").trim();
+    if (!id) throw new TypeError("product necesita id");
+    if (!name) throw new TypeError("product necesita nombre");
+
+    const status = String(normalized.status || "draft");
+    if (!PRODUCT_STATUSES.has(status)) throw new TypeError("status de producto inválido");
+    const priceMode = String(normalized.priceMode || (normalized.price == null ? "quote" : "fixed"));
+    if (!PRICE_MODES.has(priceMode)) throw new TypeError("priceMode inválido");
+    const stockMode = String(normalized.stockMode || (normalized.stock === false ? "sold_out" : "available"));
+    if (!STOCK_MODES.has(stockMode)) throw new TypeError("stockMode inválido");
+
+    let price = normalized.price;
+    if (priceMode === "quote") {
+      price = null;
+    } else {
+      price = Number(price);
+      if (!Number.isFinite(price) || price < 0) throw new TypeError("precio inválido");
+    }
+
+    normalized.id = id;
+    normalized.name = name;
+    normalized.category = String(normalized.category || "").trim();
+    normalized.description = String(normalized.description || "").trim();
+    normalized.status = status;
+    normalized.priceMode = priceMode;
+    normalized.price = price;
+    normalized.stockMode = stockMode;
+    normalized.stock = stockMode !== "sold_out";
+    normalized.featured = Boolean(normalized.featured);
+    if (Array.isArray(normalized.images)) {
+      normalized.images = normalizeImages(normalized.images);
+      normalized.image = normalized.images[0]?.src || "";
+    }
     return normalized;
   }
 
@@ -103,7 +146,9 @@
 
       async saveProducts(products) {
         if (!Array.isArray(products)) throw new TypeError("products debe ser un array");
-        return write(keys.products, products);
+        const normalized = products.map(normalizeProduct);
+        uniqueIds(normalized, "products");
+        return write(keys.products, normalized);
       },
 
       async listCollections() {
@@ -133,11 +178,9 @@
       },
 
       async createProduct(product) {
-        if (!plainObject(product)) throw new TypeError("product debe ser un objeto");
+        const next = normalizeProduct(product);
         const products = await this.listProducts();
-        if (products.some(item => item.id === product.id)) throw new Error("ya existe un producto con ese id");
-        const next = clone(product);
-        if (Array.isArray(next.images)) next.images = normalizeImages(next.images);
+        if (products.some(item => item.id === next.id)) throw new Error("ya existe un producto con ese id");
         products.unshift(next);
         await this.saveProducts(products);
         return clone(next);
@@ -149,8 +192,8 @@
         const product = products.find(item => item.id === productId);
         if (!product) return false;
         const safePatch = clone(patch);
-        if (Object.hasOwn(safePatch, "images")) safePatch.images = normalizeImages(safePatch.images);
         Object.assign(product, safePatch, { id: product.id });
+        Object.assign(product, normalizeProduct(product), { id: product.id });
         await this.saveProducts(products);
         return clone(product);
       },
@@ -162,7 +205,10 @@
       },
 
       async setProductAvailability(productId, available) {
-        return Boolean(await this.updateProduct(productId, { stock: Boolean(available) }));
+        return Boolean(await this.updateProduct(productId, {
+          stock: Boolean(available),
+          stockMode: available ? "available" : "sold_out"
+        }));
       },
 
       async deleteProduct(productId) {
@@ -208,6 +254,10 @@
         const collections = await this.listCollections();
         const next = collections.filter(item => item.id !== collectionId);
         if (next.length === collections.length) return false;
+        const products = await this.listProducts();
+        if (products.some(product => product.category === collectionId)) {
+          throw new Error("no se puede eliminar una colección con productos asociados");
+        }
         await this.saveCollections(next);
         return true;
       },
