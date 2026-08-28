@@ -1,126 +1,83 @@
-# PocketBase — esquema V1 del Admin
+# PocketBase: esquema de producción V1
 
-Este documento define el contrato inicial de datos del Admin V2. No contiene credenciales ni configuración privada.
+Este documento prepara la conexión del panel **Sin prisa, pero con alma**. No instala ni modifica PocketBase: es el contrato que debe aplicarse de forma aislada cuando se haga la puesta en marcha en el mini PC.
 
-## `users` (auth)
+## Límites de la instalación
 
-Campos adicionales:
-- `name` — text, required
-- `role` — select: `owner | editor`
-- `active` — bool
+- Usar la instancia PocketBase ya existente, únicamente tras confirmar que se puede aislar por datos y acceso.
+- No abrir el puerto `8090` a Internet.
+- No reutilizar superusuarios en el navegador ni guardar sus tokens en el código.
+- Exponer el panel solo detrás de Cloudflare Access y con una segunda autenticación en PocketBase.
+- No modificar Language School, Atelier, Nginx, Docker, cloudflared ni sus servicios durante esta fase.
 
-Reglas objetivo:
-- lectura del propio usuario autenticado;
-- escritura de negocio solo para `owner` o `editor` activos;
-- cambios de rol solo para `owner`.
+## Colección de acceso
 
-## `categories`
+Crear una colección de tipo **Auth** llamada `sinprisa_staff`.
 
-- `name` — text, required
-- `slug` — text, required, unique
-- `description` — text
-- `sort_order` — number
-- `active` — bool
+Campos propios:
 
-## `products`
+| Campo | Tipo | Valores / regla |
+| --- | --- | --- |
+| `name` | texto | obligatorio |
+| `role` | selección única | `owner`, `editor` |
+| `active` | booleano | obligatorio, predeterminado `true` |
 
-- `name` — text, required
-- `slug` — text, required, unique
-- `category` — relation -> `categories`
-- `short_description` — text
-- `description` — editor/text
-- `price` — number nullable
-- `price_mode` — select: `fixed | from | quote`
-- `status` — select: `draft | published | hidden | archived`
-- `stock_mode` — select: `available | made_to_order | sold_out`
-- `featured` — bool
-- `sort_order` — number
-- `published_at` — date nullable
+Cuenta inicial:
 
-## `product_images`
+- Correo: la dirección personal de Isivoltpro que elija el propietario.
+- Rol: `owner`.
+- `active`: `true`.
+- Contraseña única y larga, creada en el momento de configuración.
+- Activar MFA tras comprobar la entrega de correo.
 
-- `product` — relation -> `products`, required
-- `original` — file, required
-- `alt_text` — text
-- `sort_order` — number
-- `is_cover` — bool
+No se usará el nombre `isivoltpro` como contraseña. Si se desea, podrá ser el identificador visible, pero el inicio de sesión será con correo y contraseña.
 
-Reglas:
-- originales accesibles únicamente a usuarios autorizados;
-- derivados públicos fuera de PocketBase cuando se publique el snapshot.
+## Datos del atelier
 
-## `customers`
+Crear colecciones de tipo **Base**. Las reglas usan `@request.auth` y el rol de `sinprisa_staff`.
 
-- `name` — text, required
-- `email` — email
-- `phone` — text
-- `address` — text
-- `notes` — text privado
+| Colección | Campos principales | Lectura pública | Escritura staff |
+| --- | --- | --- | --- |
+| `sinprisa_collections` | `name`, `slug`, `status`, `position` | solo `status = "published"` | `@request.auth.role = "owner" || @request.auth.role = "editor"` |
+| `sinprisa_products` | `name`, `slug`, `collection` (relación), `description`, `price`, `price_mode`, `stock_mode`, `status`, `featured`, `images` (archivo múltiple) | solo `status = "published"` | `@request.auth.role = "owner" || @request.auth.role = "editor"` |
+| `sinprisa_orders` | `reference`, `email`, `customer_name`, `items` (JSON), `total`, `status`, `notes` | ninguna | `@request.auth.role = "owner" || @request.auth.role = "editor"` |
+| `sinprisa_messages` | `name`, `email`, `subject`, `body`, `status` | creación pública controlada; sin lectura pública | lectura/actualización para staff |
 
-Nunca forma parte del snapshot público.
+Para cada operación de creación, actualización y borrado de las tres primeras colecciones, usar esta regla:
 
-## `orders`
+```
+@request.auth.role = "owner" || @request.auth.role = "editor"
+```
 
-- `number` — text, required, unique
-- `customer` — relation -> `customers`
-- `status` — select: `new | confirmed | preparing | ready | shipped | delivered | cancelled`
-- `payment_status` — select: `pending | paid | refunded`
-- `subtotal` — number
-- `shipping` — number
-- `total` — number
-- `internal_notes` — text privado
+Para `sinprisa_messages`, permitir crear un mensaje público solo con validación de campos y límite de frecuencia en la capa del servidor/proxy. La lista y cualquier modificación requieren personal autorizado.
 
-## `order_items`
+## Migración desde la demo local
 
-- `order` — relation -> `orders`, required
-- `product` — relation -> `products` nullable
-- `product_name_snapshot` — text, required
-- `quantity` — number, required
-- `unit_price` — number nullable
-- `customization` — text
+1. Exportar los registros de `alma-v2-products` y `alma-v2-collections` desde el navegador de administración, una vez se añada el asistente de migración.
+2. Crear primero las colecciones y comprobar sus estados.
+3. Importar productos como borradores.
+4. Subir las imágenes a archivos de PocketBase; no migrar Data URLs de la demo como solución definitiva.
+5. Revisar manualmente una muestra de productos y publicar solo los validados.
+6. Cambiar el driver local del panel por el driver PocketBase y comprobar altas, edición, archivado y cierre de sesión.
 
-Los campos snapshot preservan el pedido aunque el producto cambie posteriormente.
+## Criterios de aceptación
 
-## `commissions`
+- Una persona sin Cloudflare Access no llega al panel.
+- Una persona con Access pero sin cuenta `sinprisa_staff` no puede administrar nada.
+- Una cuenta `editor` no obtiene permisos de superusuario.
+- Una petición anónima no puede leer pedidos, mensajes ni borradores.
+- Las fotografías se sirven desde archivos de PocketBase y las reglas no revelan datos privados.
+- El panel conserva el modo local únicamente como desarrollo, nunca como fuente de datos de producción.
 
-- `customer` — relation -> `customers`
-- `idea` — text, required
-- `event_date` — date nullable
-- `quantity` — number nullable
-- `details` — text
-- `status` — select: `new | reviewing | quoted | accepted | making | completed | cancelled`
-- `quoted_price` — number nullable
-- `internal_notes` — text privado
+## Campos operativos que no deben perderse
 
-## `content_blocks`
+El esquema de tablas anterior es la versión compacta de implantación. Al crear los campos, conservar además estas necesidades funcionales:
 
-- `key` — text, required, unique
-- `title` — text
-- `body` — editor/text
-- `image` — file nullable
-- `enabled` — bool
+- `sinprisa_products`: `slug` único, `short_description`, `sort_order` y `published_at` opcional.
+- Las imágenes se modelarán como una colección `sinprisa_product_images`, relacionada con producto, con `original` (archivo), `alt_text`, `sort_order` e `is_cover`. Esto permite una galería ordenable y una portada inequívoca.
+- `sinprisa_orders`: relación con `sinprisa_customers`, `payment_status`, `subtotal`, `shipping` e `internal_notes` privados.
+- `sinprisa_order_items`: conserva `product_name_snapshot`, cantidad, precio unitario y personalización, de modo que un pedido siga siendo correcto aunque el producto cambie.
+- `sinprisa_commissions`: cliente, idea, fecha del evento, cantidad, detalles, precio presupuestado, notas internas y estado `new | reviewing | quoted | accepted | making | completed | cancelled`.
+- `sinprisa_content_blocks`: `key` único, título, cuerpo, imagen y `enabled`, para contenido editorial sin editar código.
 
-## Snapshot público
-
-El snapshot publicado solo puede incluir datos expresamente públicos:
-
-- id público / slug;
-- nombre;
-- categoría;
-- descripción pública;
-- precio y modo de precio;
-- disponibilidad pública;
-- destacado;
-- imágenes derivadas públicas y `alt`;
-- orden.
-
-Debe excluir siempre:
-
-- usuarios;
-- clientes;
-- direcciones;
-- teléfonos privados;
-- pedidos;
-- notas internas;
-- originales privados;
-- tokens o configuración del mini PC.
+Los clientes, direcciones, teléfonos, pedidos, encargos, notas internas, originales de imágenes y cualquier token quedan siempre fuera del snapshot público.
