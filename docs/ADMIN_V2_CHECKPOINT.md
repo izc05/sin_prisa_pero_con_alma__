@@ -1,17 +1,37 @@
-# Admin V2 — checkpoint 0
+# Admin V2 — checkpoints
 
 - Rama de trabajo: `feat/admin-v2-pocketbase-ready`
-- Base: estado actual de `main` en el momento de creación de la rama.
+- Base inicial: estado de `main` en el momento de creación de la rama.
 - Web oficial: sin cambios.
-- Objetivo del checkpoint: consolidar arquitectura, esquema PocketBase y validación automática antes de sustituir almacenamiento local.
+- Regla: el trabajo permanece en Draft PR y no se integra ni despliega sin autorización expresa.
 
-## Incluido
+## Checkpoint 0 — arquitectura y gate
+
+Incluido:
 
 - Plan de integración segura del Admin V2.
 - Esquema PocketBase V1 para usuarios, categorías, productos, imágenes, clientes, pedidos, líneas de pedido, encargos y contenido.
 - Gate `scripts/validate-admin-v2.mjs` para proteger el contrato mínimo del admin y detectar patrones obvios de secretos.
-- Workflow `Admin V2 Check` que ejecuta el gate y `npm run build` en cambios del admin.
+- Workflow `Admin V2 Check` con sintaxis, contrato y build estático.
 
-## Siguiente checkpoint
+Estado: cerrado a nivel de código versionado.
 
-Crear una capa de datos desacoplada de la UI que permita mantener el modo local actual y cambiar posteriormente a PocketBase sin reescribir las pantallas. Después se abordará autenticación real y CRUD de productos.
+## Checkpoint 1 — capa de datos sustituible
+
+Incluido:
+
+- `admin-data.js` como gateway independiente de la interfaz.
+- Driver local compatible con las claves actuales de productos, pedidos y mensajes.
+- Operaciones explícitas para listar/guardar productos, pedidos y mensajes.
+- Operaciones de negocio actuales: crear/eliminar producto, cambiar disponibilidad, actualizar estado de pedido y marcar mensaje como leído.
+- Copias defensivas al leer/escribir para evitar mutaciones accidentales fuera del gateway.
+- `scripts/test-admin-data.mjs` con pruebas de comportamiento en memoria.
+- El build incluye `admin-data.js` como artefacto, pero la interfaz actual todavía no lo carga: el comportamiento visible permanece sin cambios en este checkpoint.
+
+Estado: implementación base completada; pendiente confirmar CI del HEAD y conectar la UI del admin al gateway.
+
+## Siguiente paso
+
+1. Conectar exclusivamente `renderAdmin()` y `setupAdmin()` al gateway local manteniendo el resto de la tienda sin cambios.
+2. Validar que productos, pedidos y mensajes conservan el comportamiento actual.
+3. Solo después añadir un driver PocketBase y autenticación real.
