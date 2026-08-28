@@ -14,7 +14,7 @@
         <span class="brand-mark">SP</span>
         <span><strong>Sin prisa,</strong><em>pero con alma</em></span>
       </a>
-      <p class="mode-badge">Borrador local · sin servidor</p>
+      <p class="mode-badge" id="admin-mode">Borrador local · sin servidor</p>
       <nav aria-label="Administración">
         <button class="nav-item is-active" data-view="dashboard">Resumen</button>
         <button class="nav-item" data-view="products">Productos</button>
@@ -34,12 +34,12 @@
         </div>
         <div class="connection-state" aria-live="polite">
           <span class="dot"></span>
-          Mini PC no conectado
+          <span id="connection-label">Mini PC no conectado</span>
         </div>
       </header>
 
       <section class="view is-visible" data-panel="dashboard">
-        <div class="notice">
+        <div class="notice" id="storage-notice">
           <strong>Modo seguro de preparación.</strong>
           Los cambios se guardan únicamente en este navegador. Cuando conectemos PocketBase en el mini PC, esta misma interfaz trabajará contra la base de datos real.
         </div>
@@ -138,6 +138,7 @@
       </section>
     </main>
   </div>
+  <script src="./data-store.js"></script>
   <script src="./admin.js"></script>
 </body>
 </html>
