@@ -13,12 +13,17 @@
   <header class="site-header">
     <a class="brand-link" href="index.html"><img src="assets/logo-alma-hd.png" alt=""><span class="brand-wordmark">sin prisa,<span>pero con alma</span></span></a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menú</button>
-    <nav class="main-nav" id="main-nav"><a href="tienda.html" aria-current="page">Tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></nav>
+    <nav class="main-nav" id="main-nav"><a href="index.html">Inicio</a><a href="tienda.html" aria-current="page">Tienda</a><a href="encargos.html">Encargos</a><a href="diario.html">Diario</a><a href="marca.html">La marca</a></nav>
     <div class="header-tools"><a class="account-link" href="cuenta.html">Mi cuenta</a><a class="cart-link" href="#cart" data-cart-open>Cesta <span class="cart-count">0</span></a></div>
   </header>
   <main id="contenido">
-    <section class="page-hero"><div class="page-hero-inner"><div><p class="eyebrow">Colección disponible</p><h1 class="display-title">Objetos para <em>quedarse.</em></h1></div><p class="section-copy">Piezas terminadas y listas para formar parte de otra historia. Al ser artesanales, el stock es pequeño y cada acabado puede variar ligeramente.</p></div></section>
-    <section class="section">
+    <section class="editorial-page-hero editorial-page-hero--shop">
+      <img class="editorial-page-hero__image" src="assets/cabecera-tienda.png" alt="Selección de piezas textiles de lino con flores bordadas a mano">
+      <div class="editorial-page-hero__veil"></div>
+      <div class="editorial-page-hero__content"><p class="eyebrow">Colección disponible · piezas únicas</p><h1 class="display-title">Objetos para <em>quedarse.</em></h1><p class="section-copy">Piezas terminadas y listas para formar parte de otra historia. El stock es pequeño porque cada una se borda y remata a mano.</p><a class="button button--primary" href="#catalogo">Ver la colección</a></div>
+      <p class="editorial-page-hero__note">Textiles bordados con tiempo, intención y detalle</p>
+    </section>
+    <section class="section" id="catalogo">
       <div class="shop-toolbar">
         <div class="filter-group" aria-label="Filtrar productos"><button class="filter-button is-active" type="button" data-filter="todos">Todo</button><button class="filter-button" type="button" data-filter="bebé">Bebé</button><button class="filter-button" type="button" data-filter="regalo">Regalo</button><button class="filter-button" type="button" data-filter="hogar">Hogar</button><button class="filter-button" type="button" data-filter="encargo">Encargos</button></div>
         <div class="field-inline"><input id="shop-search" type="search" placeholder="Buscar una pieza" aria-label="Buscar productos"><select id="shop-sort" aria-label="Ordenar productos"><option value="featured">Destacados</option><option value="price-asc">Precio: menor a mayor</option><option value="price-desc">Precio: mayor a menor</option></select></div>
