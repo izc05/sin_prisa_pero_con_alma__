@@ -1,5 +1,4 @@
-const STORAGE_KEY = 'spca-admin-draft-v1';
-const CATALOG_URL = '../data/catalog.json';
+const store = globalThis.SPCAAdminStore;
 
 const state = {
   products: [],
@@ -13,6 +12,9 @@ const productList = document.querySelector('#product-list');
 const form = document.querySelector('#product-form');
 const editorTitle = document.querySelector('#editor-title');
 const deleteButton = document.querySelector('#delete-product');
+const adminMode = document.querySelector('#admin-mode');
+const connectionLabel = document.querySelector('#connection-label');
+const storageNotice = document.querySelector('#storage-notice');
 
 function categoryLabel(category) {
   return {
@@ -40,25 +42,8 @@ function createId() {
 }
 
 function persistDraft() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ products: state.products }));
+  store.saveLocalDraft(state.products);
   renderAll();
-}
-
-function loadStoredDraft() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (stored && Array.isArray(stored.products)) return stored.products;
-  } catch (error) {
-    console.warn('No se pudo recuperar el borrador local.', error);
-  }
-  return null;
-}
-
-async function fetchPublishedCatalog() {
-  const response = await fetch(CATALOG_URL, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
-  const catalog = await response.json();
-  return Array.isArray(catalog.products) ? catalog.products : [];
 }
 
 function switchView(view) {
@@ -172,6 +157,20 @@ function productFromForm() {
   };
 }
 
+function updateConnectionUi(health) {
+  if (store.mode() === 'local') {
+    adminMode.textContent = 'Borrador local · sin servidor';
+    connectionLabel.textContent = 'Mini PC no conectado';
+    return;
+  }
+
+  adminMode.textContent = health.connected ? 'PocketBase · mini PC' : 'PocketBase · sin conexión';
+  connectionLabel.textContent = health.connected ? 'Mini PC disponible' : 'Mini PC no disponible';
+  storageNotice.innerHTML = health.connected
+    ? '<strong>Mini PC disponible.</strong> La conexión está preparada, pero las escrituras siguen en modo borrador hasta activar autenticación y reglas PocketBase.'
+    : '<strong>Modo degradado seguro.</strong> El mini PC no responde; puedes seguir trabajando con el borrador local y el último catálogo publicado.';
+}
+
 form.addEventListener('submit', (event) => {
   event.preventDefault();
   const product = productFromForm();
@@ -197,7 +196,6 @@ deleteButton.addEventListener('click', () => {
 });
 
 document.querySelector('#cancel-edit').addEventListener('click', clearForm);
-
 document.querySelector('#new-product').addEventListener('click', clearForm);
 document.querySelector('#new-product-dashboard').addEventListener('click', () => {
   switchView('products');
@@ -211,8 +209,8 @@ navItems.forEach((item) => {
 document.querySelector('#reset-draft').addEventListener('click', async () => {
   if (!window.confirm('¿Descartar los cambios locales y volver al catálogo publicado?')) return;
   try {
-    state.products = await fetchPublishedCatalog();
-    localStorage.removeItem(STORAGE_KEY);
+    state.products = await store.loadPublishedCatalog();
+    store.clearLocalDraft();
     renderAll();
     clearForm();
   } catch (error) {
@@ -240,19 +238,27 @@ document.querySelector('#export-json').addEventListener('click', () => {
 });
 
 async function boot() {
-  const localProducts = loadStoredDraft();
+  if (!store) throw new Error('SPCAAdminStore no está disponible.');
+
+  const localProducts = store.loadLocalDraft();
   if (localProducts) {
     state.products = localProducts;
   } else {
     try {
-      state.products = await fetchPublishedCatalog();
+      state.products = await store.loadPublishedCatalog();
     } catch (error) {
       console.error(error);
       state.products = [];
     }
   }
+
+  const health = await store.pocketBaseHealth();
+  updateConnectionUi(health);
   renderAll();
   clearForm();
 }
 
-boot();
+boot().catch((error) => {
+  console.error('No se pudo iniciar el panel de administración.', error);
+  connectionLabel.textContent = 'Error al iniciar el admin';
+});
