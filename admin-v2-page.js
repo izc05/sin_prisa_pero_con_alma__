@@ -2,16 +2,15 @@
   "use strict";
 
   const KEYS = {
-    cart: "alma-v2-cart",
     session: "alma-v2-session",
     adminPin: "alma-v2-admin-pin"
   };
 
   const seedProducts = [
-    { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true },
-    { id: "bolsa-jardin", name: "Bolsa Jardín", category: "regalo", description: "Bolsa de lino bordada puntada a puntada.", price: 22, image: "assets/bolsa-flores.jpeg", badge: "Pieza única", stock: true },
-    { id: "bastidor-botanico", name: "Bastidor Botánico", category: "hogar", description: "Pequeño paisaje floral para guardar un recuerdo.", price: 35, image: "assets/detalle-bordado.jpeg", badge: "Hecho a mano", stock: true },
-    { id: "encargo-personal", name: "Bordado a medida", category: "encargo", description: "Una pieza creada desde tu historia, nombre o idea.", price: null, image: "assets/encargo-bordado.jpeg", badge: "Por encargo", stock: true }
+    { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, priceMode: "fixed", image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true, stockMode: "available", status: "published", featured: true },
+    { id: "bolsa-jardin", name: "Bolsa Jardín", category: "regalo", description: "Bolsa de lino bordada puntada a puntada.", price: 22, priceMode: "fixed", image: "assets/bolsa-flores.jpeg", badge: "Pieza única", stock: true, stockMode: "available", status: "published", featured: false },
+    { id: "bastidor-botanico", name: "Bastidor Botánico", category: "hogar", description: "Pequeño paisaje floral para guardar un recuerdo.", price: 35, priceMode: "fixed", image: "assets/detalle-bordado.jpeg", badge: "Hecho a mano", stock: true, stockMode: "available", status: "published", featured: false },
+    { id: "encargo-personal", name: "Bordado a medida", category: "encargo", description: "Una pieza creada desde tu historia, nombre o idea.", price: null, priceMode: "quote", image: "assets/encargo-bordado.jpeg", badge: "Por encargo", stock: true, stockMode: "made_to_order", status: "published", featured: true }
   ];
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -20,6 +19,9 @@
   const money = (value) => value == null ? "Consultar" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
   const dateText = (value) => value ? new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value)) : "Sin fecha";
   const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
+  const priceModeLabel = (mode) => ({ fixed: "Precio fijo", from: "Desde", quote: "Consultar" })[mode] || "Precio fijo";
+  const stockModeLabel = (mode) => ({ available: "Disponible", made_to_order: "Bajo pedido", sold_out: "Agotado" })[mode] || "Disponible";
+  const statusLabel = (status) => ({ draft: "Borrador", published: "Publicado", hidden: "Oculto" })[status] || "Publicado";
 
   if (!window.AlmaAdminData?.createLocalDriver) {
     console.error("Admin V2: no se encontró el gateway de datos.");
@@ -90,11 +92,15 @@
   }
 
   function productMarkup(product) {
-    const available = product.stock !== false;
+    const available = product.stock !== false && product.stockMode !== "sold_out";
+    const status = product.status || "published";
+    const priceMode = product.priceMode || (product.price == null ? "quote" : "fixed");
+    const stockMode = product.stockMode || (available ? "available" : "sold_out");
     return `<article class="admin-product-row">
       <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
-      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${money(product.price)}</small><span class="admin-product-state ${available ? "" : "is-hidden"}">${available ? "Visible en catálogo" : "Oculto"}</span></div>
-      <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Ocultar" : "Activar"}</button>
+      <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${priceMode === "quote" ? "Consultar" : `${priceModeLabel(priceMode)} · ${money(product.price)}`}</small><div class="admin-product-tags"><span class="admin-product-state ${available ? "" : "is-hidden"}">${stockModeLabel(stockMode)}</span><span class="admin-product-state admin-product-state--status">${statusLabel(status)}</span>${product.featured ? `<span class="admin-product-state admin-product-state--featured">Destacado</span>` : ""}</div></div>
+      <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option></select></label>
+      <button class="button button--outline" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Marcar agotado" : "Reactivar"}</button>
       ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
     </article>`;
   }
@@ -103,13 +109,13 @@
     const products = adminData.listProducts();
     const orders = adminData.listOrders();
     const messages = adminData.listMessages();
-    const visibleProducts = products.filter(product => product.stock !== false).length;
+    const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
     $("#metric-products").textContent = products.length;
     $("#metric-visible").textContent = visibleProducts;
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
-    $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} visibles`;
+    $("#product-list-meta").textContent = `${products.length} ${products.length === 1 ? "pieza" : "piezas"} · ${visibleProducts} publicables`;
 
     $("#admin-products").innerHTML = products.length ? products.map(productMarkup).join("") : `<div class="empty-state">Todavía no hay productos.</div>`;
     $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
@@ -177,6 +183,8 @@
       const form = event.currentTarget;
       const data = new FormData(form);
       const file = data.get("image");
+      const priceMode = String(data.get("priceMode") || "fixed");
+      const stockMode = String(data.get("stockMode") || "available");
       let image = "assets/detalle-bordado.jpeg";
       try {
         if (file && file.size) image = await fileToDataUrl(file);
@@ -189,23 +197,31 @@
         name: String(data.get("name") || "").trim(),
         category: String(data.get("category") || "regalo"),
         description: String(data.get("description") || "").trim(),
-        price: data.get("price") ? Number(data.get("price")) : null,
+        price: priceMode === "quote" || !data.get("price") ? null : Number(data.get("price")),
+        priceMode,
         image,
         badge: "Nueva pieza",
-        stock: true,
+        stock: stockMode !== "sold_out",
+        stockMode,
+        status: String(data.get("status") || "draft"),
+        featured: data.get("featured") === "on",
         custom: true
       });
       form.reset();
       renderAdmin();
-      toast("Producto añadido al catálogo local");
+      toast("Nueva pieza guardada en el catálogo local");
     });
 
     document.addEventListener("change", event => {
-      const select = event.target.closest("[data-order-status]");
-      if (!select) return;
-      if (adminData.updateOrderStatus(select.dataset.orderStatus, select.value)) {
+      const orderStatus = event.target.closest("[data-order-status]");
+      const productStatus = event.target.closest("[data-product-status]");
+      if (orderStatus && adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
         renderAdmin();
-        toast("Estado actualizado");
+        toast("Estado del pedido actualizado");
+      }
+      if (productStatus && adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
+        renderAdmin();
+        toast("Estado de publicación actualizado");
       }
     });
 
@@ -216,9 +232,13 @@
 
       if (stock) {
         const product = adminData.listProducts().find(item => item.id === stock.dataset.toggleStock);
-        if (product && adminData.setProductAvailability(product.id, product.stock === false)) {
-          renderAdmin();
-          toast(product.stock === false ? "Producto visible de nuevo" : "Producto ocultado");
+        if (product) {
+          const available = product.stock !== false && product.stockMode !== "sold_out";
+          const patch = available ? { stock: false, stockMode: "sold_out" } : { stock: true, stockMode: "available" };
+          if (adminData.updateProduct(product.id, patch)) {
+            renderAdmin();
+            toast(available ? "Producto marcado como agotado" : "Producto disponible de nuevo");
+          }
         }
       }
 
