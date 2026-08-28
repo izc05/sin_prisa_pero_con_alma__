@@ -85,13 +85,18 @@
         return clone(product);
       },
 
-      setProductAvailability(productId, available) {
+      updateProduct(productId, patch) {
+        if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new TypeError("patch debe ser un objeto");
         const products = this.listProducts();
         const product = products.find(item => item.id === productId);
         if (!product) return false;
-        product.stock = Boolean(available);
+        Object.assign(product, clone(patch), { id: product.id });
         this.saveProducts(products);
-        return true;
+        return clone(product);
+      },
+
+      setProductAvailability(productId, available) {
+        return Boolean(this.updateProduct(productId, { stock: Boolean(available) }));
       },
 
       deleteProduct(productId) {
