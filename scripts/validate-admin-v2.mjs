@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 const admin = readFileSync(new URL("../admin.html", import.meta.url), "utf8");
 const controller = readFileSync(new URL("../admin-v2-page.js", import.meta.url), "utf8");
 const dataGateway = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
+const adminStyles = readFileSync(new URL("../admin-v2.css", import.meta.url), "utf8");
 
 const requiredAdminFragments = [
   'id="admin-page"',
@@ -14,6 +15,9 @@ const requiredAdminFragments = [
   'id="product-form"',
   'id="admin-orders"',
   'id="admin-messages"',
+  'id="metric-visible"',
+  'id="product-list-meta"',
+  'href="admin-v2.css"',
   'src="admin-data.js"',
   'src="admin-v2-page.js"'
 ];
@@ -32,6 +36,7 @@ const requiredControllerFragments = [
   'window.AlmaAdminData.createLocalDriver',
   'function setupAdmin()',
   'function renderAdmin()',
+  'function productMarkup(product)',
   'adminData.listProducts()',
   'adminData.listOrders()',
   'adminData.listMessages()',
@@ -39,7 +44,9 @@ const requiredControllerFragments = [
   'adminData.setProductAvailability(',
   'adminData.deleteProduct(',
   'adminData.updateOrderStatus(',
-  'adminData.markMessageRead('
+  'adminData.markMessageRead(',
+  'metric-visible',
+  'product-list-meta'
 ];
 
 for (const fragment of requiredControllerFragments) {
@@ -70,6 +77,21 @@ for (const fragment of requiredGatewayFragments) {
   }
 }
 
+const requiredStyleFragments = [
+  'body[data-page="admin"]',
+  '.admin-statusbar',
+  '.admin-chip',
+  '.admin-view-head',
+  '.admin-product-state',
+  '@media (max-width: 760px)'
+];
+
+for (const fragment of requiredStyleFragments) {
+  if (!adminStyles.includes(fragment)) {
+    throw new Error(`Admin V2 style contract missing: ${fragment}`);
+  }
+}
+
 const forbiddenPatterns = [
   /sk-[A-Za-z0-9_-]{16,}/,
   /ghp_[A-Za-z0-9]{20,}/,
@@ -78,7 +100,7 @@ const forbiddenPatterns = [
 ];
 
 for (const pattern of forbiddenPatterns) {
-  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway)) {
+  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(adminStyles)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
 }
