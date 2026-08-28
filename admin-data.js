@@ -3,6 +3,7 @@
 
   const DEFAULT_KEYS = Object.freeze({
     products: "alma-v2-products",
+    collections: "alma-v2-collections",
     orders: "alma-v2-orders",
     messages: "alma-v2-messages"
   });
@@ -16,10 +17,31 @@
     return Array.isArray(value) ? value : fallback;
   }
 
+  function plainObject(value) {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function normalizeImages(images) {
+    if (!Array.isArray(images)) throw new TypeError("images debe ser un array");
+    return images.map((image, index) => {
+      if (!plainObject(image)) throw new TypeError("cada imagen debe ser un objeto");
+      const src = String(image.src || "").trim();
+      if (!src) throw new TypeError("cada imagen necesita src");
+      return {
+        id: String(image.id || `image-${index + 1}`),
+        src,
+        alt: String(image.alt || "").trim(),
+        position: index,
+        primary: index === 0
+      };
+    });
+  }
+
   function createLocalDriver(options = {}) {
     const storage = options.storage || global.localStorage;
     const keys = { ...DEFAULT_KEYS, ...(options.keys || {}) };
     const seedProducts = safeArray(options.seedProducts, []);
+    const seedCollections = safeArray(options.seedCollections, []);
 
     function read(key, fallback) {
       try {
@@ -40,6 +62,7 @@
 
     function ensureSeed() {
       if (storage.getItem(keys.products) == null) write(keys.products, seedProducts);
+      if (storage.getItem(keys.collections) == null) write(keys.collections, seedCollections);
       if (storage.getItem(keys.orders) == null) write(keys.orders, []);
       if (storage.getItem(keys.messages) == null) write(keys.messages, []);
     }
@@ -57,6 +80,15 @@
       saveProducts(products) {
         if (!Array.isArray(products)) throw new TypeError("products debe ser un array");
         return write(keys.products, products);
+      },
+
+      listCollections() {
+        return safeArray(read(keys.collections, seedCollections));
+      },
+
+      saveCollections(collections) {
+        if (!Array.isArray(collections)) throw new TypeError("collections debe ser un array");
+        return write(keys.collections, collections);
       },
 
       listOrders() {
@@ -78,21 +110,32 @@
       },
 
       createProduct(product) {
-        if (!product || typeof product !== "object") throw new TypeError("product debe ser un objeto");
+        if (!plainObject(product)) throw new TypeError("product debe ser un objeto");
         const products = this.listProducts();
-        products.unshift(clone(product));
+        if (products.some(item => item.id === product.id)) throw new Error("ya existe un producto con ese id");
+        const next = clone(product);
+        if (Array.isArray(next.images)) next.images = normalizeImages(next.images);
+        products.unshift(next);
+        this.saveProducts(products);
+        return clone(next);
+      },
+
+      updateProduct(productId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const products = this.listProducts();
+        const product = products.find(item => item.id === productId);
+        if (!product) return false;
+        const safePatch = clone(patch);
+        if (Object.hasOwn(safePatch, "images")) safePatch.images = normalizeImages(safePatch.images);
+        Object.assign(product, safePatch, { id: product.id });
         this.saveProducts(products);
         return clone(product);
       },
 
-      updateProduct(productId, patch) {
-        if (!patch || typeof patch !== "object" || Array.isArray(patch)) throw new TypeError("patch debe ser un objeto");
-        const products = this.listProducts();
-        const product = products.find(item => item.id === productId);
-        if (!product) return false;
-        Object.assign(product, clone(patch), { id: product.id });
-        this.saveProducts(products);
-        return clone(product);
+      setProductImages(productId, images) {
+        const normalized = normalizeImages(images);
+        const result = this.updateProduct(productId, { images: normalized, image: normalized[0]?.src || "" });
+        return result || false;
       },
 
       setProductAvailability(productId, available) {
@@ -104,6 +147,34 @@
         const next = products.filter(item => item.id !== productId);
         if (next.length === products.length) return false;
         this.saveProducts(next);
+        return true;
+      },
+
+      createCollection(collection) {
+        if (!plainObject(collection)) throw new TypeError("collection debe ser un objeto");
+        const collections = this.listCollections();
+        if (collections.some(item => item.id === collection.id)) throw new Error("ya existe una colección con ese id");
+        const next = clone(collection);
+        collections.push(next);
+        this.saveCollections(collections);
+        return clone(next);
+      },
+
+      updateCollection(collectionId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const collections = this.listCollections();
+        const collection = collections.find(item => item.id === collectionId);
+        if (!collection) return false;
+        Object.assign(collection, clone(patch), { id: collection.id });
+        this.saveCollections(collections);
+        return clone(collection);
+      },
+
+      deleteCollection(collectionId) {
+        const collections = this.listCollections();
+        const next = collections.filter(item => item.id !== collectionId);
+        if (next.length === collections.length) return false;
+        this.saveCollections(next);
         return true;
       },
 
@@ -128,7 +199,7 @@
   }
 
   global.AlmaAdminData = Object.freeze({
-    version: 1,
+    version: 2,
     createLocalDriver
   });
 })(window);
