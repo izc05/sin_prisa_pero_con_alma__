@@ -4,11 +4,13 @@ on:
   pull_request:
     paths:
       - "admin.html"
+      - "admin-data.js"
       - "site-v2.js"
       - "site-v2.css"
       - "scripts/**"
       - "docs/ADMIN_V2_PLAN.md"
       - "docs/POCKETBASE_SCHEMA_V1.md"
+      - "docs/ADMIN_V2_CHECKPOINT.md"
       - "package.json"
   workflow_dispatch:
 
@@ -27,6 +29,13 @@ jobs:
         with:
           node-version: 22
 
+      - name: Check JavaScript syntax
+        run: |
+          node --check admin-data.js
+          node --check site-v2.js
+          node --check scripts/build.mjs
+          node --check scripts/validate-admin-v2.mjs
+
       - name: Validate Admin V2 contract
         run: node scripts/validate-admin-v2.mjs
 
@@ -36,5 +45,6 @@ jobs:
       - name: Verify admin output
         run: |
           test -f dist/admin.html
+          test -f dist/admin-data.js
           test -f dist/site-v2.js
           test -f dist/site-v2.css
