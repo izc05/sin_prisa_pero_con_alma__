@@ -194,12 +194,12 @@ button { color: inherit; }
   transition: opacity 600ms ease, visibility 600ms ease;
 }
 .welcome-video {
-  width: min(72vw, 920px);
+  width: min(60vw, 780px);
   max-height: 76svh;
   aspect-ratio: 16 / 9;
   object-fit: contain;
+  opacity: .72;
   pointer-events: none;
-  mix-blend-mode: multiply;
   -webkit-mask-image: radial-gradient(ellipse 78% 84% at center, #000 48%, rgba(0,0,0,.56) 72%, transparent 100%);
   mask-image: radial-gradient(ellipse 78% 84% at center, #000 48%, rgba(0,0,0,.56) 72%, transparent 100%);
 }
@@ -486,7 +486,7 @@ button { color: inherit; }
 }
 
 @media (max-width: 760px) {
-  .welcome-video { width: min(100%, 680px); max-height: 70svh; }
+  .welcome-video { width: min(86%, 520px); max-height: 70svh; }
   .site-header { min-height: 74px; padding-inline: 18px; }
   .brand-link img { width: 46px; height: 46px; }
   .brand-wordmark { font-size: 1rem; }
