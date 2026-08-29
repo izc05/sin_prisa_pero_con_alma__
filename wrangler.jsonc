@@ -5,16 +5,5 @@
   "compatibility_date": "2026-08-29",
   "vars": {
     "ORDER_INTAKE_URL": "https://pedidos-sinprisa.isivoltpro.com/api/sinprisa/order-requests"
-  },
-  "secrets": {
-    "required": [
-      "CF_ACCESS_CLIENT_ID",
-      "CF_ACCESS_CLIENT_SECRET",
-      "ORDER_INTAKE_SECRET"
-    ]
-  },
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
   }
 }
