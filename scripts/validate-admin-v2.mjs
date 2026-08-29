@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 const admin = readFileSync(new URL("../admin.html", import.meta.url), "utf8");
 const controller = readFileSync(new URL("../admin-v2-page.js", import.meta.url), "utf8");
 const dataGateway = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
+const integrationTest = readFileSync(new URL("./test-pocketbase-integration.mjs", import.meta.url), "utf8");
 const adminStyles = readFileSync(new URL("../admin-v2.css", import.meta.url), "utf8");
 const adminControls = readFileSync(new URL("../admin-v2-controls.css", import.meta.url), "utf8");
 
@@ -160,9 +161,13 @@ const forbiddenPatterns = [
 ];
 
 for (const pattern of forbiddenPatterns) {
-  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(adminStyles) || pattern.test(adminControls)) {
+  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(integrationTest) || pattern.test(adminStyles) || pattern.test(adminControls)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
+}
+
+if (/password\s*=\s*["'][^"']+["']/i.test(integrationTest)) {
+  throw new Error("Integration test must never contain a password literal");
 }
 
 if (dataGateway.includes("127.0.0.1:8092")) {
