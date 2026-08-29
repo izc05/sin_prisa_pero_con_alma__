@@ -70,11 +70,15 @@
     const enter = $("#enter-site");
     if (!welcome || !enter) return;
     document.body.classList.add("no-scroll");
-    enter.addEventListener("click", () => {
+    const video = $(".welcome-video", welcome);
+    const closeWelcome = () => {
+      video?.pause();
       welcome.classList.add("is-hidden");
       document.body.classList.remove("no-scroll");
       window.setTimeout(() => welcome.remove(), 650);
-    });
+    };
+    video?.play().catch(() => welcome.classList.add("welcome--no-video"));
+    enter.addEventListener("click", closeWelcome, { once: true });
   }
 
   function productCard(product) {

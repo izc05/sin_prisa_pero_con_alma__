@@ -186,18 +186,39 @@ button { color: inherit; }
   position: fixed;
   inset: 0;
   z-index: 200;
+  isolation: isolate;
   display: grid;
   place-items: center;
   overflow: hidden;
   padding: 28px;
-  background-color: var(--paper);
+  background-color: var(--paper-deep);
   background-image: url("assets/linen-texture.png");
   background-size: 520px;
   transition: opacity 600ms ease, visibility 600ms ease;
 }
+.welcome-video,
+.welcome-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.welcome-video {
+  z-index: 0;
+  object-fit: cover;
+  opacity: .58;
+  filter: sepia(.14) saturate(.8) contrast(.92);
+  pointer-events: none;
+}
+.welcome-scrim {
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255,250,243,.58), rgba(255,250,243,.76));
+  pointer-events: none;
+}
 .welcome::before,
 .welcome::after {
   position: absolute;
+  z-index: 2;
   width: 260px;
   height: 260px;
   content: "";
@@ -208,7 +229,7 @@ button { color: inherit; }
 .welcome::before { top: -110px; left: -70px; }
 .welcome::after { right: -80px; bottom: -120px; animation-delay: -4s; }
 .welcome.is-hidden { visibility: hidden; opacity: 0; pointer-events: none; }
-.welcome-inner { position: relative; z-index: 1; display: grid; justify-items: center; text-align: center; }
+.welcome-inner { position: relative; z-index: 3; display: grid; justify-items: center; text-align: center; }
 .welcome-logo {
   width: min(48vw, 340px);
   filter: drop-shadow(0 22px 28px rgba(103, 66, 59, 0.14));
@@ -218,7 +239,7 @@ button { color: inherit; }
 .welcome-kicker { margin: 18px 0 8px; color: var(--rose-dark); font: 500 0.7rem/1.5 var(--mono); letter-spacing: 0.18em; text-transform: uppercase; }
 .welcome-title { margin: 0; font: 500 clamp(1.8rem, 4vw, 3.1rem)/1 var(--serif); }
 .welcome .button { margin-top: 28px; animation: arrive 950ms 180ms cubic-bezier(.2,.75,.25,1) both; }
-.welcome-note { position: absolute; bottom: 25px; color: var(--ink-soft); font: 400 0.64rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.welcome-note { position: absolute; z-index: 3; bottom: 25px; color: var(--ink-soft); font: 400 0.64rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
 
 @keyframes arrive { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
 @keyframes drift { 0%, 100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(20px,12px,0); } }
@@ -559,4 +580,5 @@ button { color: inherit; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .welcome-video { display: none; }
 }
