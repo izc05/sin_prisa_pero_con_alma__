@@ -3,6 +3,7 @@ node_modules/
 .wrangler/
 .dev.vars
 .env
+/admin-runtime-config.js
 *.log
 qa/
 design-qa.md

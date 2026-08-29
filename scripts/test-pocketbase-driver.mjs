@@ -122,7 +122,7 @@ async function mockFetch(input, init) {
   const path = url.pathname;
   const method = init.method || "GET";
   assert.equal(init.headers.Authorization, "Bearer runtime-auth-value");
-  requests.push({ path, method, body: init.body });
+  requests.push({ path, search: url.search, method, body: init.body });
 
   if (path === "/api/collections/sinprisa_products/records" && method === "GET") {
     return jsonResponse(list(products));
@@ -193,7 +193,9 @@ assert.equal(driver.kind, "pocketbase");
 assert.equal(driver.isRemote, true);
 assert.equal(requests.length, 0);
 assert.equal(controllerSource.includes("createLocalDriver("), true);
-assert.equal(controllerSource.includes("createPocketBaseDriver("), false);
+assert.equal(controllerSource.includes("createPocketBaseDriver("), true);
+assert.equal(controllerSource.includes("normalizeRuntimeConfig(configured)"), true);
+assert.equal(controllerSource.includes("if (isPocketBaseMode())"), true);
 
 const listedProducts = await driver.listProducts();
 assert.equal(listedProducts.length, 2);
@@ -227,6 +229,7 @@ assert.equal(Array.from(upload.body.values()).some(value => typeof value === "st
 assert.equal((await driver.listCollections())[0].slug, "bebe");
 assert.equal((await driver.listOrders())[0].items[0].name, "Babero");
 assert.equal((await driver.listMessages())[0].status, "Nuevo");
+assert.equal(requests.filter(request => request.method === "GET" && request.path.includes("/records")).some(request => request.search.includes("created")), false);
 
 const forbidden = window.AlmaAdminData.createPocketBaseDriver({
   url: "https://pocketbase.invalid",

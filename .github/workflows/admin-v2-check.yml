@@ -40,6 +40,7 @@ jobs:
           node --check scripts/test-admin-data.mjs
           node --check scripts/test-pocketbase-driver.mjs
           node --check scripts/test-pocketbase-integration.mjs
+          node --check scripts/test-admin-auth.mjs
 
       - name: Test and validate Admin V2
         run: npm test
@@ -55,3 +56,5 @@ jobs:
           test -f dist/admin-v2.css
           test -f dist/admin-v2-controls.css
           test -f dist/site-v2.css
+          test -f dist/admin-auth.js
+          test -f dist/admin-runtime-config-loader.js

@@ -412,7 +412,7 @@
         throw createPocketBaseError("PocketBasePermissionError", "PocketBase denegó la operación", 403);
       }
       if (!response.ok) {
-        throw createPocketBaseError("PocketBaseRequestError", `PocketBase respondió con HTTP ${response.status}`, response.status);
+        throw createPocketBaseError("PocketBaseRequestError", `PocketBase respondió con HTTP ${response.status} en ${path}`, response.status);
       }
       if (response.status === 204) return null;
 
@@ -643,8 +643,8 @@
 
       async listProducts() {
         const [products, images] = await Promise.all([
-          listRecords(POCKETBASE_COLLECTIONS.products, { sort: "sort_order,created" }),
-          listRecords(POCKETBASE_COLLECTIONS.images, { sort: "sort_order,created" })
+          listRecords(POCKETBASE_COLLECTIONS.products, { sort: "sort_order" }),
+          listRecords(POCKETBASE_COLLECTIONS.images, { sort: "sort_order" })
         ]);
         return products.map(product => mapProduct(product, images));
       },
@@ -751,7 +751,7 @@
       },
 
       async listCollections() {
-        const records = await listRecords(POCKETBASE_COLLECTIONS.collections, { sort: "sort_order,created" });
+        const records = await listRecords(POCKETBASE_COLLECTIONS.collections, { sort: "sort_order" });
         return records.map(mapCollection);
       },
 
@@ -811,8 +811,8 @@
 
       async listOrders() {
         const [orders, items] = await Promise.all([
-          listRecords(POCKETBASE_COLLECTIONS.orders, { sort: "-created" }),
-          listRecords(POCKETBASE_COLLECTIONS.orderItems, { sort: "created" })
+          listRecords(POCKETBASE_COLLECTIONS.orders),
+          listRecords(POCKETBASE_COLLECTIONS.orderItems)
         ]);
         return orders.map(order => mapOrder(order, items));
       },
@@ -842,7 +842,7 @@
       },
 
       async listMessages() {
-        const records = await listRecords(POCKETBASE_COLLECTIONS.messages, { sort: "-created" });
+        const records = await listRecords(POCKETBASE_COLLECTIONS.messages);
         return records.map(mapMessage);
       },
 

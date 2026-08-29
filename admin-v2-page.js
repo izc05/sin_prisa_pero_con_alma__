@@ -31,14 +31,21 @@
   const stockModeLabel = (mode) => ({ available: "Disponible", made_to_order: "Bajo pedido", sold_out: "Agotado" })[mode] || "Disponible";
   const statusLabel = (status) => ({ draft: "Borrador", published: "Publicado", hidden: "Oculto", archived: "Archivado" })[status] || "Publicado";
 
-  if (!window.AlmaAdminData?.createLocalDriver) {
+  if (!window.AlmaAdminData?.createLocalDriver || !window.AlmaAdminData?.createPocketBaseDriver || !window.AlmaAdminAuth) {
     console.error("Admin V2: no se encontró el gateway de datos.");
     const feedback = $("#admin-lock-feedback");
     if (feedback) feedback.textContent = "No se pudo iniciar la capa de datos del panel.";
     return;
   }
 
-  const adminData = window.AlmaAdminData.createLocalDriver({ seedProducts, seedCollections });
+  let adminData;
+  let runtimeConfig = Object.freeze({ mode: "local" });
+  let pocketBaseSession = null;
+  let pocketBaseUser = null;
+
+  function isPocketBaseMode() {
+    return runtimeConfig.mode === "pocketbase";
+  }
 
   function readLocal(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
@@ -202,26 +209,100 @@
   async function unlockAdmin() {
     $("#admin-lock").hidden = true;
     $("#admin-dashboard").hidden = false;
+    $("#admin-logout").hidden = !isPocketBaseMode();
     await renderAdmin();
   }
 
   function setupIdentity() {
+    if (isPocketBaseMode()) {
+      const account = $(".account-link");
+      if (account) account.textContent = pocketBaseUser?.name ? `Hola, ${pocketBaseUser.name}` : "Acceso staff";
+      $("#admin-auth-name").textContent = pocketBaseUser?.name || "PocketBase staging";
+      $("#admin-auth-role").textContent = pocketBaseUser?.role ? `Rol: ${pocketBaseUser.role}` : "Sesión no iniciada";
+      return;
+    }
     const session = readLocal(KEYS.session, null);
     const account = $(".account-link");
     if (account && session?.name) account.textContent = `Hola, ${String(session.name).split(" ")[0]}`;
+  }
+
+  function configureLoginUi() {
+    const emailField = $("#admin-email-field");
+    const emailInput = $("#admin-email");
+    const secretInput = $("#admin-pin");
+    const secretLabel = $("#admin-secret-label");
+
+    if (isPocketBaseMode()) {
+      localStorage.removeItem(KEYS.adminPin);
+      emailField.hidden = false;
+      emailInput.required = true;
+      secretInput.name = "password";
+      secretInput.removeAttribute("minlength");
+      secretLabel.textContent = "Contraseña";
+      $("#admin-lock-title").textContent = "Entrar en el Admin V2";
+      $("#admin-pin-hint").textContent = "Usa tu cuenta staff de PocketBase. La sesión termina al cerrar esta pestaña.";
+      $("#admin-lock-notice").textContent = "Staging local: la sesión se guarda únicamente en sessionStorage y no usa el PIN de desarrollo.";
+      $("#admin-login-submit").textContent = "Iniciar sesión";
+      $("#admin-data-mode").textContent = "PocketBase staging activo";
+      setupIdentity();
+      return;
+    }
+
+    const hasPin = Boolean(localStorage.getItem(KEYS.adminPin));
+    emailField.hidden = true;
+    emailInput.required = false;
+    secretInput.name = "pin";
+    secretInput.minLength = 4;
+    secretLabel.textContent = "PIN";
+    $("#admin-lock-title").textContent = hasPin ? "Entrar en administración" : "Crear acceso local";
+    $("#admin-pin-hint").textContent = hasPin ? "Introduce el PIN creado en este navegador." : "Crea un PIN de al menos 4 caracteres para proteger esta demo local.";
+    $("#admin-lock-notice").textContent = "Este PIN protege solo esta demostración local en el navegador.";
+    $("#admin-login-submit").textContent = "Acceder al panel";
+    $("#admin-data-mode").textContent = "Driver local activo";
+  }
+
+  function lockPocketBaseAdmin() {
+    $("#admin-dashboard").hidden = true;
+    $("#admin-lock").hidden = false;
+    $("#admin-logout").hidden = true;
+    $("#admin-pin").value = "";
+    pocketBaseUser = null;
+    setupIdentity();
   }
 
   function setupAdmin() {
     const page = $("#admin-page");
     if (!page) return;
 
-    const hasPin = Boolean(localStorage.getItem(KEYS.adminPin));
-    $("#admin-lock-title").textContent = hasPin ? "Entrar en administración" : "Crear acceso local";
-    $("#admin-pin-hint").textContent = hasPin ? "Introduce el PIN creado en este navegador." : "Crea un PIN de al menos 4 caracteres para proteger esta demo local.";
+    configureLoginUi();
 
     $("#admin-pin-form").addEventListener("submit", async event => {
       event.preventDefault();
-      const pin = String(new FormData(event.currentTarget).get("pin") || "");
+      const formData = new FormData(event.currentTarget);
+      const secretInput = $("#admin-pin");
+      const submit = $("#admin-login-submit");
+      $("#admin-lock-feedback").textContent = "";
+
+      if (isPocketBaseMode()) {
+        submit.disabled = true;
+        try {
+          pocketBaseUser = await pocketBaseSession.login(
+            String(formData.get("email") || ""),
+            String(formData.get("password") || "")
+          );
+          secretInput.value = "";
+          setupIdentity();
+          await unlockAdmin();
+        } catch (error) {
+          $("#admin-lock-feedback").textContent = error.message || "No se pudo iniciar sesión";
+        } finally {
+          secretInput.value = "";
+          submit.disabled = false;
+        }
+        return;
+      }
+
+      const pin = String(formData.get("pin") || "");
       if (pin.length < 4) {
         $("#admin-lock-feedback").textContent = "El PIN debe tener al menos 4 caracteres.";
         return;
@@ -238,6 +319,13 @@
         return;
       }
       await unlockAdmin();
+    });
+
+    $("#admin-logout").addEventListener("click", () => {
+      if (!isPocketBaseMode()) return;
+      pocketBaseSession.logout();
+      lockPocketBaseAdmin();
+      $("#admin-lock-feedback").textContent = "Sesión cerrada correctamente.";
     });
 
     $$("[data-admin-view]").forEach(button => button.addEventListener("click", () => {
@@ -292,7 +380,7 @@
       }
       form.reset();
       await renderAdmin();
-      toast("Nueva pieza guardada en el catálogo local");
+      toast(isPocketBaseMode() ? "Nueva pieza guardada en PocketBase" : "Nueva pieza guardada en el catálogo local");
     });
 
     $("#collection-form")?.addEventListener("submit", async event => {
@@ -311,7 +399,7 @@
       }
       form.reset();
       await renderAdmin();
-      toast("Colección creada en el catálogo local");
+      toast(isPocketBaseMode() ? "Colección creada en PocketBase" : "Colección creada en el catálogo local");
     });
 
     ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock"].forEach(selector => {
@@ -389,9 +477,15 @@
         }
       }
 
-      if (remove && await adminData.deleteProduct(remove.dataset.deleteProduct)) {
-        await renderAdmin();
-        toast("Producto eliminado del catálogo local");
+      if (remove && window.confirm("¿Eliminar esta pieza? Esta acción no se puede deshacer.")) {
+        try {
+          if (await adminData.deleteProduct(remove.dataset.deleteProduct)) {
+            await renderAdmin();
+            toast(isPocketBaseMode() ? "Producto eliminado de PocketBase" : "Producto eliminado del catálogo local");
+          }
+        } catch (error) {
+          toast(error.message || "No se pudo eliminar la pieza");
+        }
       }
 
       if (readMessage && await adminData.markMessageRead(readMessage.dataset.readMessage)) {
@@ -468,7 +562,43 @@
     });
   }
 
-  setupNavigation();
-  setupIdentity();
-  setupAdmin();
+  async function startAdmin() {
+    try {
+      const configured = await (window.AlmaAdminRuntimeConfigReady || Promise.resolve(null));
+      runtimeConfig = window.AlmaAdminAuth.normalizeRuntimeConfig(configured);
+
+      if (isPocketBaseMode()) {
+        const runtimeFetch = window.fetch.bind(window);
+        pocketBaseSession = window.AlmaAdminAuth.createPocketBaseSession({
+          url: runtimeConfig.pocketbaseUrl,
+          fetch: runtimeFetch,
+          storage: window.sessionStorage
+        });
+        adminData = window.AlmaAdminData.createPocketBaseDriver({
+          url: runtimeConfig.pocketbaseUrl,
+          token: () => pocketBaseSession.getToken(),
+          fetch: runtimeFetch
+        });
+        localStorage.removeItem(KEYS.adminPin);
+        try {
+          pocketBaseUser = await pocketBaseSession.restore();
+        } catch {
+          pocketBaseSession.logout();
+          $("#admin-lock-feedback").textContent = "No se pudo conectar con PocketBase staging.";
+        }
+      } else {
+        adminData = window.AlmaAdminData.createLocalDriver({ seedProducts, seedCollections });
+      }
+
+      setupNavigation();
+      setupIdentity();
+      setupAdmin();
+      if (pocketBaseUser) await unlockAdmin();
+    } catch (error) {
+      console.error("Admin V2: no se pudo iniciar el runtime.", error?.name, error?.message);
+      $("#admin-lock-feedback").textContent = error.message || "No se pudo iniciar el Admin V2";
+    }
+  }
+
+  startAdmin();
 })();

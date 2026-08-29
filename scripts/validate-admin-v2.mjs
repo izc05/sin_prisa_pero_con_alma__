@@ -3,6 +3,9 @@ import { readFileSync } from "node:fs";
 const admin = readFileSync(new URL("../admin.html", import.meta.url), "utf8");
 const controller = readFileSync(new URL("../admin-v2-page.js", import.meta.url), "utf8");
 const dataGateway = readFileSync(new URL("../admin-data.js", import.meta.url), "utf8");
+const authGateway = readFileSync(new URL("../admin-auth.js", import.meta.url), "utf8");
+const configLoader = readFileSync(new URL("../admin-runtime-config-loader.js", import.meta.url), "utf8");
+const configExample = readFileSync(new URL("../admin-runtime-config.example.js", import.meta.url), "utf8");
 const integrationTest = readFileSync(new URL("./test-pocketbase-integration.mjs", import.meta.url), "utf8");
 const adminStyles = readFileSync(new URL("../admin-v2.css", import.meta.url), "utf8");
 const adminControls = readFileSync(new URL("../admin-v2-controls.css", import.meta.url), "utf8");
@@ -33,10 +36,12 @@ const requiredAdminFragments = [
   'id="product-filter-collection"',
   'id="product-filter-status"',
   'id="product-filter-stock"',
-  'href="admin-v2.css"',
+  'href="admin-v2.css?v=3"',
   'href="admin-v2-controls.css"',
-  'src="admin-data.js"',
-  'src="admin-v2-page.js"'
+  'src="admin-data.js?v=3"',
+  'src="admin-auth.js"',
+  'src="admin-runtime-config-loader.js"',
+  'src="admin-v2-page.js?v=2"'
 ];
 
 for (const fragment of requiredAdminFragments) {
@@ -49,12 +54,12 @@ if (admin.includes('src="site-v2.js"')) {
   throw new Error("Admin V2 must not load the storefront runtime");
 }
 
-if (controller.includes('createPocketBaseDriver(')) {
-  throw new Error("PocketBase driver must remain inactive until runtime authentication is integrated");
-}
-
 const requiredControllerFragments = [
   'window.AlmaAdminData.createLocalDriver',
+  'window.AlmaAdminData.createPocketBaseDriver',
+  'pocketBaseSession.login(',
+  'pocketBaseSession.logout()',
+  'window.sessionStorage',
   'function setupAdmin()',
   'async function renderAdmin()',
   'function productMarkup(product, collections)',
@@ -161,9 +166,13 @@ const forbiddenPatterns = [
 ];
 
 for (const pattern of forbiddenPatterns) {
-  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(integrationTest) || pattern.test(adminStyles) || pattern.test(adminControls)) {
+  if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(authGateway) || pattern.test(configLoader) || pattern.test(configExample) || pattern.test(integrationTest) || pattern.test(adminStyles) || pattern.test(adminControls)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
+}
+
+if (configExample.includes("email") || /password|token|cookie/i.test(configExample)) {
+  throw new Error("Runtime config example must contain only mode and URL");
 }
 
 if (/password\s*=\s*["'][^"']+["']/i.test(integrationTest)) {

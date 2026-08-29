@@ -16,7 +16,9 @@ const files = [
   "site-v2.js",
   "admin-v2.css",
   "admin-v2-controls.css",
+  "admin-runtime-config-loader.js",
   "admin-data.js",
+  "admin-auth.js",
   "admin-v2-page.js",
   "_headers",
   ".nojekyll"

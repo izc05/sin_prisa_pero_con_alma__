@@ -4,6 +4,10 @@ body[data-page="admin"] {
     linear-gradient(180deg, var(--paper) 0%, #f8f1e8 100%);
 }
 
+body[data-page="admin"] [hidden] {
+  display: none !important;
+}
+
 body[data-page="admin"] .page-hero {
   padding-bottom: clamp(46px, 6vw, 80px);
 }
