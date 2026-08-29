@@ -48,6 +48,10 @@ if (admin.includes('src="site-v2.js"')) {
   throw new Error("Admin V2 must not load the storefront runtime");
 }
 
+if (controller.includes('createPocketBaseDriver(')) {
+  throw new Error("PocketBase driver must remain inactive until runtime authentication is integrated");
+}
+
 const requiredControllerFragments = [
   'window.AlmaAdminData.createLocalDriver',
   'function setupAdmin()',
@@ -88,6 +92,12 @@ for (const fragment of requiredControllerFragments) {
 const requiredGatewayFragments = [
   'global.AlmaAdminData',
   'createLocalDriver',
+  'createPocketBaseDriver',
+  'sinprisa_products',
+  'sinprisa_collections',
+  'sinprisa_product_images',
+  'sinprisa_orders',
+  'sinprisa_messages',
   'async listProducts()',
   'async createProduct(product)',
   'async updateProduct(productId, patch)',
@@ -143,13 +153,20 @@ const forbiddenPatterns = [
   /sk-[A-Za-z0-9_-]{16,}/,
   /ghp_[A-Za-z0-9]{20,}/,
   /BEGIN OPENSSH PRIVATE KEY/,
-  /cloudflare.{0,20}(token|secret).{0,5}[:=].{0,5}["'][^"']+/i
+  /cloudflare.{0,20}(token|secret).{0,5}[:=].{0,5}["'][^"']+/i,
+  /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/,
+  /BEGIN (?:RSA |OPENSSH )?PRIVATE KEY/,
+  /token\s*:\s*["'][A-Za-z0-9._~-]{24,}["']/i
 ];
 
 for (const pattern of forbiddenPatterns) {
   if (pattern.test(admin) || pattern.test(controller) || pattern.test(dataGateway) || pattern.test(adminStyles) || pattern.test(adminControls)) {
     throw new Error(`Potential secret detected by Admin V2 gate: ${pattern}`);
   }
+}
+
+if (dataGateway.includes("127.0.0.1:8092")) {
+  throw new Error("PocketBase URL must be supplied at runtime");
 }
 
 console.log("Admin V2 contract OK");

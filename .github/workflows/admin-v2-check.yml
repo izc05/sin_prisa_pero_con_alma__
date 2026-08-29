@@ -38,12 +38,10 @@ jobs:
           node --check scripts/build.mjs
           node --check scripts/validate-admin-v2.mjs
           node --check scripts/test-admin-data.mjs
+          node --check scripts/test-pocketbase-driver.mjs
 
-      - name: Test admin data gateway
-        run: node scripts/test-admin-data.mjs
-
-      - name: Validate Admin V2 contract
-        run: node scripts/validate-admin-v2.mjs
+      - name: Test and validate Admin V2
+        run: npm test
 
       - name: Build static site
         run: npm run build
