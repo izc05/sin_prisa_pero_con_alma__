@@ -36,7 +36,9 @@ jobs:
           node --check admin-data.js
           node --check admin-v2-page.js
           node --check scripts/build.mjs
+          node --check scripts/build-public.mjs
           node --check scripts/validate-admin-v2.mjs
+          node --check scripts/validate-public-build.mjs
           node --check scripts/test-admin-data.mjs
           node --check scripts/test-pocketbase-driver.mjs
           node --check scripts/test-pocketbase-integration.mjs
@@ -48,6 +50,9 @@ jobs:
       - name: Build static site
         run: npm run build
 
+      - name: Build public site without Admin
+        run: npm run build:public
+
       - name: Verify admin output
         run: |
           test -f dist/admin.html
@@ -58,3 +63,5 @@ jobs:
           test -f dist/site-v2.css
           test -f dist/admin-auth.js
           test -f dist/admin-runtime-config-loader.js
+          test ! -e dist-public/admin.html
+          test ! -e dist-public/admin-data.js

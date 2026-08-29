@@ -7,7 +7,8 @@
     "test": "node scripts/test-admin-data.mjs && node scripts/test-pocketbase-driver.mjs && node scripts/test-admin-auth.mjs && node scripts/validate-admin-v2.mjs",
     "test:integration:pocketbase": "node scripts/test-pocketbase-integration.mjs",
     "build": "node scripts/build.mjs",
+    "build:public": "node scripts/build-public.mjs && node scripts/validate-public-build.mjs",
     "preview": "npx serve dist",
-    "deploy:cloudflare": "npm run build && npx wrangler pages deploy dist"
+    "deploy:cloudflare": "npm run build:public && npx wrangler pages deploy dist-public"
   }
 }
