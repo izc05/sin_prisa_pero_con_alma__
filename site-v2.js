@@ -109,17 +109,18 @@
   }
 
   function productCard(product) {
+    const detailUrl = `producto.html#pieza=${encodeURIComponent(product.id)}`;
     const customLink = `<a class="product-custom-link" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Personalizar esta pieza</a>`;
     const action = product.price == null
       ? `<a class="button button--outline" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Contar mi idea</a>`
       : `<div class="product-actions"><button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>${customLink}</div>`;
     return `<article class="product-card" data-category="${escapeHtml(product.category)}">
-      <div class="product-image-wrap">
+      <a class="product-image-wrap" href="${detailUrl}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
         <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy">
         <span class="product-badge">${escapeHtml(product.badge || "Hecho a mano")}</span>
-      </div>
+      </a>
       <div class="product-info">
-        <h3>${escapeHtml(product.name)}</h3>
+        <h3><a href="${detailUrl}">${escapeHtml(product.name)}</a></h3>
         <span class="product-price">${money(product.price)}</span>
         <p>${escapeHtml(product.description)}</p>
         ${action}
@@ -156,6 +157,27 @@
     }));
     search?.addEventListener("input", update);
     sort?.addEventListener("change", update);
+  }
+
+  function setupProductDetail() {
+    const root = $("#product-detail-root");
+    if (!root) return;
+    const selectedProductId = new URLSearchParams(window.location.hash.split("?")[1] || window.location.search).get("pieza");
+    const product = getProducts().find(item => item.id === selectedProductId && item.stock !== false);
+    if (!product) {
+      root.innerHTML = `<div class="detail-empty"><p class="eyebrow">La pieza no está disponible</p><h1 class="section-title">Volvamos a la colección.</h1><p class="section-copy">Puede que esta pieza ya haya encontrado su casa o que el enlace no sea correcto.</p><a class="button button--primary" href="tienda.html">Ver la tienda</a></div>`;
+      return;
+    }
+    const customUrl = `encargos.html#formulario?pieza=${encodeURIComponent(product.id)}`;
+    const purchaseAction = product.price == null
+      ? `<a class="button button--primary" href="${customUrl}">Contar mi idea</a>`
+      : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
+    const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
+    root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
+      <article class="product-detail">
+        <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}"></div>
+        <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}<a class="button button--outline" href="${customUrl}">Personalizar esta pieza</a></div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, cuéntanoslo al hacer tu pedido.</p></div></div>
+      </article>`;
   }
 
   function addToCart(id) {
@@ -459,6 +481,7 @@
   setupStorageNotice();
   renderProducts();
   setupShopFilters();
+  setupProductDetail();
   renderCart();
   setupCartEvents();
   setupAccount();
