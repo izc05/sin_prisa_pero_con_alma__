@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -32,4 +32,5 @@ for (const file of files) {
 }
 
 cpSync(resolve(root, "assets"), resolve(output, "assets"), { recursive: true });
+writeFileSync(resolve(output, "admin-runtime-config.js"), `window.ALMA_ADMIN_RUNTIME = Object.freeze({\n  mode: "pocketbase",\n  pocketbaseUrl: window.location.origin\n});\n`);
 console.log(`Sitio preparado en ${output}`);

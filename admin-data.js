@@ -579,10 +579,14 @@
     }
 
     function mapOrder(record, orderItems = []) {
+      const expandedCustomer = record.expand?.customer || null;
       return {
         id: String(record.id),
         number: String(record.number || ""),
         customer: String(record.customer || ""),
+        customerName: String(expandedCustomer?.name || ""),
+        email: String(expandedCustomer?.email || ""),
+        type: "Solicitud de pedido",
         status: ORDER_STATUS_FROM_POCKETBASE[record.status] || String(record.status || ""),
         paymentStatus: String(record.payment_status || ""),
         subtotal: Number(record.subtotal || 0),
@@ -811,10 +815,12 @@
 
       async listOrders() {
         const [orders, items] = await Promise.all([
-          listRecords(POCKETBASE_COLLECTIONS.orders),
+          listRecords(POCKETBASE_COLLECTIONS.orders, { expand: "customer" }),
           listRecords(POCKETBASE_COLLECTIONS.orderItems)
         ]);
-        return orders.map(order => mapOrder(order, items));
+        return orders
+          .map(order => mapOrder(order, items))
+          .sort((left, right) => String(right.createdAt || "").localeCompare(String(left.createdAt || "")));
       },
 
       async saveOrders(orders) {

@@ -14,6 +14,7 @@ const publicFiles = [
   "site-v2.css",
   "site-v2.js",
   "_headers",
+  "_routes.json",
   ".nojekyll"
 ];
 const adminFooterLink = '<a href="admin.html">Administración</a>';

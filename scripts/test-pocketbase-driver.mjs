@@ -173,7 +173,7 @@ async function mockFetch(input, init) {
     return jsonResponse(list(collections));
   }
   if (path === "/api/collections/sinprisa_orders/records" && method === "GET") {
-    return jsonResponse(list([{ id: "order-one", number: "SP-1", customer: "customer-one", status: "pending", payment_status: "pending", subtotal: 20, shipping: 3, total: 23, internal_notes: "" }]));
+    return jsonResponse(list([{ id: "order-one", number: "SP-1", customer: "customer-one", status: "pending", payment_status: "pending", subtotal: 20, shipping: 3, total: 23, internal_notes: "", expand: { customer: { name: "Ana", email: "ana@example.invalid" } } }]));
   }
   if (path === "/api/collections/sinprisa_order_items/records" && method === "GET") {
     return jsonResponse(list([{ id: "item-one", order: "order-one", product: "product-number", product_name_snapshot: "Babero", quantity: 1, unit_price: 20, customization: "" }]));
@@ -227,7 +227,10 @@ assert.ok(upload.body.get("original") instanceof Blob);
 assert.equal(Array.from(upload.body.values()).some(value => typeof value === "string" && value.startsWith("data:")), false);
 
 assert.equal((await driver.listCollections())[0].slug, "bebe");
-assert.equal((await driver.listOrders())[0].items[0].name, "Babero");
+const [mappedOrder] = await driver.listOrders();
+assert.equal(mappedOrder.items[0].name, "Babero");
+assert.equal(mappedOrder.customerName, "Ana");
+assert.equal(mappedOrder.email, "ana@example.invalid");
 assert.equal((await driver.listMessages())[0].status, "Nuevo");
 assert.equal(requests.filter(request => request.method === "GET" && request.path.includes("/records")).some(request => request.search.includes("created")), false);
 

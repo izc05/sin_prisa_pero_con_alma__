@@ -14,6 +14,7 @@ const requiredFiles = [
   "site-v2.css",
   "site-v2.js",
   "_headers",
+  "_routes.json",
   ".nojekyll"
 ];
 const forbiddenFiles = [
@@ -38,6 +39,16 @@ for (const file of forbiddenFiles) {
 for (const file of readdirSync(output).filter(name => name.endsWith(".html"))) {
   const html = readFileSync(resolve(output, file), "utf8");
   if (/href=["']admin\.html["']/.test(html)) throw new Error(`El build público enlaza al Admin desde ${file}`);
+}
+
+const routes = JSON.parse(readFileSync(resolve(output, "_routes.json"), "utf8"));
+if (JSON.stringify(routes.include) !== JSON.stringify(["/api/order-requests"])) {
+  throw new Error("El build público ejecuta Functions fuera del endpoint de pedidos");
+}
+
+const publicScript = readFileSync(resolve(output, "site-v2.js"), "utf8");
+if (/pocketbase|CF_ACCESS_CLIENT_SECRET|ORDER_INTAKE_SECRET/i.test(publicScript)) {
+  throw new Error("El JavaScript público contiene referencias a credenciales o PocketBase");
 }
 
 console.log("Build público sin Admin OK");

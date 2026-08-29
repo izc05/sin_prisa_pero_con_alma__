@@ -34,7 +34,7 @@ jobs:
 
       - name: Preparar la web
         if: steps.config.outputs.ready == 'true'
-        run: npm run build
+        run: npm run build:full
 
       - name: Configurar acceso seguro al mini PC
         if: steps.config.outputs.ready == 'true'

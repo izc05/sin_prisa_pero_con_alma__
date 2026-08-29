@@ -99,8 +99,8 @@
       : escapeHtml(order.details || "Encargo personalizado");
     const options = ["Solicitud recibida", "Pendiente de Bizum", "En preparación", "Enviado", "Completado"];
     return `<article class="order-card">
-      <div class="order-head"><div><h3>${escapeHtml(order.id)}</h3><span class="status">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
-      <p>${escapeHtml(order.type || "Pedido")} · ${dateText(order.createdAt)}${order.email ? ` · ${escapeHtml(order.email)}` : ""}</p>
+      <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
+      <p>${escapeHtml(order.type || "Pedido")} · ${dateText(order.createdAt)}${order.customerName ? ` · ${escapeHtml(order.customerName)}` : ""}${order.email ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
       <label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}">${options.map(option => `<option ${order.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></label>
     </article>`;

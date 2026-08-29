@@ -7,6 +7,7 @@
     users: "alma-v2-users",
     session: "alma-v2-session",
     orders: "alma-v2-orders",
+    orderRequest: "alma-v2-order-request",
     messages: "alma-v2-messages",
     adminPin: "alma-v2-admin-pin",
     storageNotice: "alma-storage-notice"
@@ -27,6 +28,15 @@
   };
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const uid = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+  const requestId = () => {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0"));
+    return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+  };
   const money = (value) => value == null ? "Consultar" : new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" }).format(value);
   const dateText = (value) => new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
   const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -203,6 +213,7 @@
     const items = cart.map(item => ({ ...item, product: products.find(product => product.id === item.id) })).filter(item => item.product);
     const count = items.reduce((total, item) => total + item.quantity, 0);
     const total = items.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0);
+    const session = getSession();
     $$(".cart-count").forEach(node => node.textContent = count);
     root.innerHTML = `<aside class="cart-drawer" id="cart-drawer" aria-label="Cesta" aria-hidden="true">
       <button class="cart-backdrop" type="button" data-close-cart aria-label="Cerrar la cesta"></button>
@@ -218,8 +229,16 @@
         </div>
         <div class="cart-footer">
           <div class="cart-total"><strong>Total</strong><strong>${money(total)}</strong></div>
-          <button class="button button--primary" type="button" id="checkout-button" ${items.length ? "" : "disabled"}>Confirmar pedido por Bizum</button>
-          <p class="form-note">El pedido queda pendiente hasta que confirmemos disponibilidad y pago.</p>
+          <form class="cart-checkout" id="checkout-form">
+            <div class="cart-checkout__fields">
+              <label><span>Nombre</span><input name="name" autocomplete="name" maxlength="120" required value="${escapeHtml(session?.name || "")}"></label>
+              <label><span>Correo</span><input name="email" type="email" autocomplete="email" maxlength="254" required value="${escapeHtml(session?.email || "")}"></label>
+              <label class="checkout-honeypot" aria-hidden="true"><span>Web</span><input name="website" tabindex="-1" autocomplete="off"></label>
+            </div>
+            <button class="button button--primary" type="submit" id="checkout-button" ${items.length ? "" : "disabled"}>Enviar solicitud de pedido</button>
+            <p class="form-feedback" id="checkout-feedback" role="status"></p>
+          </form>
+          <p class="form-note">Revisaremos la disponibilidad antes de enviarte los datos de Bizum. Esta solicitud todavía no implica ningún pago.</p>
         </div>
       </div>
     </aside>`;
@@ -240,34 +259,65 @@
     document.body.classList.remove("no-scroll");
   }
 
-  function checkout() {
-    const session = getSession();
-    if (!session) {
-      toast("Entra en tu cuenta para asociar el pedido");
-      window.setTimeout(() => { window.location.href = "cuenta.html?checkout=1"; }, 700);
-      return;
-    }
+  async function checkout(form) {
     const cart = getCart();
     const products = getProducts();
     const items = cart.map(item => ({ ...item, product: products.find(p => p.id === item.id) })).filter(i => i.product);
     if (!items.length) return;
-    const order = {
-      id: uid("ALMA"),
-      type: "Compra",
-      email: session.email,
-      customer: session.name,
-      createdAt: new Date().toISOString(),
-      status: "Pendiente de Bizum",
-      total: items.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0),
-      items: items.map(item => ({ id: item.id, name: item.product.name, price: item.product.price, quantity: item.quantity }))
+    const data = new FormData(form);
+    const customer = {
+      name: String(data.get("name") || "").trim(),
+      email: String(data.get("email") || "").trim().toLowerCase()
     };
-    const orders = read(KEYS.orders, []);
-    orders.unshift(order);
-    write(KEYS.orders, orders);
-    write(KEYS.cart, []);
-    renderCart();
-    closeCart();
-    toast(`Pedido ${order.id} creado. Falta confirmar el Bizum.`);
+    const payload = {
+      customer,
+      items: items.map(item => ({ productId: item.id, quantity: item.quantity })),
+      website: String(data.get("website") || "")
+    };
+    const fingerprint = await hash(JSON.stringify({ customer, items: payload.items }));
+    const previousRequest = read(KEYS.orderRequest, null);
+    const idempotencyKey = previousRequest?.fingerprint === fingerprint ? previousRequest.key : requestId();
+    write(KEYS.orderRequest, { fingerprint, key: idempotencyKey });
+
+    const submit = $("#checkout-button", form);
+    const feedback = $("#checkout-feedback", form);
+    submit.disabled = true;
+    submit.textContent = "Enviando solicitud…";
+    feedback.textContent = "";
+
+    try {
+      const response = await fetch("/api/order-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "No hemos podido registrar la solicitud");
+
+      const order = {
+        id: result.orderNumber,
+        type: "Solicitud de pedido",
+        email: customer.email,
+        customer: customer.name,
+        createdAt: new Date().toISOString(),
+        status: "Solicitud recibida",
+        paymentStatus: "Pendiente",
+        total: Number(result.total || 0),
+        items: items.map(item => ({ id: item.id, name: item.product.name, price: item.product.price, quantity: item.quantity }))
+      };
+      const orders = read(KEYS.orders, []).filter(item => item.id !== order.id);
+      orders.unshift(order);
+      write(KEYS.orders, orders);
+      write(KEYS.cart, []);
+      localStorage.removeItem(KEYS.orderRequest);
+      renderCart();
+      closeCart();
+      toast(`Solicitud ${order.id} recibida. Te confirmaremos disponibilidad antes del Bizum.`);
+    } catch (error) {
+      feedback.textContent = error.message || "No hemos podido registrar la solicitud. Inténtalo de nuevo.";
+      submit.disabled = false;
+      submit.textContent = "Reintentar solicitud";
+    }
   }
 
   function setupCartEvents() {
@@ -278,7 +328,11 @@
       if (remove) removeFromCart(remove.dataset.removeCart);
       if (event.target.closest("[data-cart-open]")) openCart();
       if (event.target.closest("[data-close-cart]")) closeCart();
-      if (event.target.closest("#checkout-button")) checkout();
+    });
+    document.addEventListener("submit", event => {
+      if (!event.target.matches("#checkout-form")) return;
+      event.preventDefault();
+      checkout(event.target);
     });
   }
 

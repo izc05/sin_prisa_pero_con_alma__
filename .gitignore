@@ -2,8 +2,8 @@ dist/
 dist-public/
 node_modules/
 .wrangler/
-.dev.vars
-.env
+.dev.vars*
+.env*
 /admin-runtime-config.js
 *.log
 qa/

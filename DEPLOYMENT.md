@@ -31,7 +31,7 @@ En **Workers & Pages → Create application → Pages → Connect to Git**:
 - Repositorio: `izc05/sin_prisa_pero_con_alma__`
 - Rama de producción: `main`
 - Comando de compilación: `npm run build`
-- Directorio de salida: `dist`
+- Directorio de salida: `dist-public`
 - Directorio raíz: dejar vacío
 
 Cada `push` a `main` generará una nueva publicación. Las demás ramas pueden usarse como vistas previas.
@@ -60,16 +60,16 @@ Para administrar o consultar el mini PC desde fuera:
 4. Crear una aplicación de Cloudflare Access y autorizar solo los correos de administración.
 5. Mantener cerrados los puertos del router y evitar publicar SSH o el panel directamente en Internet.
 
-La copia estática del mini PC sirve como réplica y recuperación. No debe considerarse todavía la base de datos central de pedidos.
+El Admin privado usa el build completo `dist/`; PocketBase en `127.0.0.1:8092` es la fuente central de pedidos. El servidor privado hace proxy del API con mismo origen y el hostname exclusivo de recepción bloquea cualquier ruta distinta de `POST /api/sinprisa/order-requests`.
 
 ## Antes de cobrar pedidos reales
 
-La tienda, cuenta y administración funcionan ahora en modo local del navegador. Para compartir cuentas y pedidos entre dispositivos hay que conectar un backend seguro. En Cloudflare, una evolución natural sería Pages Functions o Workers con D1 para datos y R2 para fotografías, manteniendo el frontend actual.
+La cesta envía solicitudes mediante una Pages Function y Cloudflare Access Service Auth hacia PocketBase. Los detalles y secretos operativos están en `docs/PEDIDOS_PRIVADOS.md`.
 
 Orden de puesta en producción:
 
-1. Publicar el frontend en Pages y validar el subdominio público.
-2. Configurar Tunnel y Access para el mini PC.
-3. Incorporar D1 para clientes, encargos y pedidos, y R2 para imágenes.
-4. Sustituir el PIN local del administrador por autenticación real y permisos de servidor.
-5. Activar el cobro solo después de probar estados de pedido, avisos, privacidad y copias de seguridad.
+1. Publicar primero una rama preview y validar una solicitud completa.
+2. Mantener `pedidos-sinprisa.isivoltpro.com` limitado a Service Auth y al endpoint de recepción.
+3. Comprobar que el Admin privado muestra nombre, correo, líneas, cantidades y total.
+4. Confirmar disponibilidad desde el Admin antes de solicitar Bizum.
+5. Fusionar o publicar `main` únicamente con autorización expresa.
