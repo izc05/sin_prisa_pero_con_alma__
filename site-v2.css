@@ -275,6 +275,14 @@ button { color: inherit; }
 .product-detail__note strong { font: 500 1.42rem/1 var(--serif); }
 .product-detail__note p { margin: 9px 0 0; color: var(--ink-soft); font-size: .85rem; }
 .detail-empty { max-width: 660px; padding: clamp(100px, 16vw, 190px) clamp(24px, 7vw, 128px); }
+.text-link { display: inline-block; margin-top: 15px; border-bottom: 1px solid var(--line); color: var(--rose-dark); font: 500 .65rem/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+.purchase-steps { display: grid; grid-template-columns: minmax(250px, .85fr) minmax(0, 1.15fr); gap: clamp(40px, 8vw, 130px); padding: clamp(72px, 9vw, 126px) clamp(24px, 7vw, 128px); border-top: 1px solid var(--line); background: var(--ivory); }
+.purchase-steps ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.purchase-steps li { display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 21px 0; border-bottom: 1px solid var(--line); }
+.purchase-steps li > span { color: var(--rose-dark); font: 500 .66rem/1.5 var(--mono); }
+.purchase-steps strong { font: 500 1.45rem/1.1 var(--serif); }
+.purchase-steps p { margin: 7px 0 0; color: var(--ink-soft); font-size: .84rem; }
 
 .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
 .value { padding: 36px; border-right: 1px solid var(--line); }
@@ -512,6 +520,7 @@ button { color: inherit; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .editorial-page-hero__content { width: min(620px, 58vw); }
   .commission-intro, .faq-section, .brand-manifesto { grid-template-columns: 1fr; }
+  .purchase-steps { grid-template-columns: 1fr; gap: 36px; }
 }
 
 @media (max-width: 760px) {
