@@ -8,7 +8,8 @@
     session: "alma-v2-session",
     orders: "alma-v2-orders",
     messages: "alma-v2-messages",
-    adminPin: "alma-v2-admin-pin"
+    adminPin: "alma-v2-admin-pin",
+    storageNotice: "alma-storage-notice"
   };
 
   const seedProducts = [
@@ -93,10 +94,25 @@
     video?.play().catch(closeWelcome);
   }
 
+  function setupStorageNotice() {
+    if (read(KEYS.storageNotice, false)) return;
+    const notice = document.createElement("section");
+    notice.className = "cookie-notice";
+    notice.setAttribute("role", "dialog");
+    notice.setAttribute("aria-labelledby", "cookie-notice-title");
+    notice.innerHTML = `<div><strong id="cookie-notice-title">Tu privacidad, con calma</strong><p>Esta web solo usa almacenamiento funcional para la cesta y las preferencias de uso. No incorpora analítica ni publicidad.</p><a href="legal.html#cookies">Ver política de cookies</a></div><button type="button" class="button button--primary" data-storage-notice-close>Entendido</button>`;
+    document.body.appendChild(notice);
+    $("[data-storage-notice-close]", notice).addEventListener("click", () => {
+      write(KEYS.storageNotice, true);
+      notice.remove();
+    });
+  }
+
   function productCard(product) {
+    const customLink = `<a class="product-custom-link" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Personalizar esta pieza</a>`;
     const action = product.price == null
-      ? `<a class="button button--outline" href="encargos.html">Contar mi idea</a>`
-      : `<button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
+      ? `<a class="button button--outline" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Contar mi idea</a>`
+      : `<div class="product-actions"><button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>${customLink}</div>`;
     return `<article class="product-card" data-category="${escapeHtml(product.category)}">
       <div class="product-image-wrap">
         <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy">
@@ -319,6 +335,19 @@
       form.elements.name.value = session.name;
       form.elements.email.value = session.email;
     }
+    const selectedProductId = new URLSearchParams(window.location.hash.split("?")[1] || window.location.search).get("pieza");
+    const selectedProduct = getProducts().find(product => product.id === selectedProductId);
+    if (selectedProduct) {
+      const pieceByCategory = { bebé: "Babero", regalo: "Bolsa o saquito", hogar: "Bastidor decorativo" };
+      form.elements.piece.value = pieceByCategory[selectedProduct.category] || "Otra idea";
+      form.elements.details.value = `Quiero personalizar la pieza “${selectedProduct.name}”. `;
+      const note = $("#custom-order-prefill");
+      if (note) {
+        note.hidden = false;
+        note.textContent = `Has elegido personalizar: ${selectedProduct.name}. Cuéntanos cómo la imaginas.`;
+      }
+      form.scrollIntoView({ block: "center" });
+    }
     form.addEventListener("submit", event => {
       event.preventDefault();
       const data = new FormData(form);
@@ -427,6 +456,7 @@
 
   setupNavigation();
   setupWelcome();
+  setupStorageNotice();
   renderProducts();
   setupShopFilters();
   renderCart();

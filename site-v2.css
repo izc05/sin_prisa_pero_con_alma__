@@ -252,6 +252,10 @@ button { color: inherit; }
 .product-info p { grid-column: 1/-1; margin: 0; color: var(--ink-soft); font-size: .84rem; }
 .product-price { font: 500 .78rem/1.4 var(--mono); }
 .product-card .button { grid-column: 1/-1; margin-top: 8px; }
+.product-actions { display: grid; grid-column: 1/-1; gap: 10px; margin-top: 8px; }
+.product-actions .button { margin: 0; }
+.product-custom-link { width: fit-content; border-bottom: 1px solid var(--line); color: var(--ink-soft); font: 500 .64rem/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.product-custom-link:hover { border-color: var(--rose-dark); color: var(--rose-dark); }
 
 .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); border-block: 1px solid var(--line); }
 .value { padding: 36px; border-right: 1px solid var(--line); }
@@ -465,6 +469,11 @@ button { color: inherit; }
 .cart-footer .button { width: 100%; }
 .toast { position: fixed; right: 22px; bottom: 22px; z-index: 300; max-width: 360px; padding: 16px 20px; background: var(--ink); color: white; box-shadow: var(--shadow); transform: translateY(150%); transition: transform 240ms ease; font-size: .84rem; }
 .toast.is-visible { transform: none; }
+.cookie-notice { position: fixed; z-index: 180; right: 22px; bottom: 22px; display: grid; grid-template-columns: 1fr auto; gap: 18px; width: min(520px, calc(100% - 44px)); padding: 18px 20px; border: 1px solid var(--line); background: var(--ivory); box-shadow: var(--shadow); }
+.cookie-notice strong { display: block; font: 500 1.25rem/1 var(--serif); }
+.cookie-notice p { margin: 8px 0; color: var(--ink-soft); font-size: .78rem; }
+.cookie-notice a { border-bottom: 1px solid var(--line); color: var(--ink-soft); font: 500 .62rem/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.cookie-notice .button { align-self: center; margin: 0; white-space: nowrap; }
 
 @media (max-width: 900px) {
   .site-header { grid-template-columns: 1fr auto auto; column-gap: 14px; }
@@ -515,6 +524,8 @@ button { color: inherit; }
   .form-grid { grid-template-columns: 1fr; }
   .field--full { grid-column: auto; }
   .shop-toolbar, .field-inline { display: grid; }
+  .cookie-notice { right: 18px; bottom: 18px; left: 18px; width: auto; grid-template-columns: 1fr; gap: 12px; }
+  .cookie-notice .button { width: 100%; }
   .metrics { grid-template-columns: 1fr; }
   .admin-nav { grid-template-columns: 1fr; }
   .admin-product-row { align-items: flex-start; flex-wrap: wrap; }
