@@ -38,9 +38,15 @@ sudo node scripts/install-pocketbase-order-secret.mjs /etc/sin-prisa-pocketbase-
 ```
 
 `ORDER_INTAKE_URL` no es secreto y se declara en `wrangler.jsonc`. La ruta de
-Tunnel debe apuntar al PocketBase aislado `http://127.0.0.1:8092` y la aplicación
-Access del hostname debe aceptar exclusivamente el Service Token creado para
-Pages. No se habilitan reglas anónimas de escritura en ninguna colección.
+Tunnel apunta al proxy privado `http://127.0.0.1:8084`, que solo permite el POST
+exacto de pedidos en el hostname de entrada. La aplicación Access de ese
+hostname acepta exclusivamente el Service Token creado para Pages. PocketBase
+permanece aislado en `127.0.0.1:8092` y no se habilitan reglas anónimas de
+escritura en ninguna colección.
+
+El Admin remoto usa un hostname distinto, protegido por una aplicación Access
+para las identidades autorizadas. Superar Access no concede permisos de gestión:
+el Admin exige además una cuenta activa de la colección `sinprisa_staff`.
 
 ## Archivos del mini PC
 

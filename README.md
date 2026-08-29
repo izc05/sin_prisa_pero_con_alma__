@@ -1,6 +1,6 @@
 # Sin prisa, pero con alma
 
-Tienda multipágina de bordado artesanal con portada editorial, catálogo, encargos, diario, página de marca, cuenta de cliente, seguimiento de pedidos, panel de administración e información legal.
+Tienda multipágina de bordado artesanal con portada editorial, catálogo, encargos, diario, página de marca, solicitudes privadas de pedido, panel de administración e información legal.
 
 ## Desarrollo local
 
@@ -11,7 +11,7 @@ npm run build
 npm run preview
 ```
 
-El comando genera `dist-public/` con todos los archivos públicos. El Admin y los archivos de PocketBase quedan fuera de esa salida.
+El comando genera `dist-public/` con todos los archivos públicos. El Admin, PocketBase y el prototipo de cuenta local quedan fuera de esa salida.
 
 ## Estructura
 
@@ -20,7 +20,7 @@ El comando genera `dist-public/` con todos los archivos públicos. El Admin y lo
 - `encargos.html`: explicación del proceso y formulario de solicitud.
 - `diario.html`: historias de taller y conexión directa con Instagram, sin API.
 - `marca.html`: relato y valores de la marca.
-- `cuenta.html`: registro local y seguimiento de pedidos.
+- `cuenta.html`: prototipo local conservado para desarrollo; no forma parte del build público.
 - `admin.html`: productos, pedidos y mensajes; en el mini PC usa autenticación privada de PocketBase.
 - `legal.html`: textos base que deben completarse antes de vender.
 - `site-v2.css` y `site-v2.js`: sistema visual y comportamiento compartido.
