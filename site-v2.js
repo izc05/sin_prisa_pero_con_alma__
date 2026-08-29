@@ -67,18 +67,30 @@
 
   function setupWelcome() {
     const welcome = $("#welcome");
-    const enter = $("#enter-site");
-    if (!welcome || !enter) return;
+    if (!welcome) return;
     document.body.classList.add("no-scroll");
     const video = $(".welcome-video", welcome);
+    let closed = false;
+    const onKeydown = event => {
+      if (event.key === "Escape") closeWelcome();
+    };
     const closeWelcome = () => {
+      if (closed) return;
+      closed = true;
       video?.pause();
       welcome.classList.add("is-hidden");
       document.body.classList.remove("no-scroll");
+      window.removeEventListener("keydown", onKeydown);
       window.setTimeout(() => welcome.remove(), 650);
     };
-    video?.play().catch(() => welcome.classList.add("welcome--no-video"));
-    enter.addEventListener("click", closeWelcome, { once: true });
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      closeWelcome();
+      return;
+    }
+    video?.addEventListener("ended", closeWelcome, { once: true });
+    video?.addEventListener("error", closeWelcome, { once: true });
+    window.addEventListener("keydown", onKeydown);
+    video?.play().catch(closeWelcome);
   }
 
   function productCard(product) {
