@@ -38,6 +38,7 @@
   if (!localStorage.getItem(KEYS.messages)) write(KEYS.messages, []);
 
   let catalogProducts = [];
+  let catalogCollections = [];
   let refreshShopFilters = () => {};
   const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
@@ -73,6 +74,10 @@
   async function loadCatalog() {
     try {
       const payload = await apiJson("/api/catalog");
+      catalogCollections = (Array.isArray(payload.collections) ? payload.collections : [])
+        .filter(collection => collection && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(collection.id || "")))
+        .map(collection => ({ id: String(collection.id), name: String(collection.name || "") }))
+        .filter(collection => collection.name);
       catalogProducts = (Array.isArray(payload.products) ? payload.products : [])
         .filter(product => product && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(product.id || "")))
         .map(product => ({
@@ -91,6 +96,7 @@
         }))
         .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
     } catch {
+      catalogCollections = [];
       catalogProducts = [];
     }
     return catalogProducts;
@@ -196,10 +202,19 @@
     });
   }
 
+  function renderCategoryFilters() {
+    const group = $("[data-category-filters]");
+    if (!group) return;
+    group.innerHTML = [
+      { id: "todos", name: "Todo" },
+      ...catalogCollections
+    ].map((collection, index) => `<button class="filter-button${index === 0 ? " is-active" : ""}" type="button" data-filter="${escapeHtml(collection.id)}">${escapeHtml(collection.name)}</button>`).join("");
+  }
+
   function setupShopFilters() {
     const grid = $("#shop-grid");
     if (!grid) return;
-    const filters = $$("[data-filter]");
+    const filterGroup = $("[data-category-filters]");
     const search = $("#shop-search");
     const sort = $("#shop-sort");
     let active = "todos";
@@ -210,11 +225,13 @@
       if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
       grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
     };
-    filters.forEach(button => button.addEventListener("click", () => {
+    filterGroup?.addEventListener("click", event => {
+      const button = event.target.closest("[data-filter]");
+      if (!button || !filterGroup.contains(button)) return;
       active = button.dataset.filter;
-      filters.forEach(item => item.classList.toggle("is-active", item === button));
+      $$("[data-filter]", filterGroup).forEach(item => item.classList.toggle("is-active", item === button));
       update();
-    }));
+    });
     search?.addEventListener("input", update);
     sort?.addEventListener("change", update);
     refreshShopFilters = update;
@@ -632,6 +649,7 @@
   setupAdmin();
   (async () => {
     await Promise.all([loadCustomerSession(), loadCatalog()]);
+    renderCategoryFilters();
     renderProducts();
     refreshShopFilters();
     setupProductDetail();
