@@ -43,6 +43,8 @@
   let activeShopFilter = new URLSearchParams(window.location.search).get("categoria") || "todos";
   let customerCommissions = [];
   let customerCommissionsError = "";
+  let customerOrders = [];
+  let customerOrdersError = "";
   let refreshShopFilters = () => {};
   const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
@@ -467,8 +469,7 @@
     $("#account-email").textContent = session.email;
     const ordersList = $("#customer-orders");
     if (ordersList) {
-      const orders = read(KEYS.orders, []).filter(order => !order.email || order.email.toLowerCase() === String(session.email).toLowerCase());
-      ordersList.innerHTML = orders.length ? orders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">Aún no tienes pedidos. Cuando confirmes uno, verás aquí su estado.</div>`;
+      ordersList.innerHTML = customerOrders.length ? customerOrders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">${customerOrdersError ? `No hemos podido cargar tus pedidos ahora mismo. ${escapeHtml(customerOrdersError)}` : "Aún no tienes pedidos. Cuando confirmes uno, verás aquí su estado."}</div>`;
     }
     const list = $("#customer-commissions");
     if (list) {
@@ -496,6 +497,16 @@
       customerCommissions = [];
       customerCommissionsError = error.message || "No se pudo conectar con el servidor privado.";
     }
+    renderAccount();
+  }
+
+  async function loadCustomerOrders() {
+    if (!getSession()) { customerOrders = []; customerOrdersError = ""; renderAccount(); return; }
+    try {
+      customerOrdersError = "";
+      const payload = await apiJson("/api/account/orders");
+      customerOrders = Array.isArray(payload.orders) ? payload.orders : [];
+    } catch (error) { customerOrders = []; customerOrdersError = error.message || "No se pudo conectar con el servidor privado."; }
     renderAccount();
   }
 
@@ -527,7 +538,7 @@
         renderAccount();
         updateIdentityLinks();
         feedback.textContent = "";
-        await loadCustomerCommissions();
+        await Promise.all([loadCustomerCommissions(), loadCustomerOrders()]);
         toast("Cuenta creada de forma segura");
         continueAfterAuth();
       } catch (error) {
@@ -549,7 +560,7 @@
         renderAccount();
         updateIdentityLinks();
         feedback.textContent = "";
-        await loadCustomerCommissions();
+        await Promise.all([loadCustomerCommissions(), loadCustomerOrders()]);
         toast("Sesión iniciada");
         continueAfterAuth();
       } catch (error) {
@@ -755,7 +766,7 @@
     setupProductDetail();
     renderCart();
     setupAccount();
-    await loadCustomerCommissions();
+    await Promise.all([loadCustomerCommissions(), loadCustomerOrders()]);
     setupCustomOrder();
     updateIdentityLinks();
   })();

@@ -18,7 +18,7 @@ const PUBLIC_POST_PATHS = new Set([
   "/api/collections/sinprisa_customer_accounts/auth-with-password",
   "/api/collections/sinprisa_customer_accounts/auth-refresh"
 ]);
-const PUBLIC_GET_PATHS = new Set(["/api/sinprisa/catalog", "/api/sinprisa/my-commissions"]);
+const PUBLIC_GET_PATHS = new Set(["/api/sinprisa/catalog", "/api/sinprisa/my-commissions", "/api/sinprisa/my-orders"]);
 const PUBLIC_CATALOG_IMAGE_PATH = /^\/api\/sinprisa\/catalog-image\/[a-z0-9]{15}$/;
 const HOP_BY_HOP_HEADERS = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
 

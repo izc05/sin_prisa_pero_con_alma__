@@ -99,6 +99,24 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   return e.json(200, { commissions: commissions })
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
 
+routerAdd("GET", "/api/sinprisa/my-orders", (e) => {
+  const email = String(e.auth.getString("email") || "").trim().toLowerCase()
+  let customer
+  try { customer = e.app.findFirstRecordByData("sinprisa_customers", "email", email) } catch (_) { return e.json(200, { orders: [] }) }
+  const itemsByOrder = {}
+  for (const item of e.app.findAllRecords("sinprisa_order_items")) {
+    if (!item) continue
+    const orderId = item.getString("order")
+    if (!itemsByOrder[orderId]) itemsByOrder[orderId] = []
+    itemsByOrder[orderId].push({ name: item.getString("product_name_snapshot"), quantity: item.getInt("quantity"), unitPrice: item.getFloat("unit_price") })
+  }
+  const labels = { pending: "Solicitud recibida", confirmed: "Pendiente de Bizum", preparing: "En preparación", ready: "En preparación", shipped: "Enviado", completed: "Completado", cancelled: "Cancelado" }
+  const orders = e.app.findAllRecords("sinprisa_orders").filter(record => record && record.getString("customer") === customer.id).map(record => ({
+    id: record.id, number: record.getString("number"), status: labels[record.getString("status")] || record.getString("status"), total: record.getFloat("total"), createdAt: record.getString("created"), items: itemsByOrder[record.id] || []
+  })).sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)))
+  return e.json(200, { orders: orders })
+}, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
+
 routerAdd("POST", "/api/sinprisa/commission-messages", (e) => {
   const accountId = String(e.auth.id || "")
   const body = e.requestInfo().body || {}
