@@ -11,7 +11,8 @@
     messages: "alma-v2-messages",
     adminPin: "alma-v2-admin-pin",
     welcomeSeen: "alma-welcome-seen",
-    storageNotice: "alma-storage-notice"
+    storageNotice: "alma-storage-notice",
+    catalogSnapshot: "alma-v2-public-catalog-snapshot"
   };
 
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -78,8 +79,18 @@
   }
 
   async function loadCatalog() {
+    let payload;
     try {
-      const payload = await apiJson("/api/catalog");
+      payload = await apiJson("/api/catalog");
+      write(KEYS.catalogSnapshot, payload);
+    } catch {
+      payload = read(KEYS.catalogSnapshot, null);
+      if (!payload && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
+        try { payload = await fetch("assets/catalog-preview.json").then(response => response.ok ? response.json() : Promise.reject()); } catch {}
+      }
+      if (!payload) { catalogCollections = []; catalogProducts = []; return catalogProducts; }
+    }
+    try {
       catalogCollections = (Array.isArray(payload.collections) ? payload.collections : [])
         .filter(collection => collection && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(collection.id || "")))
         .map(collection => ({ id: String(collection.id), name: String(collection.name || "") }))
@@ -101,15 +112,7 @@
           badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Disponible"
         }))
         .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
-    } catch {
-      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-        try {
-          const preview = await fetch("assets/catalog-preview.json").then(response => response.ok ? response.json() : Promise.reject());
-          catalogCollections = preview.collections || [];
-          catalogProducts = (preview.products || []).map(product => ({ ...product, stock: product.stockMode !== "sold_out", badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Vista local" }));
-        } catch { catalogCollections = []; catalogProducts = []; }
-      } else { catalogCollections = []; catalogProducts = []; }
-    }
+    } catch { catalogCollections = []; catalogProducts = []; }
     return catalogProducts;
   }
 

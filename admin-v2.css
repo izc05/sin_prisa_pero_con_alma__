@@ -34,8 +34,9 @@ body[data-page="admin"] .page-hero-inner {
   min-height: 30px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  background: rgba(255, 250, 243, 0.72);
-  color: var(--ink-soft);
+  background: #263a4a;
+  border-color: #263a4a;
+  color: #fff;
   font: 500 0.62rem/1 var(--mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -150,9 +151,9 @@ body[data-page="admin"] .admin-nav button::before {
 }
 
 body[data-page="admin"] .admin-nav button.is-active {
-  border-color: rgba(143, 75, 78, 0.16);
-  background: linear-gradient(90deg, var(--rose-pale), rgba(234, 210, 204, 0.35));
-  color: var(--rose-dark);
+  border-color: #7c3035;
+  background: #7c3035;
+  color: #fff;
 }
 
 body[data-page="admin"] .admin-nav button.is-active::before {
@@ -307,17 +308,28 @@ body[data-page="admin"] .admin-product-row img {
   width: fit-content;
   margin-top: 8px;
   padding: 5px 8px;
-  background: rgba(124, 141, 112, 0.12);
-  color: var(--sage);
+  background: #216f61;
+  color: #fff;
   font: 500 0.58rem/1 var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .admin-product-state.is-hidden {
-  background: rgba(185, 104, 104, 0.1);
-  color: var(--rose-dark);
+  background: #9f3037;
+  color: #fff;
 }
+
+.admin-product-state--stock-made_to_order { background: #875a12; }
+.admin-product-state--stock-sold_out { background: #9f3037; }
+.admin-product-state--status { background: #315f91 !important; color: #fff !important; }
+.admin-product-state--status-draft { background: #6c5a32 !important; }
+.admin-product-state--status-hidden, .admin-product-state--status-archived { background: #555d66 !important; }
+.admin-product-state--featured { background: #a74421 !important; color: #fff !important; }
+.admin-stock-action { border-color: #9b6313 !important; background: #fff5df; color: #6f4200; }
+.admin-stock-action:hover { background: #9b6313; color: #fff; }
+body[data-page="admin"] .danger { border-color: #a1252b; background: #a1252b; color: #fff; }
+body[data-page="admin"] .danger:hover { background: #67191d; border-color: #67191d; }
 
 body[data-page="admin"] .admin-product-row .button {
   min-height: 42px;
@@ -359,12 +371,12 @@ body[data-page="admin"] .empty-state {
 .image-lightbox img { display: block; max-width: 100%; max-height: calc(94vh - 62px); margin: 12px auto 0; object-fit: contain; }
 .admin-list-filters { display: flex; justify-content: flex-end; margin: 0 0 18px; }
 .admin-list-filters .field { min-width: 220px; margin: 0; }
-.status--solicitud-recibida, .status--new { background: #e4eff7 !important; color: #155c7c !important; border-color: #a9cfe2 !important; }
-.status--pendiente-de-bizum, .status--reviewing, .status--quoted { background: #fff0c9 !important; color: #805500 !important; border-color: #ead08a !important; }
-.status--en-preparacion, .status--accepted, .status--in-progress { background: #eee2ff !important; color: #5d3b96 !important; border-color: #cdb5ed !important; }
-.status--enviado { background: #dff2ee !important; color: #17665d !important; border-color: #a9d8cf !important; }
-.status--completado { background: #ddf0df !important; color: #28633a !important; border-color: #a9cfb0 !important; }
-.status--cancelado, .status--cancelled, .status--rejected { background: #f8dddd !important; color: #963d3d !important; border-color: #e8b3b3 !important; }
+.status--solicitud-recibida, .status--new { background: #1d5d88 !important; color: #fff !important; border-color: #1d5d88 !important; }
+.status--pendiente-de-bizum, .status--reviewing, .status--quoted { background: #9a6500 !important; color: #fff !important; border-color: #9a6500 !important; }
+.status--en-preparacion, .status--accepted, .status--in-progress { background: #6b3e99 !important; color: #fff !important; border-color: #6b3e99 !important; }
+.status--enviado { background: #08746b !important; color: #fff !important; border-color: #08746b !important; }
+.status--completado { background: #28733d !important; color: #fff !important; border-color: #28733d !important; }
+.status--cancelado, .status--cancelled, .status--rejected { background: #a1252b !important; color: #fff !important; border-color: #a1252b !important; }
 
 .admin-order-notes { margin-top: 14px; }
 .admin-order-notes textarea { min-height: 82px; }
