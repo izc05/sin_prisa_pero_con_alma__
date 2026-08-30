@@ -67,8 +67,8 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   const messagesByCommission = {}
   try {
     for (const message of e.app.findAllRecords("sinprisa_commission_messages")) {
-      if (!message || String(message.get("account") || "") !== accountId) continue
-      const commissionId = String(message.get("commission") || "")
+      if (!message || message.getString("account") !== accountId) continue
+      const commissionId = message.getString("commission")
       if (!messagesByCommission[commissionId]) messagesByCommission[commissionId] = []
       messagesByCommission[commissionId].push({
         author: message.getString("author"),
@@ -78,7 +78,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
     }
   } catch (_) {}
   for (const record of e.app.findAllRecords("sinprisa_commissions")) {
-    if (!record || String(record.get("account") || "") !== accountId) continue
+    if (!record || record.getString("account") !== accountId) continue
     commissions.push({
       id: record.id,
       reference: "ENC-" + record.id.toUpperCase(),
@@ -107,7 +107,7 @@ routerAdd("POST", "/api/sinprisa/commission-messages", (e) => {
   if (!/^[a-z0-9]{15}$/.test(commissionId) || !messageBody || messageBody.length > 4000) throw new BadRequestError("Mensaje no válido")
   let commission
   try { commission = e.app.findRecordById("sinprisa_commissions", commissionId) } catch (_) { throw new NotFoundError("Encargo no encontrado") }
-  if (String(commission.get("account") || "") !== accountId) throw new NotFoundError("Encargo no encontrado")
+  if (commission.getString("account") !== accountId) throw new NotFoundError("Encargo no encontrado")
   const message = new Record(e.app.findCollectionByNameOrId("sinprisa_commission_messages"))
   message.set("commission", commissionId)
   message.set("account", accountId)
