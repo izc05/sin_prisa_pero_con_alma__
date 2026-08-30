@@ -80,6 +80,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   for (const record of e.app.findAllRecords("sinprisa_commissions")) {
     if (!record || String(record.get("account") || "") !== accountId) continue
     commissions.push({
+      id: record.id,
       reference: "ENC-" + record.id.toUpperCase(),
       piece: record.getString("idea"),
       details: record.getString("details"),

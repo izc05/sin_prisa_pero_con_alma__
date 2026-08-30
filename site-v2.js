@@ -42,6 +42,7 @@
   let catalogCollections = [];
   let activeShopFilter = new URLSearchParams(window.location.search).get("categoria") || "todos";
   let customerCommissions = [];
+  let customerCommissionsError = "";
   let refreshShopFilters = () => {};
   const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
@@ -470,21 +471,24 @@
         const messages = Array.isArray(commission.messages) ? commission.messages : [];
         const conversation = messages.length ? `<div class="customer-commission-conversation">${messages.map(message => `<article class="customer-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Tú"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="customer-commission-pending">Estamos revisando tu solicitud. Puedes añadir más detalles aquí si lo necesitas.</p>`;
         return `<article class="order-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(statusLabels[commission.status] || commission.status || "Solicitud recibida")}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p><section class="customer-commission-thread"><strong>Conversación con el atelier</strong>${conversation}<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form></section></article>`;
-      }).join("") : `<div class="empty-state">Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí.</div>`;
+      }).join("") : `<div class="empty-state">${customerCommissionsError ? `No hemos podido cargar tus encargos ahora mismo. ${escapeHtml(customerCommissionsError)} Recarga la página e inténtalo de nuevo.` : "Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí."}</div>`;
     }
   }
 
   async function loadCustomerCommissions() {
     if (!getSession()) {
       customerCommissions = [];
+      customerCommissionsError = "";
       renderAccount();
       return;
     }
     try {
+      customerCommissionsError = "";
       const payload = await apiJson("/api/account/commissions");
       customerCommissions = Array.isArray(payload.commissions) ? payload.commissions : [];
-    } catch {
+    } catch (error) {
       customerCommissions = [];
+      customerCommissionsError = error.message || "No se pudo conectar con el servidor privado.";
     }
     renderAccount();
   }

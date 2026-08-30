@@ -16,7 +16,6 @@ migrate((app) => {
       new TextField({ name: "sent_at", required: true, max: 40 }),
     ],
   })
-  messages.addIndex("idx_sinprisa_commission_messages_commission", false, "commission, sent_at", "")
   app.save(messages)
 }, (app) => {
   try { app.delete(app.findCollectionByNameOrId("sinprisa_commission_messages")) } catch (_) {}
