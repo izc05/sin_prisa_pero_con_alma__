@@ -10,6 +10,7 @@
     orderRequest: "alma-v2-order-request",
     messages: "alma-v2-messages",
     adminPin: "alma-v2-admin-pin",
+    welcomeSeen: "alma-welcome-seen",
     storageNotice: "alma-storage-notice"
   };
 
@@ -141,12 +142,17 @@
     const closeWelcome = () => {
       if (closed) return;
       closed = true;
+      write(KEYS.welcomeSeen, true);
       video?.pause();
       welcome.classList.add("is-hidden");
       document.body.classList.remove("no-scroll");
       window.removeEventListener("keydown", onKeydown);
       window.setTimeout(() => welcome.remove(), 650);
     };
+    if (read(KEYS.welcomeSeen, false)) {
+      closeWelcome();
+      return;
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       closeWelcome();
       return;
