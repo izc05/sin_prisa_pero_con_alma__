@@ -229,7 +229,7 @@
     const visibleMessages = messages.filter(message => !messageFilter || message.status === messageFilter);
     $("#admin-orders").innerHTML = visibleOrders.length ? visibleOrders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos con este estado.</div>`;
     $("#admin-messages").innerHTML = visibleMessages.length ? visibleMessages.map(message => `<article class="message-card">
-      <span class="status">${escapeHtml(message.status || "Nuevo")}</span>
+      <span class="status ${statusTone(message.status || "Nuevo")}">${escapeHtml(message.status || "Nuevo")}</span>
       <h3>${escapeHtml(message.subject || "Mensaje")}</h3>
       <p>${escapeHtml(message.name || "Cliente")}${message.email ? ` · ${escapeHtml(message.email)}` : ""} · ${dateText(message.createdAt)}</p>
       <p>${escapeHtml(message.body || "")}</p>
@@ -470,12 +470,17 @@
         await renderAdmin();
         toast("Estado del pedido actualizado");
       }
-      if (commissionStatus && await adminData.updateCommissionStatus(commissionStatus.dataset.commissionStatus, commissionStatus.value)) {
-        if (commissionStatus.value === "cancelled") {
-          await adminData.addCommissionMessage(commissionStatus.dataset.commissionStatus, "Hola, gracias por compartirnos tu idea. En esta ocasión no podremos continuar con el encargo, pero estaremos encantadas de leerte en otro momento. Un abrazo del atelier.");
+      if (commissionStatus) {
+        const commissionId = commissionStatus.dataset.commissionStatus;
+        const currentCommission = (await adminData.listCommissions()).find(item => item.id === commissionId);
+        const isNewCancellation = commissionStatus.value === "cancelled" && currentCommission?.status !== "cancelled";
+        if (await adminData.updateCommissionStatus(commissionId, commissionStatus.value)) {
+          if (isNewCancellation) {
+            await adminData.addCommissionMessage(commissionId, "Hola, gracias por compartirnos tu idea. En esta ocasión no podremos continuar con el encargo, pero estaremos encantadas de leerte en otro momento. Un abrazo del atelier.");
+          }
+          await renderAdmin();
+          toast(isNewCancellation ? "Encargo cancelado y mensaje enviado a la clienta" : "Estado del encargo actualizado");
         }
-        await renderAdmin();
-        toast("Estado del encargo actualizado");
       }
       if (productStatus && await adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
         await renderAdmin();
