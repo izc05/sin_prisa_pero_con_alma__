@@ -32,5 +32,5 @@ for (const file of files) {
 }
 
 cpSync(resolve(root, "assets"), resolve(output, "assets"), { recursive: true });
-writeFileSync(resolve(output, "admin-runtime-config.js"), `window.ALMA_ADMIN_RUNTIME = Object.freeze({\n  mode: "pocketbase",\n  pocketbaseUrl: window.location.origin\n});\n`);
+writeFileSync(resolve(output, "admin-runtime-config.js"), `window.AlmaAdminRuntimeConfig = Object.freeze({\n  mode: "pocketbase",\n  pocketbaseUrl: window.location.origin\n});\n`);
 console.log(`Sitio preparado en ${output}`);

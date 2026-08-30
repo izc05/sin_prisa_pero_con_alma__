@@ -40,8 +40,8 @@ const requiredAdminFragments = [
   'href="admin-v2-controls.css"',
   'src="admin-data.js?v=3"',
   'src="admin-auth.js"',
-  'src="admin-runtime-config-loader.js"',
-  'src="admin-v2-page.js?v=2"'
+  'src="admin-runtime-config-loader.js?v=2"',
+  'src="admin-v2-page.js?v=3"'
 ];
 
 for (const fragment of requiredAdminFragments) {
@@ -55,7 +55,6 @@ if (admin.includes('src="site-v2.js"')) {
 }
 
 const requiredControllerFragments = [
-  'window.AlmaAdminData.createLocalDriver',
   'window.AlmaAdminData.createPocketBaseDriver',
   'pocketBaseSession.login(',
   'pocketBaseSession.logout()',
@@ -181,6 +180,14 @@ if (/password\s*=\s*["'][^"']+["']/i.test(integrationTest)) {
 
 if (dataGateway.includes("127.0.0.1:8092")) {
   throw new Error("PocketBase URL must be supplied at runtime");
+}
+
+if (!configLoader.includes("global.AlmaAdminRuntimeConfig")) {
+  throw new Error("Runtime config loader must use the canonical global name");
+}
+
+if (/Crear acceso local|demo local|Driver local activo/.test(controller)) {
+  throw new Error("The private Admin must not offer the local PIN fallback");
 }
 
 console.log("Admin V2 contract OK");

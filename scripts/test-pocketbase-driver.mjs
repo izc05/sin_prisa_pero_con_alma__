@@ -192,10 +192,10 @@ const driver = window.AlmaAdminData.createPocketBaseDriver({
 assert.equal(driver.kind, "pocketbase");
 assert.equal(driver.isRemote, true);
 assert.equal(requests.length, 0);
-assert.equal(controllerSource.includes("createLocalDriver("), true);
+assert.equal(controllerSource.includes("createLocalDriver("), false);
 assert.equal(controllerSource.includes("createPocketBaseDriver("), true);
 assert.equal(controllerSource.includes("normalizeRuntimeConfig(configured)"), true);
-assert.equal(controllerSource.includes("if (isPocketBaseMode())"), true);
+assert.equal(controllerSource.includes("if (!isPocketBaseMode())"), true);
 
 const listedProducts = await driver.listProducts();
 assert.equal(listedProducts.length, 2);

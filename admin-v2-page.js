@@ -39,7 +39,7 @@
   }
 
   let adminData;
-  let runtimeConfig = Object.freeze({ mode: "local" });
+  let runtimeConfig = Object.freeze({ mode: "disabled" });
   let pocketBaseSession = null;
   let pocketBaseUser = null;
 
@@ -217,7 +217,7 @@
     if (isPocketBaseMode()) {
       const account = $(".account-link");
       if (account) account.textContent = pocketBaseUser?.name ? `Hola, ${pocketBaseUser.name}` : "Acceso staff";
-      $("#admin-auth-name").textContent = pocketBaseUser?.name || "PocketBase staging";
+      $("#admin-auth-name").textContent = pocketBaseUser?.name || "PocketBase privado";
       $("#admin-auth-role").textContent = pocketBaseUser?.role ? `Rol: ${pocketBaseUser.role}` : "Sesión no iniciada";
       return;
     }
@@ -241,24 +241,14 @@
       secretLabel.textContent = "Contraseña";
       $("#admin-lock-title").textContent = "Entrar en el Admin V2";
       $("#admin-pin-hint").textContent = "Usa tu cuenta staff de PocketBase. La sesión termina al cerrar esta pestaña.";
-      $("#admin-lock-notice").textContent = "Staging local: la sesión se guarda únicamente en sessionStorage y no usa el PIN de desarrollo.";
+      $("#admin-lock-notice").textContent = "La sesión se guarda únicamente en esta pestaña y el Admin no usa un PIN local.";
       $("#admin-login-submit").textContent = "Iniciar sesión";
-      $("#admin-data-mode").textContent = "PocketBase staging activo";
+      $("#admin-data-mode").textContent = "PocketBase privado activo";
       setupIdentity();
       return;
     }
 
-    const hasPin = Boolean(localStorage.getItem(KEYS.adminPin));
-    emailField.hidden = true;
-    emailInput.required = false;
-    secretInput.name = "pin";
-    secretInput.minLength = 4;
-    secretLabel.textContent = "PIN";
-    $("#admin-lock-title").textContent = hasPin ? "Entrar en administración" : "Crear acceso local";
-    $("#admin-pin-hint").textContent = hasPin ? "Introduce el PIN creado en este navegador." : "Crea un PIN de al menos 4 caracteres para proteger esta demo local.";
-    $("#admin-lock-notice").textContent = "Este PIN protege solo esta demostración local en el navegador.";
-    $("#admin-login-submit").textContent = "Acceder al panel";
-    $("#admin-data-mode").textContent = "Driver local activo";
+    throw new Error("El Admin privado no tiene una conexión válida con PocketBase");
   }
 
   function lockPocketBaseAdmin() {
@@ -567,27 +557,27 @@
       const configured = await (window.AlmaAdminRuntimeConfigReady || Promise.resolve(null));
       runtimeConfig = window.AlmaAdminAuth.normalizeRuntimeConfig(configured);
 
-      if (isPocketBaseMode()) {
-        const runtimeFetch = window.fetch.bind(window);
-        pocketBaseSession = window.AlmaAdminAuth.createPocketBaseSession({
-          url: runtimeConfig.pocketbaseUrl,
-          fetch: runtimeFetch,
-          storage: window.sessionStorage
-        });
-        adminData = window.AlmaAdminData.createPocketBaseDriver({
-          url: runtimeConfig.pocketbaseUrl,
-          token: () => pocketBaseSession.getToken(),
-          fetch: runtimeFetch
-        });
-        localStorage.removeItem(KEYS.adminPin);
-        try {
-          pocketBaseUser = await pocketBaseSession.restore();
-        } catch {
-          pocketBaseSession.logout();
-          $("#admin-lock-feedback").textContent = "No se pudo conectar con PocketBase staging.";
-        }
-      } else {
-        adminData = window.AlmaAdminData.createLocalDriver({ seedProducts, seedCollections });
+      if (!isPocketBaseMode()) {
+        throw new Error("El Admin privado no tiene una conexión válida con PocketBase");
+      }
+
+      const runtimeFetch = window.fetch.bind(window);
+      pocketBaseSession = window.AlmaAdminAuth.createPocketBaseSession({
+        url: runtimeConfig.pocketbaseUrl,
+        fetch: runtimeFetch,
+        storage: window.sessionStorage
+      });
+      adminData = window.AlmaAdminData.createPocketBaseDriver({
+        url: runtimeConfig.pocketbaseUrl,
+        token: () => pocketBaseSession.getToken(),
+        fetch: runtimeFetch
+      });
+      localStorage.removeItem(KEYS.adminPin);
+      try {
+        pocketBaseUser = await pocketBaseSession.restore();
+      } catch {
+        pocketBaseSession.logout();
+        $("#admin-lock-feedback").textContent = "No se pudo conectar con PocketBase privado.";
       }
 
       setupNavigation();
