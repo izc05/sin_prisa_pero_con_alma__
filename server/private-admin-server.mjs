@@ -13,6 +13,7 @@ const PUBLIC_SITE_URL = new URL(process.env.SINPRISA_PUBLIC_SITE_URL || "https:/
 const PUBLIC_POST_PATHS = new Set([
   ORDER_PATH,
   "/api/sinprisa/commissions",
+  "/api/sinprisa/commission-messages",
   "/api/collections/sinprisa_customer_accounts/records",
   "/api/collections/sinprisa_customer_accounts/auth-with-password",
   "/api/collections/sinprisa_customer_accounts/auth-refresh"

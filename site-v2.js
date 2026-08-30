@@ -466,7 +466,11 @@
     const list = $("#customer-commissions");
     if (list) {
       const statusLabels = { new: "Solicitud recibida", reviewing: "En revisión", quoted: "Presupuesto enviado", accepted: "Aceptado", in_progress: "En preparación", completed: "Completado", rejected: "No viable", cancelled: "Cancelado" };
-      list.innerHTML = customerCommissions.length ? customerCommissions.map(commission => `<article class="order-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(statusLabels[commission.status] || commission.status || "Solicitud recibida")}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p>${commission.reply ? `<div class="customer-commission-reply"><strong>Respuesta del atelier</strong><p>${escapeHtml(commission.reply)}</p></div>` : `<p class="customer-commission-pending">Estamos revisando tu solicitud. Te avisaremos aquí cuando tengamos una respuesta.</p>`}</article>`).join("") : `<div class="empty-state">Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí.</div>`;
+      list.innerHTML = customerCommissions.length ? customerCommissions.map(commission => {
+        const messages = Array.isArray(commission.messages) ? commission.messages : [];
+        const conversation = messages.length ? `<div class="customer-commission-conversation">${messages.map(message => `<article class="customer-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Tú"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="customer-commission-pending">Estamos revisando tu solicitud. Puedes añadir más detalles aquí si lo necesitas.</p>`;
+        return `<article class="order-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(statusLabels[commission.status] || commission.status || "Solicitud recibida")}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p><section class="customer-commission-thread"><strong>Conversación con el atelier</strong>${conversation}<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form></section></article>`;
+      }).join("") : `<div class="empty-state">Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí.</div>`;
     }
   }
 
@@ -547,6 +551,23 @@
       customerSession = null;
       renderAccount();
       updateIdentityLinks();
+    });
+    $("#customer-commissions")?.addEventListener("submit", async event => {
+      const form = event.target.closest("[data-customer-commission-chat]");
+      if (!form) return;
+      event.preventDefault();
+      const feedback = $(".form-feedback", form);
+      const submit = $("button[type=submit]", form);
+      const message = String(new FormData(form).get("message") || "").trim();
+      feedback.textContent = "Enviando mensaje…";
+      submit.disabled = true;
+      try {
+        await apiJson("/api/account/commission-messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ commission: form.dataset.customerCommissionChat, message }) });
+        await loadCustomerCommissions();
+      } catch (error) {
+        feedback.textContent = error.message || "No se pudo enviar el mensaje";
+        submit.disabled = false;
+      }
     });
     renderAccount();
   }

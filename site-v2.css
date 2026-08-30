@@ -517,10 +517,22 @@ button { color: inherit; }
 .admin-commission-reply { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
 .admin-commission-reply textarea { width: 100%; min-height: 130px; resize: vertical; border: 1px solid var(--line); background: var(--ivory); padding: 13px 14px; color: var(--ink); }
 .admin-commission-reply .button { justify-self: start; }
+.admin-commission-thread { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
+.admin-commission-conversation, .customer-commission-conversation { display: grid; gap: 10px; margin: 12px 0 18px; }
+.admin-chat-message, .customer-chat-message { max-width: min(620px, 92%); padding: 13px 15px; background: var(--ivory); border: 1px solid var(--line); }
+.admin-chat-message.is-atelier, .customer-chat-message.is-atelier { justify-self: end; background: var(--rose-pale); }
+.admin-chat-message strong, .customer-chat-message strong { font: 500 .62rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.admin-chat-message p, .customer-chat-message p { margin: 8px 0 0; line-height: 1.55; white-space: pre-wrap; }
 .customer-commission-reply { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--sage); background: rgba(124,141,112,.1); }
 .customer-commission-reply strong { font: 500 .68rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
 .customer-commission-reply p, .customer-commission-pending { margin: 9px 0 0; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
 .customer-commission-pending { font-size: .82rem; font-style: italic; }
+.customer-commission-thread { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
+.customer-commission-thread > strong { font: 500 .7rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.customer-commission-thread form { display: grid; gap: 10px; margin-top: 14px; }
+.customer-commission-thread label { display: grid; gap: 8px; color: var(--ink-soft); font: 500 .62rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.customer-commission-thread textarea { min-height: 88px; resize: vertical; border: 1px solid var(--line); background: var(--ivory); padding: 12px; color: var(--ink); }
+.customer-commission-thread .button { justify-self: start; }
 
 .site-footer { padding: 70px clamp(24px, 7vw, 128px) 28px; border-top: 1px solid var(--line); background: var(--ivory); }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(3, .7fr); gap: 50px; }

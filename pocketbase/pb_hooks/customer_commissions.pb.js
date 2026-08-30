@@ -64,6 +64,19 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
 routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   const commissions = []
   const accountId = String(e.auth.id || "")
+  const messagesByCommission = {}
+  try {
+    for (const message of e.app.findAllRecords("sinprisa_commission_messages")) {
+      if (!message || String(message.get("account") || "") !== accountId) continue
+      const commissionId = String(message.get("commission") || "")
+      if (!messagesByCommission[commissionId]) messagesByCommission[commissionId] = []
+      messagesByCommission[commissionId].push({
+        author: message.getString("author"),
+        body: message.getString("body"),
+        sentAt: message.getString("sent_at"),
+      })
+    }
+  } catch (_) {}
   for (const record of e.app.findAllRecords("sinprisa_commissions")) {
     if (!record || String(record.get("account") || "") !== accountId) continue
     commissions.push({
@@ -74,8 +87,32 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
       status: record.getString("status"),
       createdAt: record.getString("event_date"),
       reply: record.getString("customer_reply"),
+      messages: messagesByCommission[record.id] || [],
     })
+  }
+  for (const commission of commissions) {
+    if (commission.reply) commission.messages.push({ author: "atelier", body: commission.reply, sentAt: "" })
+    commission.messages.sort((left, right) => String(left.sentAt).localeCompare(String(right.sentAt)))
   }
   commissions.sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)))
   return e.json(200, { commissions: commissions })
+}, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
+
+routerAdd("POST", "/api/sinprisa/commission-messages", (e) => {
+  const accountId = String(e.auth.id || "")
+  const body = e.requestInfo().body || {}
+  const commissionId = String(body.commission || "").trim()
+  const messageBody = String(body.message || "").trim()
+  if (!/^[a-z0-9]{15}$/.test(commissionId) || !messageBody || messageBody.length > 4000) throw new BadRequestError("Mensaje no válido")
+  let commission
+  try { commission = e.app.findRecordById("sinprisa_commissions", commissionId) } catch (_) { throw new NotFoundError("Encargo no encontrado") }
+  if (String(commission.get("account") || "") !== accountId) throw new NotFoundError("Encargo no encontrado")
+  const message = new Record(e.app.findCollectionByNameOrId("sinprisa_commission_messages"))
+  message.set("commission", commissionId)
+  message.set("account", accountId)
+  message.set("author", "customer")
+  message.set("body", messageBody)
+  message.set("sent_at", new Date().toISOString())
+  e.app.save(message)
+  return e.json(201, { message: { author: "customer", body: messageBody, sentAt: message.getString("sent_at") } })
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())

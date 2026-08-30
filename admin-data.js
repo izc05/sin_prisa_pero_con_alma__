@@ -306,7 +306,8 @@
     orders: "sinprisa_orders",
     orderItems: "sinprisa_order_items",
     messages: "sinprisa_messages",
-    commissions: "sinprisa_commissions"
+    commissions: "sinprisa_commissions",
+    commissionMessages: "sinprisa_commission_messages"
   });
   const ORDER_STATUS_TO_POCKETBASE = Object.freeze({
     "Solicitud recibida": "pending",
@@ -667,7 +668,7 @@
       return payload;
     }
 
-    function mapCommission(record, fileToken = "") {
+    function mapCommission(record, fileToken = "", messages = []) {
       const customer = record.expand?.customer || {};
       const filenames = safeArray(record.reference_images, []);
       return {
@@ -680,6 +681,7 @@
         quantity: Number(record.quantity || 1),
         status: String(record.status || "new"),
         customerReply: String(record.customer_reply || ""),
+        messages: messages.filter(message => String(message.commission || "") === String(record.id)).map(message => ({ author: String(message.author || ""), body: String(message.body || ""), sentAt: String(message.sent_at || "") })).sort((left, right) => left.sentAt.localeCompare(right.sentAt)),
         images: filenames.map(filename => ({ filename, src: fileSource(POCKETBASE_COLLECTIONS.commissions, record, filename, fileToken) })),
         createdAt: record.created || null
       };
@@ -898,11 +900,12 @@
       },
 
       async listCommissions() {
-        const [records, fileAuth] = await Promise.all([
+        const [records, fileAuth, messages] = await Promise.all([
           listRecords(POCKETBASE_COLLECTIONS.commissions, { expand: "customer" }),
-          request("/api/files/token", { method: "POST" }).catch(() => ({ token: "" }))
+          request("/api/files/token", { method: "POST" }).catch(() => ({ token: "" })),
+          listRecords(POCKETBASE_COLLECTIONS.commissionMessages).catch(() => [])
         ]);
-        return records.map(record => mapCommission(record, String(fileAuth?.token || "")));
+        return records.map(record => mapCommission(record, String(fileAuth?.token || ""), messages));
       },
 
       async updateCommissionStatus(commissionId, status) {
@@ -925,6 +928,15 @@
         }
         if (!Object.keys(payload).length) return true;
         await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: payload });
+        return true;
+      },
+
+      async addCommissionMessage(commissionId, body) {
+        const text = String(body || "").trim();
+        if (!text || text.length > 4000) throw new TypeError("La respuesta debe tener entre 1 y 4.000 caracteres");
+        const commission = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
+        if (!commission) return false;
+        await request(recordsPath(POCKETBASE_COLLECTIONS.commissionMessages), { method: "POST", body: { commission: commissionId, account: String(commission.account || ""), author: "atelier", body: text, sent_at: new Date().toISOString() } });
         return true;
       },
 
