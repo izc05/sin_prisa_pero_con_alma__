@@ -299,6 +299,12 @@ button { color: inherit; }
 .product-detail__note p { margin: 9px 0 0; color: var(--ink-soft); font-size: .85rem; }
 .detail-empty { max-width: 660px; padding: clamp(100px, 16vw, 190px) clamp(24px, 7vw, 128px); }
 .text-link { display: inline-block; margin-top: 15px; border-bottom: 1px solid var(--line); color: var(--rose-dark); font: 500 .65rem/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.status--solicitud-recibida, .status--new { background: #e4eff7; color: #155c7c; border-color: #a9cfe2; }
+.status--pendiente-de-bizum, .status--reviewing, .status--quoted { background: #fff0c9; color: #805500; border-color: #ead08a; }
+.status--en-preparacion, .status--accepted, .status--in-progress { background: #eee2ff; color: #5d3b96; border-color: #cdb5ed; }
+.status--enviado { background: #dff2ee; color: #17665d; border-color: #a9d8cf; }
+.status--completado { background: #ddf0df; color: #28633a; border-color: #a9cfb0; }
+.status--cancelado, .status--cancelled, .status--rejected { background: #f8dddd; color: #963d3d; border-color: #e8b3b3; }
 
 .purchase-steps { display: grid; grid-template-columns: minmax(250px, .85fr) minmax(0, 1.15fr); gap: clamp(40px, 8vw, 130px); padding: clamp(72px, 9vw, 126px) clamp(24px, 7vw, 128px); border-top: 1px solid var(--line); background: var(--ivory); }
 .purchase-steps ol { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }

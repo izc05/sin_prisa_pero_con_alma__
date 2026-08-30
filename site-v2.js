@@ -444,9 +444,10 @@
   }
 
   function orderMarkup(order, admin = false) {
+    const tone = String(order.status || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
     const details = order.items?.length ? order.items.map(item => `${escapeHtml(item.name)} × ${item.quantity}`).join(" · ") : escapeHtml(order.details || "Encargo personalizado");
     return `<article class="order-card">
-      <div class="order-head"><div><h3>${escapeHtml(order.id)}</h3><span class="status">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
+      <div class="order-head"><div><h3>${escapeHtml(order.id)}</h3><span class="status status--${tone}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
       <p>${escapeHtml(order.type)} · ${dateText(order.createdAt)}${admin ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
       ${admin ? `<label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}"><option ${order.status === "Solicitud recibida" ? "selected" : ""}>Solicitud recibida</option><option ${order.status === "Pendiente de Bizum" ? "selected" : ""}>Pendiente de Bizum</option><option ${order.status === "En preparación" ? "selected" : ""}>En preparación</option><option ${order.status === "Enviado" ? "selected" : ""}>Enviado</option><option ${order.status === "Completado" ? "selected" : ""}>Completado</option></select></label>` : ""}
@@ -464,6 +465,11 @@
     if (!session) return;
     $("#account-name").textContent = session.name;
     $("#account-email").textContent = session.email;
+    const ordersList = $("#customer-orders");
+    if (ordersList) {
+      const orders = read(KEYS.orders, []).filter(order => !order.email || order.email.toLowerCase() === String(session.email).toLowerCase());
+      ordersList.innerHTML = orders.length ? orders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">Aún no tienes pedidos. Cuando confirmes uno, verás aquí su estado.</div>`;
+    }
     const list = $("#customer-commissions");
     if (list) {
       const statusLabels = { new: "Solicitud recibida", reviewing: "En revisión", quoted: "Presupuesto enviado", accepted: "Aceptado", in_progress: "En preparación", completed: "Completado", rejected: "No viable", cancelled: "Cancelado" };

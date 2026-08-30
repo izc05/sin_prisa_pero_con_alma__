@@ -30,6 +30,7 @@
   const priceModeLabel = (mode) => ({ fixed: "Precio fijo", from: "Desde", quote: "Consultar" })[mode] || "Precio fijo";
   const stockModeLabel = (mode) => ({ available: "Disponible", made_to_order: "Bajo pedido", sold_out: "Agotado" })[mode] || "Disponible";
   const statusLabel = (status) => ({ draft: "Borrador", published: "Publicado", hidden: "Oculto", archived: "Archivado" })[status] || "Publicado";
+  const statusTone = (status = "") => `status--${String(status).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-")}`;
 
   if (!window.AlmaAdminData?.createLocalDriver || !window.AlmaAdminData?.createPocketBaseDriver || !window.AlmaAdminAuth) {
     console.error("Admin V2: no se encontró el gateway de datos.");
@@ -99,7 +100,7 @@
       : escapeHtml(order.details || "Encargo personalizado");
     const options = ["Solicitud recibida", "Pendiente de Bizum", "En preparación", "Enviado", "Completado"];
     return `<article class="order-card">
-      <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
+      <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status ${statusTone(order.status)}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
       <p>${escapeHtml(order.type || "Pedido")} · ${dateText(order.createdAt)}${order.customerName ? ` · ${escapeHtml(order.customerName)}` : ""}${order.email ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
       <label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}">${options.map(option => `<option ${order.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></label>
@@ -110,11 +111,11 @@
     const labels = { new: "Nuevo", reviewing: "Revisando", quoted: "Presupuestado", accepted: "Aceptado", in_progress: "En proceso", completed: "Completado", rejected: "No viable", cancelled: "Cancelado" };
     const options = Object.entries(labels).map(([value, label]) => `<option value="${value}" ${commission.status === value ? "selected" : ""}>${label}</option>`).join("");
     const images = commission.images?.length
-      ? `<div class="admin-commission-gallery">${commission.images.map((image, index) => `<a href="${escapeHtml(image.src)}" target="_blank" rel="noreferrer"><img src="${escapeHtml(image.src)}" alt="Referencia ${index + 1} del encargo ${escapeHtml(commission.reference)}"><span>Ver imagen ${index + 1}</span></a>`).join("")}</div>`
+      ? `<div class="admin-commission-gallery">${commission.images.map((image, index) => `<button class="admin-image-preview" type="button" data-image-preview="${escapeHtml(image.src)}" data-image-alt="Referencia ${index + 1} del encargo ${escapeHtml(commission.reference)}"><img src="${escapeHtml(image.src)}" alt="Referencia ${index + 1} del encargo ${escapeHtml(commission.reference)}"><span>Ampliar imagen ${index + 1}</span></button>`).join("")}</div>`
       : `<p class="admin-commission-empty">Sin imágenes de referencia.</p>`;
     const messages = [...(commission.messages || []), ...(commission.customerReply ? [{ author: "atelier", body: commission.customerReply, sentAt: "" }] : [])];
     const conversation = messages.length ? `<div class="admin-commission-conversation">${messages.map(message => `<article class="admin-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Clienta"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="admin-commission-empty">Aún no hay mensajes en esta conversación.</p>`;
-    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<div class="admin-commission-thread"><p class="admin-sidebar-kicker">Conversación</p>${conversation}<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label></div></section><label class="field admin-commission-status"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label></div></article>`;
+    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status)}">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<div class="admin-commission-thread"><p class="admin-sidebar-kicker">Conversación</p>${conversation}<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label></div></section><label class="field admin-commission-status"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label></div></article>`;
   }
 
   function galleryMarkup(product) {
@@ -211,15 +212,21 @@
     renderProductCatalog(products, collections);
     renderProductCategoryOptions(collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
-    $("#admin-orders").innerHTML = orders.length ? orders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos todavía.</div>`;
-    $("#admin-messages").innerHTML = messages.length ? messages.map(message => `<article class="message-card">
+    const orderFilter = $("#order-filter-status")?.value || "";
+    const commissionFilter = $("#commission-filter-status")?.value || "active";
+    const messageFilter = $("#message-filter-status")?.value || "";
+    const visibleOrders = orders.filter(order => !orderFilter || order.status === orderFilter);
+    const visibleCommissions = commissions.filter(commission => commissionFilter === "active" ? !["completed", "rejected", "cancelled"].includes(commission.status) : !commissionFilter || commission.status === commissionFilter);
+    const visibleMessages = messages.filter(message => !messageFilter || message.status === messageFilter);
+    $("#admin-orders").innerHTML = visibleOrders.length ? visibleOrders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos con este estado.</div>`;
+    $("#admin-messages").innerHTML = visibleMessages.length ? visibleMessages.map(message => `<article class="message-card">
       <span class="status">${escapeHtml(message.status || "Nuevo")}</span>
       <h3>${escapeHtml(message.subject || "Mensaje")}</h3>
       <p>${escapeHtml(message.name || "Cliente")}${message.email ? ` · ${escapeHtml(message.email)}` : ""} · ${dateText(message.createdAt)}</p>
       <p>${escapeHtml(message.body || "")}</p>
       ${message.status === "Leído" ? "" : `<button class="button button--quiet" type="button" data-read-message="${escapeHtml(message.id)}">Marcar como leído</button>`}
     </article>`).join("") : `<div class="empty-state">No hay mensajes todavía.</div>`;
-    $("#admin-commissions").innerHTML = commissions.length ? commissions.map(commissionMarkup).join("") : `<div class="empty-state">Todavía no hay encargos personalizados.</div>`;
+    $("#admin-commissions").innerHTML = visibleCommissions.length ? visibleCommissions.map(commissionMarkup).join("") : `<div class="empty-state">No hay encargos en este grupo.</div>`;
   }
 
   async function unlockAdmin() {
@@ -437,10 +444,9 @@
       toast(isPocketBaseMode() ? "Colección creada en PocketBase" : "Colección creada en el catálogo local");
     });
 
-    ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock"].forEach(selector => {
+    ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock", "#order-filter-status", "#commission-filter-status", "#message-filter-status"].forEach(selector => {
       $(selector)?.addEventListener(selector === "#product-search" ? "input" : "change", async () => {
-        const [products, collections] = await Promise.all([adminData.listProducts(), adminData.listCollections()]);
-        renderProductCatalog(products, collections);
+        await renderAdmin();
       });
     });
 
@@ -456,6 +462,9 @@
         toast("Estado del pedido actualizado");
       }
       if (commissionStatus && await adminData.updateCommissionStatus(commissionStatus.dataset.commissionStatus, commissionStatus.value)) {
+        if (commissionStatus.value === "cancelled") {
+          await adminData.addCommissionMessage(commissionStatus.dataset.commissionStatus, "Hola, gracias por compartirnos tu idea. En esta ocasión no podremos continuar con el encargo, pero estaremos encantadas de leerte en otro momento. Un abrazo del atelier.");
+        }
         await renderAdmin();
         toast("Estado del encargo actualizado");
       }
@@ -496,6 +505,7 @@
     });
 
     document.addEventListener("click", async event => {
+      const imagePreview = event.target.closest("[data-image-preview]");
       const stock = event.target.closest("[data-toggle-stock]");
       const remove = event.target.closest("[data-delete-product]");
       const readMessage = event.target.closest("[data-read-message]");
@@ -505,6 +515,15 @@
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
+
+      if (imagePreview) {
+        const dialog = document.createElement("dialog");
+        dialog.className = "image-lightbox";
+        dialog.innerHTML = `<button class="button button--quiet" type="button">Cerrar</button><img src="${escapeHtml(imagePreview.dataset.imagePreview)}" alt="${escapeHtml(imagePreview.dataset.imageAlt || "Imagen ampliada")}">`;
+        dialog.addEventListener("click", item => { if (item.target === dialog || item.target.closest("button")) dialog.close(); });
+        dialog.addEventListener("close", () => dialog.remove());
+        document.body.appendChild(dialog); dialog.showModal(); return;
+      }
 
       if (stock) {
         const product = (await adminData.listProducts()).find(item => item.id === stock.dataset.toggleStock);

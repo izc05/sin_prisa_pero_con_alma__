@@ -352,6 +352,19 @@ body[data-page="admin"] .empty-state {
 .commission-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 18px 0; }
 .commission-gallery a { display: block; aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid var(--line); background: white; }
 .commission-gallery img { width: 100%; height: 100%; object-fit: cover; }
+.admin-image-preview { position: relative; display: block; padding: 0; overflow: hidden; border: 1px solid var(--line); background: white; cursor: zoom-in; text-align: left; }
+.admin-image-preview span { position: absolute; right: 8px; bottom: 8px; padding: 5px 7px; background: rgba(255,250,243,.92); color: var(--ink); font: 500 .55rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+.image-lightbox { width: min(96vw, 1100px); max-height: 94vh; padding: 16px; border: 0; background: var(--paper); box-shadow: var(--shadow); }
+.image-lightbox::backdrop { background: rgba(39, 24, 21, .72); }
+.image-lightbox img { display: block; max-width: 100%; max-height: calc(94vh - 62px); margin: 12px auto 0; object-fit: contain; }
+.admin-list-filters { display: flex; justify-content: flex-end; margin: 0 0 18px; }
+.admin-list-filters .field { min-width: 220px; margin: 0; }
+.status--solicitud-recibida, .status--new { background: #e4eff7 !important; color: #155c7c !important; border-color: #a9cfe2 !important; }
+.status--pendiente-de-bizum, .status--reviewing, .status--quoted { background: #fff0c9 !important; color: #805500 !important; border-color: #ead08a !important; }
+.status--en-preparacion, .status--accepted, .status--in-progress { background: #eee2ff !important; color: #5d3b96 !important; border-color: #cdb5ed !important; }
+.status--enviado { background: #dff2ee !important; color: #17665d !important; border-color: #a9d8cf !important; }
+.status--completado { background: #ddf0df !important; color: #28633a !important; border-color: #a9cfb0 !important; }
+.status--cancelado, .status--cancelled, .status--rejected { background: #f8dddd !important; color: #963d3d !important; border-color: #e8b3b3 !important; }
 
 @media (max-width: 1100px) {
   body[data-page="admin"] .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
