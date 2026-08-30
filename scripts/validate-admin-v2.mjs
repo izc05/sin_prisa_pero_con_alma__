@@ -36,12 +36,12 @@ const requiredAdminFragments = [
   'id="product-filter-collection"',
   'id="product-filter-status"',
   'id="product-filter-stock"',
-  'href="admin-v2.css?v=5"',
-  'href="admin-v2-controls.css?v=5"',
-  'src="admin-data.js?v=5"',
+  'href="admin-v2.css?v=6"',
+  'href="admin-v2-controls.css?v=6"',
+  'src="admin-data.js?v=6"',
   'src="admin-auth.js"',
   'src="admin-runtime-config-loader.js?v=2"',
-  'src="admin-v2-page.js?v=5"'
+  'src="admin-v2-page.js?v=6"'
 ];
 
 for (const fragment of requiredAdminFragments) {
