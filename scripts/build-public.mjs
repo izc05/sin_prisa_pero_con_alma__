@@ -9,6 +9,7 @@ const publicFiles = [
   "encargos.html",
   "diario.html",
   "marca.html",
+  "cuenta.html",
   "legal.html",
   "site-v2.css",
   "site-v2.js",
@@ -17,9 +18,6 @@ const publicFiles = [
   ".nojekyll"
 ];
 const adminFooterLink = '<a href="admin.html">Administración</a>';
-const accountHeaderLink = /<a class="account-link" href="cuenta\.html"(?: aria-current="page")?>Mi cuenta<\/a>/g;
-const accountFooterLinks = '<a href="cuenta.html">Mi cuenta</a><a href="cuenta.html">Estado de pedidos</a>';
-const publicOrderLinks = '<a href="encargos.html">Solicitar un encargo</a><a href="legal.html">Envíos y devoluciones</a>';
 
 if (existsSync(output)) rmSync(output, { recursive: true });
 mkdirSync(output, { recursive: true });
@@ -32,8 +30,6 @@ for (const file of publicFiles) {
       destination,
       readFileSync(source, "utf8")
         .replaceAll(adminFooterLink, "")
-        .replace(accountHeaderLink, "")
-        .replaceAll(accountFooterLinks, publicOrderLinks)
     );
   } else {
     cpSync(source, destination);

@@ -9,6 +9,14 @@ const DOCUMENT_ROOT = await realpath(process.env.SINPRISA_DOCUMENT_ROOT || "/srv
 const POCKETBASE_URL = new URL(process.env.SINPRISA_POCKETBASE_URL || "http://127.0.0.1:8092");
 const ORDER_INGRESS_HOST = process.env.SINPRISA_ORDER_INGRESS_HOST || "pedidos-sinprisa.isivoltpro.com";
 const ORDER_PATH = "/api/sinprisa/order-requests";
+const PUBLIC_SITE_URL = new URL(process.env.SINPRISA_PUBLIC_SITE_URL || "https://sinprisa.isivoltpro.com");
+const PUBLIC_API_PATHS = new Set([
+  ORDER_PATH,
+  "/api/sinprisa/commissions",
+  "/api/collections/sinprisa_customer_accounts/records",
+  "/api/collections/sinprisa_customer_accounts/auth-with-password",
+  "/api/collections/sinprisa_customer_accounts/auth-refresh"
+]);
 const HOP_BY_HOP_HEADERS = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
 
 const MIME_TYPES = new Map([
@@ -138,12 +146,17 @@ const server = http.createServer(async (request, response) => {
     catch { return ""; }
   })();
   const orderIngress = requestHostname(request) === ORDER_INGRESS_HOST;
-  if (orderIngress && (request.method !== "POST" || pathname !== ORDER_PATH)) {
+  if (orderIngress && (request.method !== "POST" || !PUBLIC_API_PATHS.has(pathname))) {
     sendText(response, 404, "Not Found\n");
     return;
   }
   if (pathname.startsWith("/api/")) {
     proxyToPocketBase(request, response);
+    return;
+  }
+  if (!orderIngress && pathname === "/cuenta.html") {
+    response.writeHead(302, { Location: new URL("/cuenta.html", PUBLIC_SITE_URL).toString(), "Cache-Control": "no-store" });
+    response.end();
     return;
   }
   if (orderIngress) {

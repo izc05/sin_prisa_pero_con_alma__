@@ -181,6 +181,10 @@
         return safeArray(read(keys.messages, []));
       },
 
+      async listCommissions() {
+        return [];
+      },
+
       async saveMessages(messages) {
         if (!Array.isArray(messages)) throw new TypeError("messages debe ser un array");
         return write(keys.messages, messages);
@@ -287,6 +291,10 @@
         message.status = "Leído";
         await this.saveMessages(messages);
         return true;
+      },
+
+      async updateCommissionStatus() {
+        return false;
       }
     });
   }
@@ -297,7 +305,8 @@
     images: "sinprisa_product_images",
     orders: "sinprisa_orders",
     orderItems: "sinprisa_order_items",
-    messages: "sinprisa_messages"
+    messages: "sinprisa_messages",
+    commissions: "sinprisa_commissions"
   });
   const ORDER_STATUS_TO_POCKETBASE = Object.freeze({
     "Solicitud recibida": "pending",
@@ -436,16 +445,21 @@
       return request(recordsPath(collection, recordId), { allowNotFound: true });
     }
 
-    function imageSource(record) {
-      const filename = String(record.original || "");
+    function fileSource(collection, record, filename, fileToken = "") {
       if (!filename) return "";
-      return `${baseUrl}/api/files/${encodeURIComponent(POCKETBASE_COLLECTIONS.images)}/${encodeURIComponent(record.id)}/${encodeURIComponent(filename)}`;
+      const source = `${baseUrl}/api/files/${encodeURIComponent(collection)}/${encodeURIComponent(record.id)}/${encodeURIComponent(filename)}`;
+      return fileToken ? `${source}?token=${encodeURIComponent(fileToken)}` : source;
     }
 
-    function mapImage(record, index) {
+    function imageSource(record, fileToken = "") {
+      const filename = String(record.original || "");
+      return fileSource(POCKETBASE_COLLECTIONS.images, record, filename, fileToken);
+    }
+
+    function mapImage(record, index, fileToken = "") {
       return {
         id: String(record.id),
-        src: imageSource(record),
+        src: imageSource(record, fileToken),
         alt: String(record.alt_text || ""),
         position: Number(record.sort_order ?? index),
         primary: Boolean(record.is_cover),
@@ -453,12 +467,12 @@
       };
     }
 
-    function mapProduct(record, imageRecords = []) {
+    function mapProduct(record, imageRecords = [], fileToken = "") {
       const priceMode = String(record.price_mode || (record.price == null ? "quote" : "fixed"));
       const images = imageRecords
         .filter(image => image.product === record.id)
         .sort((left, right) => Number(right.is_cover) - Number(left.is_cover) || Number(left.sort_order) - Number(right.sort_order))
-        .map(mapImage)
+        .map((image, index) => mapImage(image, index, fileToken))
         .map((image, index) => ({ ...image, position: index, primary: index === 0 }));
       const price = numericOrNull(record.price, priceMode);
       return {
@@ -641,16 +655,34 @@
       return payload;
     }
 
+    function mapCommission(record, fileToken = "") {
+      const customer = record.expand?.customer || {};
+      const filenames = safeArray(record.reference_images, []);
+      return {
+        id: String(record.id),
+        reference: `ENC-${String(record.id).toUpperCase()}`,
+        name: String(customer.name || ""),
+        email: String(customer.email || ""),
+        idea: String(record.idea || ""),
+        details: String(record.details || ""),
+        quantity: Number(record.quantity || 1),
+        status: String(record.status || "new"),
+        images: filenames.map(filename => ({ filename, src: fileSource(POCKETBASE_COLLECTIONS.commissions, record, filename, fileToken) })),
+        createdAt: record.created || null
+      };
+    }
+
     const driver = {
       kind: "pocketbase",
       isRemote: true,
 
       async listProducts() {
-        const [products, images] = await Promise.all([
+        const [products, images, fileAuth] = await Promise.all([
           listRecords(POCKETBASE_COLLECTIONS.products, { sort: "sort_order" }),
-          listRecords(POCKETBASE_COLLECTIONS.images, { sort: "sort_order" })
+          listRecords(POCKETBASE_COLLECTIONS.images, { sort: "sort_order" }),
+          request("/api/files/token").catch(() => ({ token: "" }))
         ]);
-        return products.map(product => mapProduct(product, images));
+        return products.map(product => mapProduct(product, images, String(fileAuth?.token || "")));
       },
 
       async saveProducts(products) {
@@ -850,6 +882,23 @@
       async listMessages() {
         const records = await listRecords(POCKETBASE_COLLECTIONS.messages);
         return records.map(mapMessage);
+      },
+
+      async listCommissions() {
+        const [records, fileAuth] = await Promise.all([
+          listRecords(POCKETBASE_COLLECTIONS.commissions, { expand: "customer", sort: "-created" }),
+          request("/api/files/token").catch(() => ({ token: "" }))
+        ]);
+        return records.map(record => mapCommission(record, String(fileAuth?.token || "")));
+      },
+
+      async updateCommissionStatus(commissionId, status) {
+        const allowed = new Set(["new", "reviewing", "quoted", "accepted", "in_progress", "completed", "rejected", "cancelled"]);
+        if (!allowed.has(String(status))) throw new TypeError("Estado de encargo inválido");
+        const current = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
+        if (!current) return false;
+        await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { status } });
+        return true;
       },
 
       async saveMessages(messages) {

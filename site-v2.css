@@ -453,6 +453,11 @@ button { color: inherit; }
 .empty-state { padding: 44px 20px; border: 1px dashed var(--line); text-align: center; color: var(--ink-soft); }
 
 .notice { padding: 18px 20px; border-left: 3px solid var(--sage); background: rgba(124,141,112,.1); color: var(--ink-soft); font-size: .84rem; }
+.auth-required { display: grid; gap: 18px; align-content: center; min-height: 340px; }
+.auth-required h3 { margin: 0; font: 500 2rem/1 var(--serif); }
+.auth-required p { margin: 0; color: var(--ink-soft); }
+.upload-preview { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.upload-preview span { padding: 6px 9px; background: var(--paper-deep); color: var(--ink-soft); font: 500 .62rem/1.2 var(--mono); }
 .admin-grid { display: grid; grid-template-columns: 300px 1fr; gap: 26px; align-items: start; }
 .admin-sidebar { position: sticky; top: 112px; }
 .admin-nav { display: grid; gap: 6px; }

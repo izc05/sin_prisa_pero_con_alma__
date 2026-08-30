@@ -22,6 +22,8 @@ El comando genera `dist-public/` con todos los archivos públicos. El Admin, Poc
 - `marca.html`: relato y valores de la marca.
 - `cuenta.html`: prototipo local conservado para desarrollo; no forma parte del build público.
 - `admin.html`: productos, pedidos y mensajes; en el mini PC usa autenticación privada de PocketBase.
+- `cuenta.html`: registro e inicio de sesión real para clientas mediante Pages Functions, sin exponer PocketBase.
+- `encargos.html`: solicitudes autenticadas con texto e imágenes privadas de referencia.
 - `legal.html`: textos base que deben completarse antes de vender.
 - `site-v2.css` y `site-v2.js`: sistema visual y comportamiento compartido.
 

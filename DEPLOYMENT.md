@@ -60,7 +60,7 @@ Para administrar o consultar el mini PC desde fuera:
 4. Crear una aplicación de Cloudflare Access y autorizar solo los correos de administración.
 5. Mantener cerrados los puertos del router y evitar publicar SSH o el panel directamente en Internet.
 
-El Admin privado usa el build completo `dist/`; PocketBase en `127.0.0.1:8092` es la fuente central de pedidos. El servidor privado hace proxy del API con mismo origen y el hostname exclusivo de recepción bloquea cualquier ruta distinta de `POST /api/sinprisa/order-requests`.
+El Admin privado usa el build completo `dist/`; PocketBase en `127.0.0.1:8092` es la fuente central de pedidos y encargos. El hostname de recepción admite únicamente las rutas exactas de pedidos, cuentas de clienta y encargos que utiliza Pages Functions; el resto devuelve `404`.
 
 ## Antes de cobrar pedidos reales
 
@@ -73,3 +73,7 @@ Orden de puesta en producción:
 3. Comprobar que el Admin privado muestra nombre, correo, líneas, cantidades y total.
 4. Confirmar disponibilidad desde el Admin antes de solicitar Bizum.
 5. Fusionar o publicar `main` únicamente con autorización expresa.
+
+## Cuentas y encargos privados
+
+La cuenta pública nunca conecta directamente con PocketBase. Pages Functions valida los datos, usa el Service Token de Access y guarda el token de clienta en una cookie `HttpOnly`, `Secure` y `SameSite=Lax`. Los encargos exigen una cuenta autenticada y admiten hasta cuatro imágenes protegidas; solo el personal puede verlas desde el Admin.

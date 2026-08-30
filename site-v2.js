@@ -47,7 +47,34 @@
 
   const getProducts = () => read(KEYS.products, seedProducts);
   const getCart = () => read(KEYS.cart, []);
-  const getSession = () => read(KEYS.session, null);
+  let customerSession = null;
+  const getSession = () => customerSession;
+
+  async function apiJson(url, options = {}) {
+    const response = await fetch(url, {
+      credentials: "same-origin",
+      ...options,
+      headers: { Accept: "application/json", ...(options.headers || {}) }
+    });
+    let payload = {};
+    try { payload = await response.json(); } catch {}
+    if (!response.ok) {
+      const error = new Error(payload.error || "No se pudo completar la solicitud");
+      error.status = response.status;
+      throw error;
+    }
+    return payload;
+  }
+
+  async function loadCustomerSession() {
+    try {
+      const payload = await apiJson("/api/account/session");
+      customerSession = payload.user || null;
+    } catch {
+      customerSession = null;
+    }
+    return customerSession;
+  }
 
   function toast(message) {
     let node = $("#site-toast");
@@ -363,8 +390,6 @@
     if (!session) return;
     $("#account-name").textContent = session.name;
     $("#account-email").textContent = session.email;
-    const orders = read(KEYS.orders, []).filter(order => order.email.toLowerCase() === session.email.toLowerCase());
-    $("#account-orders").innerHTML = orders.length ? orders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">Todavía no tienes pedidos. Cuando hagas uno aparecerá aquí.</div>`;
   }
 
   function setupAccount() {
@@ -378,28 +403,47 @@
     $("#register-form")?.addEventListener("submit", async event => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
-      const email = String(data.get("email")).trim().toLowerCase();
-      const users = read(KEYS.users, []);
-      if (users.some(user => user.email === email)) { $("#auth-feedback").textContent = "Ese correo ya está registrado en este navegador."; return; }
-      const user = { id: uid("USR"), name: String(data.get("name")).trim(), email, passwordHash: await hash(String(data.get("password"))) };
-      users.push(user);
-      write(KEYS.users, users);
-      write(KEYS.session, { id: user.id, name: user.name, email: user.email });
-      renderAccount();
-      toast("Cuenta creada");
+      const feedback = $("#auth-feedback");
+      feedback.textContent = "Creando tu cuenta…";
+      try {
+        const payload = await apiJson("/api/account/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: data.get("name"), email: data.get("email"), password: data.get("password") })
+        });
+        customerSession = payload.user;
+        renderAccount();
+        updateIdentityLinks();
+        toast("Cuenta creada de forma segura");
+      } catch (error) {
+        feedback.textContent = error.message;
+      }
     });
     $("#login-form")?.addEventListener("submit", async event => {
       event.preventDefault();
       const data = new FormData(event.currentTarget);
-      const email = String(data.get("email")).trim().toLowerCase();
-      const passwordHash = await hash(String(data.get("password")));
-      const user = read(KEYS.users, []).find(item => item.email === email && item.passwordHash === passwordHash);
-      if (!user) { $("#auth-feedback").textContent = "No encuentro esa combinación en este navegador."; return; }
-      write(KEYS.session, { id: user.id, name: user.name, email: user.email });
-      renderAccount();
-      toast("Sesión iniciada");
+      const feedback = $("#auth-feedback");
+      feedback.textContent = "Comprobando tus datos…";
+      try {
+        const payload = await apiJson("/api/account/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: data.get("email"), password: data.get("password") })
+        });
+        customerSession = payload.user;
+        renderAccount();
+        updateIdentityLinks();
+        toast("Sesión iniciada");
+      } catch (error) {
+        feedback.textContent = error.message;
+      }
     });
-    $("#logout-button")?.addEventListener("click", () => { localStorage.removeItem(KEYS.session); renderAccount(); });
+    $("#logout-button")?.addEventListener("click", async () => {
+      try { await apiJson("/api/account/logout", { method: "POST" }); } catch {}
+      customerSession = null;
+      renderAccount();
+      updateIdentityLinks();
+    });
     renderAccount();
   }
 
@@ -407,6 +451,14 @@
     const form = $("#custom-order-form");
     if (!form) return;
     const session = getSession();
+    const authRequired = $("#custom-auth-required");
+    if (!session) {
+      form.hidden = true;
+      if (authRequired) authRequired.hidden = false;
+      return;
+    }
+    form.hidden = false;
+    if (authRequired) authRequired.hidden = true;
     if (session) {
       form.elements.name.value = session.name;
       form.elements.email.value = session.email;
@@ -424,28 +476,41 @@
       }
       form.scrollIntoView({ block: "center" });
     }
-    form.addEventListener("submit", event => {
+    const imageInput = $("#custom-images");
+    imageInput?.addEventListener("change", () => {
+      const files = Array.from(imageInput.files || []);
+      const preview = $("#custom-image-preview");
+      if (files.length > 4 || files.some(file => file.size > 4 * 1024 * 1024)) {
+        imageInput.value = "";
+        preview.textContent = "Máximo 4 imágenes de 4 MB cada una.";
+        return;
+      }
+      preview.innerHTML = files.map(file => `<span>${escapeHtml(file.name)}</span>`).join("");
+    });
+    form.addEventListener("submit", async event => {
       event.preventDefault();
       const data = new FormData(form);
-      const order = {
-        id: uid("ENC"),
-        type: "Encargo",
-        email: String(data.get("email")).trim().toLowerCase(),
-        customer: String(data.get("name")).trim(),
-        createdAt: new Date().toISOString(),
-        status: "Solicitud recibida",
-        total: null,
-        details: `${data.get("piece")} · ${data.get("details")}`,
-        occasion: String(data.get("occasion") || "")
-      };
-      const orders = read(KEYS.orders, []);
-      orders.unshift(order);
-      write(KEYS.orders, orders);
-      const messages = read(KEYS.messages, []);
-      messages.unshift({ id: uid("MSG"), createdAt: order.createdAt, name: order.customer, email: order.email, subject: `Nuevo encargo ${order.id}`, body: order.details, status: "Nuevo" });
-      write(KEYS.messages, messages);
-      $("#custom-feedback").textContent = `Solicitud ${order.id} guardada. Te responderemos para concretar diseño y presupuesto.`;
-      form.reset();
+      const feedback = $("#custom-feedback");
+      const submit = form.querySelector("button[type=submit]");
+      feedback.textContent = "Enviando tu idea de forma privada…";
+      submit.disabled = true;
+      try {
+        const payload = await apiJson("/api/commissions", { method: "POST", body: data });
+        feedback.textContent = `Solicitud ${payload.reference} recibida. Te responderemos para concretar diseño y presupuesto.`;
+        form.reset();
+        if ($("#custom-image-preview")) $("#custom-image-preview").innerHTML = "";
+        form.elements.name.value = session.name;
+        form.elements.email.value = session.email;
+      } catch (error) {
+        feedback.textContent = error.message;
+        if (error.status === 401 && authRequired) {
+          customerSession = null;
+          form.hidden = true;
+          authRequired.hidden = false;
+        }
+      } finally {
+        submit.disabled = false;
+      }
     });
   }
 
@@ -538,8 +603,11 @@
   setupProductDetail();
   renderCart();
   setupCartEvents();
-  setupAccount();
-  setupCustomOrder();
   setupAdmin();
-  updateIdentityLinks();
+  (async () => {
+    await loadCustomerSession();
+    setupAccount();
+    setupCustomOrder();
+    updateIdentityLinks();
+  })();
 })();

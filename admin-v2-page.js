@@ -6,7 +6,7 @@
     adminPin: "alma-v2-admin-pin"
   };
   const MAX_IMAGES_PER_PRODUCT = 4;
-  const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+  const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 
   const seedProducts = [
     { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, priceMode: "fixed", image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true, stockMode: "available", status: "published", featured: true },
@@ -106,6 +106,15 @@
     </article>`;
   }
 
+  function commissionMarkup(commission) {
+    const labels = { new: "Nuevo", reviewing: "Revisando", quoted: "Presupuestado", accepted: "Aceptado", in_progress: "En proceso", completed: "Completado", rejected: "No viable", cancelled: "Cancelado" };
+    const options = Object.entries(labels).map(([value, label]) => `<option value="${value}" ${commission.status === value ? "selected" : ""}>${label}</option>`).join("");
+    const images = commission.images?.length
+      ? `<div class="commission-gallery">${commission.images.map((image, index) => `<a href="${escapeHtml(image.src)}" target="_blank" rel="noreferrer"><img src="${escapeHtml(image.src)}" alt="Referencia ${index + 1} del encargo ${escapeHtml(commission.reference)}"></a>`).join("")}</div>`
+      : `<p class="empty-state">Sin imágenes de referencia.</p>`;
+    return `<article class="commission-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.name)} · ${escapeHtml(commission.email)} · ${dateText(commission.createdAt)}</p><h4>${escapeHtml(commission.idea)}</h4><p class="commission-details">${escapeHtml(commission.details)}</p>${images}<label class="field"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label></article>`;
+  }
+
   function galleryMarkup(product) {
     const images = productImages(product);
     const items = images.map((image, index) => `<article class="admin-gallery__item">
@@ -181,11 +190,12 @@
   }
 
   async function renderAdmin() {
-    const [products, orders, messages, collections] = await Promise.all([
+    const [products, orders, messages, collections, commissions] = await Promise.all([
       adminData.listProducts(),
       adminData.listOrders(),
       adminData.listMessages(),
-      adminData.listCollections()
+      adminData.listCollections(),
+      adminData.listCommissions()
     ]);
     const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
@@ -193,6 +203,7 @@
     $("#metric-visible").textContent = visibleProducts;
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
+    $("#metric-commissions").textContent = commissions.filter(item => !["completed", "rejected", "cancelled"].includes(item.status)).length;
     renderProductCatalog(products, collections);
     renderProductCategoryOptions(collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
@@ -204,6 +215,7 @@
       <p>${escapeHtml(message.body || "")}</p>
       ${message.status === "Leído" ? "" : `<button class="button button--quiet" type="button" data-read-message="${escapeHtml(message.id)}">Marcar como leído</button>`}
     </article>`).join("") : `<div class="empty-state">No hay mensajes todavía.</div>`;
+    $("#admin-commissions").innerHTML = commissions.length ? commissions.map(commissionMarkup).join("") : `<div class="empty-state">Todavía no hay encargos personalizados.</div>`;
   }
 
   async function unlockAdmin() {
@@ -337,7 +349,7 @@
       let images = [];
       try {
         if (files.length > MAX_IMAGES_PER_PRODUCT) throw new Error("Demasiadas fotografías");
-        if (files.some(file => file.size > MAX_IMAGE_BYTES)) throw new Error("Una fotografía supera 2 MB");
+        if (files.some(file => file.size > MAX_IMAGE_BYTES)) throw new Error("Una fotografía supera 4 MB");
         images = await Promise.all(files.map(async (file, index) => ({
           id: uid("IMG"),
           src: await fileToDataUrl(file),
@@ -369,8 +381,32 @@
         return;
       }
       form.reset();
+      if ($("#product-image-preview")) $("#product-image-preview").innerHTML = "";
       await renderAdmin();
       toast(isPocketBaseMode() ? "Nueva pieza guardada en PocketBase" : "Nueva pieza guardada en el catálogo local");
+    });
+
+    const productImageInput = $("#product-image");
+    const productImageHelp = productImageInput?.closest(".field")?.querySelector(".field-help");
+    if (productImageHelp) productImageHelp.textContent = "Máximo 4 imágenes de 4 MB cada una. La primera será la portada.";
+    if (productImageInput && !$("#product-image-preview")) {
+      const preview = document.createElement("div");
+      preview.id = "product-image-preview";
+      preview.className = "product-upload-preview";
+      preview.setAttribute("aria-live", "polite");
+      productImageInput.closest(".field")?.appendChild(preview);
+    }
+    productImageInput?.addEventListener("change", async event => {
+      const files = Array.from(event.target.files || []);
+      const preview = $("#product-image-preview");
+      if (!preview) return;
+      if (files.length > MAX_IMAGES_PER_PRODUCT || files.some(file => file.size > MAX_IMAGE_BYTES)) {
+        event.target.value = "";
+        preview.textContent = `Máximo ${MAX_IMAGES_PER_PRODUCT} fotos de 4 MB cada una`;
+        return;
+      }
+      const sources = await Promise.all(files.map(fileToDataUrl));
+      preview.innerHTML = sources.map((src, index) => `<figure><img src="${escapeHtml(src)}" alt="Vista previa ${index + 1}"><figcaption>${escapeHtml(files[index].name)}${index === 0 ? " · Portada" : ""}</figcaption></figure>`).join("");
     });
 
     $("#collection-form")?.addEventListener("submit", async event => {
@@ -401,6 +437,7 @@
 
     document.addEventListener("change", async event => {
       const orderStatus = event.target.closest("[data-order-status]");
+      const commissionStatus = event.target.closest("[data-commission-status]");
       const productStatus = event.target.closest("[data-product-status]");
       const collectionStatus = event.target.closest("[data-collection-status]");
       const imageAlt = event.target.closest("[data-image-alt]");
@@ -408,6 +445,10 @@
       if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
         await renderAdmin();
         toast("Estado del pedido actualizado");
+      }
+      if (commissionStatus && await adminData.updateCommissionStatus(commissionStatus.dataset.commissionStatus, commissionStatus.value)) {
+        await renderAdmin();
+        toast("Estado del encargo actualizado");
       }
       if (productStatus && await adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
         await renderAdmin();
@@ -430,7 +471,7 @@
         const files = Array.from(imageFiles.files);
         if (!product) return;
         if (productImages(product).length + files.length > MAX_IMAGES_PER_PRODUCT || files.some(file => file.size > MAX_IMAGE_BYTES)) {
-          toast(`Máximo ${MAX_IMAGES_PER_PRODUCT} fotos de 2 MB cada una`);
+          toast(`Máximo ${MAX_IMAGES_PER_PRODUCT} fotos de 4 MB cada una`);
           imageFiles.value = "";
           return;
         }

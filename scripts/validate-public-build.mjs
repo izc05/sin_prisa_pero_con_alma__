@@ -9,6 +9,7 @@ const requiredFiles = [
   "encargos.html",
   "diario.html",
   "marca.html",
+  "cuenta.html",
   "legal.html",
   "site-v2.css",
   "site-v2.js",
@@ -17,7 +18,6 @@ const requiredFiles = [
   ".nojekyll"
 ];
 const forbiddenFiles = [
-  "cuenta.html",
   "admin.html",
   "admin-auth.js",
   "admin-data.js",
@@ -39,11 +39,10 @@ for (const file of forbiddenFiles) {
 for (const file of readdirSync(output).filter(name => name.endsWith(".html"))) {
   const html = readFileSync(resolve(output, file), "utf8");
   if (/href=["']admin\.html["']/.test(html)) throw new Error(`El build público enlaza al Admin desde ${file}`);
-  if (/href=["']cuenta\.html["']/.test(html)) throw new Error(`El build público enlaza a la cuenta local desde ${file}`);
 }
 
 const routes = JSON.parse(readFileSync(resolve(output, "_routes.json"), "utf8"));
-if (JSON.stringify(routes.include) !== JSON.stringify(["/api/order-requests"])) {
+if (JSON.stringify(routes.include) !== JSON.stringify(["/api/*"])) {
   throw new Error("El build público ejecuta Functions fuera del endpoint de pedidos");
 }
 
