@@ -292,10 +292,18 @@
     const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
-        <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"></div>
+        <button class="product-detail__image" type="button" data-product-image-zoom aria-label="Ampliar imagen de ${escapeHtml(product.name)}"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"><span>Ampliar imagen</span></button>
         <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}${customAction}</div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
       </article><section class="product-personalizer panel" id="product-personalizer" hidden></section>`;
     const personalizer = $("#product-personalizer", root);
+    $("[data-product-image-zoom]", root)?.addEventListener("click", () => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "product-image-lightbox";
+      dialog.innerHTML = `<button class="button button--quiet" type="button">Cerrar</button><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}">`;
+      dialog.addEventListener("click", event => { if (event.target === dialog || event.target.closest("button")) dialog.close(); });
+      dialog.addEventListener("close", () => dialog.remove());
+      document.body.appendChild(dialog); dialog.showModal();
+    });
     root.addEventListener("click", event => {
       if (!event.target.closest("[data-open-personalizer]")) return;
       const session = getSession();
