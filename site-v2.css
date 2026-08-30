@@ -115,18 +115,17 @@ button { color: inherit; }
   top: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: 240px 1fr 240px;
+  grid-template-columns: 132px 1fr 240px;
   align-items: center;
-  min-height: 88px;
+  min-height: 104px;
   padding: 12px clamp(22px, 4vw, 72px);
   border-bottom: 1px solid var(--line);
   background: rgba(251, 246, 239, 0.94);
   backdrop-filter: blur(18px);
 }
 
-.brand-link { display: inline-flex; align-items: center; gap: 12px; width: fit-content; }
-.brand-link img { width: 58px; height: 58px; object-fit: contain; }
-.brand-link img,
+.brand-link { display: inline-flex; align-items: center; width: fit-content; }
+.brand-link img { width: 80px; height: 80px; object-fit: contain; border-radius: 0; mix-blend-mode: normal; }
 .welcome-logo,
 .hero-logo,
 .story-logo,
@@ -140,8 +139,7 @@ button { color: inherit; }
   border-radius: 0;
   mix-blend-mode: normal;
 }
-.brand-wordmark { font: 600 1.2rem/0.92 var(--serif); }
-.brand-wordmark span { display: block; color: var(--rose-dark); font-style: italic; font-weight: 400; }
+.brand-wordmark { display: none; }
 
 .main-nav { display: flex; justify-content: center; gap: clamp(18px, 2.8vw, 42px); }
 .main-nav a,
@@ -542,7 +540,7 @@ button { color: inherit; }
 
 .site-footer { padding: 70px clamp(24px, 7vw, 128px) 28px; border-top: 1px solid var(--line); background: var(--ivory); }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(3, .7fr); gap: 50px; }
-.footer-brand img { width: 110px; }
+.footer-brand img { width: 128px; border-radius: 0; mix-blend-mode: normal; }
 .footer-brand p { max-width: 330px; color: var(--ink-soft); font-size: .86rem; }
 .footer-column strong { display: block; margin-bottom: 16px; font: 500 1.2rem/1 var(--serif); }
 .footer-column a { display: block; margin: 8px 0; color: var(--ink-soft); font-size: .82rem; }
@@ -606,7 +604,8 @@ button { color: inherit; }
   .welcome-video { width: min(86%, 520px); max-height: 70svh; }
   .site-header { min-height: 74px; padding-inline: 18px; }
   .brand-link img { width: 46px; height: 46px; }
-  .brand-wordmark { font-size: 1rem; }
+  .site-header { grid-template-columns: 72px 1fr auto; min-height: 82px; }
+  .brand-link img { width: 62px; height: 62px; }
   .main-nav { inset-block-start: 74px; }
   .home-hero { min-height: calc(100svh - 74px); padding: 64px 22px 92px; background-position: 61% center; }
   .hero-content { width: 100%; padding: 26px; background: rgba(255,250,243,.86); backdrop-filter: blur(4px); }
