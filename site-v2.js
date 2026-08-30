@@ -13,13 +13,6 @@
     storageNotice: "alma-storage-notice"
   };
 
-  const seedProducts = [
-    { id: "babero-danna", name: "Babero Danna", category: "bebé", description: "Lino lavado, volante y bordado de ocas y flores.", price: 28, image: "assets/babero-danna.jpeg", badge: "Disponible", stock: true },
-    { id: "bolsa-jardin", name: "Bolsa Jardín", category: "regalo", description: "Bolsa de lino bordada puntada a puntada.", price: 22, image: "assets/bolsa-flores.jpeg", badge: "Pieza única", stock: true },
-    { id: "bastidor-botanico", name: "Bastidor Botánico", category: "hogar", description: "Pequeño paisaje floral para guardar un recuerdo.", price: 35, image: "assets/detalle-bordado.jpeg", badge: "Hecho a mano", stock: true },
-    { id: "encargo-personal", name: "Bordado a medida", category: "encargo", description: "Una pieza creada desde tu historia, nombre o idea.", price: null, image: "assets/encargo-bordado.jpeg", badge: "Por encargo", stock: true }
-  ];
-
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const read = (key, fallback) => {
@@ -41,11 +34,12 @@
   const dateText = (value) => new Intl.DateTimeFormat("es-ES", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(value));
   const escapeHtml = (value = "") => String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 
-  if (!localStorage.getItem(KEYS.products)) write(KEYS.products, seedProducts);
   if (!localStorage.getItem(KEYS.orders)) write(KEYS.orders, []);
   if (!localStorage.getItem(KEYS.messages)) write(KEYS.messages, []);
 
-  const getProducts = () => read(KEYS.products, seedProducts);
+  // El catálogo público queda vacío hasta que Gestión sea su única fuente segura.
+  // Los antiguos ejemplos que pueda conservar el navegador no se vuelven a mostrar.
+  const getProducts = () => [];
   const getCart = () => read(KEYS.cart, []);
   let customerSession = null;
   const getSession = () => customerSession;
@@ -147,7 +141,7 @@
   }
 
   function productCard(product) {
-    const detailUrl = `producto.html#pieza=${encodeURIComponent(product.id)}`;
+    const detailUrl = `producto.html?pieza=${encodeURIComponent(product.id)}`;
     const customLink = `<a class="product-custom-link" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Personalizar esta pieza</a>`;
     const action = product.price == null
       ? `<a class="button button--outline" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Contar mi idea</a>`
@@ -170,7 +164,9 @@
     $$("[data-product-grid]").forEach(grid => {
       const limit = Number(grid.dataset.limit || 0);
       const products = getProducts().filter(product => product.stock !== false);
-      grid.innerHTML = (limit ? products.slice(0, limit) : products).map(productCard).join("");
+      grid.innerHTML = products.length
+        ? (limit ? products.slice(0, limit) : products).map(productCard).join("")
+        : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
     });
   }
 
@@ -186,7 +182,7 @@
       let products = getProducts().filter(p => p.stock !== false && (active === "todos" || p.category === active) && `${p.name} ${p.description}`.toLowerCase().includes(term));
       if (sort?.value === "price-asc") products.sort((a,b) => (a.price ?? 9999) - (b.price ?? 9999));
       if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
-      grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state">No hay piezas con estos filtros.</div>`;
+      grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
     };
     filters.forEach(button => button.addEventListener("click", () => {
       active = button.dataset.filter;
@@ -200,7 +196,9 @@
   function setupProductDetail() {
     const root = $("#product-detail-root");
     if (!root) return;
-    const selectedProductId = new URLSearchParams(window.location.hash.split("?")[1] || window.location.search).get("pieza");
+    const hash = window.location.hash.slice(1);
+    const hashParams = hash.includes("?") ? hash.slice(hash.indexOf("?") + 1) : hash;
+    const selectedProductId = new URLSearchParams(window.location.search).get("pieza") || new URLSearchParams(hashParams).get("pieza");
     const product = getProducts().find(item => item.id === selectedProductId && item.stock !== false);
     if (!product) {
       root.innerHTML = `<div class="detail-empty"><p class="eyebrow">La pieza no está disponible</p><h1 class="section-title">Volvamos a la colección.</h1><p class="section-copy">Puede que esta pieza ya haya encontrado su casa o que el enlace no sea correcto.</p><a class="button button--primary" href="tienda.html">Ver la tienda</a></div>`;

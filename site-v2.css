@@ -255,6 +255,9 @@ button { color: inherit; }
 .category-card p { margin: 8px 0 0; color: var(--ink-soft); font-size: .86rem; }
 
 .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px 18px; }
+.catalog-empty { grid-column: 1 / -1; }
+.catalog-empty strong { display: block; color: var(--ink); font: 500 1.7rem/1.15 var(--serif); }
+.catalog-empty p { max-width: 560px; margin: 12px auto 22px; }
 .product-card { min-width: 0; }
 .product-image-wrap { position: relative; display: block; aspect-ratio: 4/5; overflow: hidden; background: var(--paper-deep); }
 .product-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 600ms ease; }
