@@ -9,9 +9,11 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
   const piece = String(body.piece || "").trim()
   const occasion = String(body.occasion || "").trim()
   const details = String(body.details || "").trim()
+  const productReference = String(body.product_reference || "").trim()
+  const productName = String(body.product_name || "").trim()
   const quantity = Number(body.quantity || 1)
   const files = e.findUploadedFiles("images") || []
-  if (piece.length < 2 || piece.length > 120 || occasion.length > 200 || details.length < 10 || details.length > 4000) {
+  if (piece.length < 2 || piece.length > 120 || occasion.length > 200 || details.length < 10 || details.length > 4000 || productName.length > 200 || (productReference && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productReference))) {
     throw new BadRequestError("Datos del encargo no válidos")
   }
   if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20 || files.length > 4) {
@@ -40,7 +42,8 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
     commission.set("account", account.id)
     commission.set("customer", customer.id)
     commission.set("idea", piece)
-    commission.set("details", details + (occasion ? "\n\nOcasión o fecha: " + occasion : ""))
+    const productContext = productReference ? "\n\nPieza de referencia: " + (productName || productReference) + " [" + productReference + "]" : ""
+    commission.set("details", details + productContext + (occasion ? "\n\nOcasión o fecha: " + occasion : ""))
     commission.set("quantity", quantity)
     commission.set("status", "new")
     if (files.length) commission.set("reference_images", files)
@@ -50,7 +53,7 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
     message.set("name", name)
     message.set("email", email)
     message.set("subject", "Nuevo encargo " + commission.id)
-    message.set("body", piece + " · " + details)
+    message.set("body", piece + " · " + details + productContext)
     message.set("status", "new")
     txApp.save(message)
     responseData = { reference: "ENC-" + commission.id.toUpperCase(), images: files.length }

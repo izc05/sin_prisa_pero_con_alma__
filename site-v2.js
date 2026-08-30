@@ -255,15 +255,16 @@
       root.innerHTML = `<div class="detail-empty"><p class="eyebrow">La pieza no está disponible</p><h1 class="section-title">Volvamos a la colección.</h1><p class="section-copy">Puede que esta pieza ya haya encontrado su casa o que el enlace no sea correcto.</p><a class="button button--primary" href="tienda.html">Ver la tienda</a></div>`;
       return;
     }
-    const customUrl = `encargos.html#formulario?pieza=${encodeURIComponent(product.id)}`;
+    const customUrl = `encargos.html?pieza=${encodeURIComponent(product.id)}#formulario`;
     const purchaseAction = product.price == null
-      ? `<a class="button button--primary" href="${customUrl}">Contar mi idea</a>`
+      ? `<a class="button button--primary" href="${customUrl}">Personalizar esta pieza</a>`
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
+    const customAction = product.price == null ? "" : `<a class="button button--outline" href="${customUrl}">Personalizar esta pieza</a>`;
     const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
         <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"></div>
-        <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}<a class="button button--outline" href="${customUrl}">Personalizar esta pieza</a></div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
+        <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}${customAction}</div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
       </article>`;
   }
 
@@ -444,6 +445,11 @@
 
   function setupAccount() {
     if (!$("#account-page")) return;
+    const continuation = new URLSearchParams(window.location.search).get("continuar") || "";
+    const safeContinuation = /^encargos\.html\?pieza=[a-z0-9]+(?:-[a-z0-9]+)*#formulario$/.test(continuation) ? continuation : "";
+    const continueAfterAuth = () => {
+      if (safeContinuation) window.location.assign(safeContinuation);
+    };
     const tabs = $$("[data-auth-tab]");
     tabs.forEach(tab => tab.addEventListener("click", () => {
       tabs.forEach(item => item.classList.toggle("is-active", item === tab));
@@ -465,6 +471,7 @@
         renderAccount();
         updateIdentityLinks();
         toast("Cuenta creada de forma segura");
+        continueAfterAuth();
       } catch (error) {
         feedback.textContent = error.message;
       }
@@ -484,6 +491,7 @@
         renderAccount();
         updateIdentityLinks();
         toast("Sesión iniciada");
+        continueAfterAuth();
       } catch (error) {
         feedback.textContent = error.message;
       }
@@ -504,7 +512,13 @@
     const authRequired = $("#custom-auth-required");
     if (!session) {
       form.hidden = true;
-      if (authRequired) authRequired.hidden = false;
+      if (authRequired) {
+        authRequired.hidden = false;
+        const selectedProductId = new URLSearchParams(window.location.search).get("pieza");
+        const continuation = selectedProductId ? `encargos.html?pieza=${selectedProductId}#formulario` : "encargos.html#formulario";
+        const loginLink = $("a", authRequired);
+        if (loginLink) loginLink.href = `cuenta.html?continuar=${encodeURIComponent(continuation)}`;
+      }
       return;
     }
     form.hidden = false;
@@ -513,11 +527,13 @@
       form.elements.name.value = session.name;
       form.elements.email.value = session.email;
     }
-    const selectedProductId = new URLSearchParams(window.location.hash.split("?")[1] || window.location.search).get("pieza");
+    const selectedProductId = new URLSearchParams(window.location.search).get("pieza") || new URLSearchParams(window.location.hash.split("?")[1] || "").get("pieza");
     const selectedProduct = getProducts().find(product => product.id === selectedProductId);
     if (selectedProduct) {
-      const pieceByCategory = { bebé: "Babero", regalo: "Bolsa o saquito", hogar: "Bastidor decorativo" };
+      const pieceByCategory = { bebe: "Babero", regalo: "Bolsa o saquito", hogar: "Bastidor decorativo" };
       form.elements.piece.value = pieceByCategory[selectedProduct.category] || "Otra idea";
+      form.elements.product_reference.value = selectedProduct.id;
+      form.elements.product_name.value = selectedProduct.name;
       form.elements.details.value = `Quiero personalizar la pieza “${selectedProduct.name}”. `;
       const note = $("#custom-order-prefill");
       if (note) {

@@ -57,6 +57,8 @@ try {
   form.set("occasion", "Regalo");
   form.set("details", "Flores silvestres en tonos suaves");
   form.set("quantity", "2");
+  form.set("product_reference", "bastidor-botanico");
+  form.set("product_name", "Bastidor Botánico");
   form.append("images", new File([new Uint8Array([1, 2, 3])], "referencia.jpg", { type: "image/jpeg" }));
   const commissionResponse = await commission({
     env,
@@ -71,6 +73,9 @@ try {
   const forwarded = calls.find(call => String(call.url).endsWith("/api/sinprisa/commissions"));
   assert.equal(forwarded.init.headers.Authorization, "Bearer private-auth-token");
   assert.equal(forwarded.init.headers["CF-Access-Client-Secret"], "client-secret");
+  const forwardedForm = forwarded.init.body;
+  assert.equal(forwardedForm.get("product_reference"), "bastidor-botanico");
+  assert.equal(forwardedForm.get("product_name"), "Bastidor Botánico");
 
   const anonymous = await commission({
     env,
@@ -82,4 +87,3 @@ try {
 }
 
 console.log("Customer account and private commission behavior OK");
-

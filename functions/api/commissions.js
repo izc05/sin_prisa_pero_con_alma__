@@ -11,9 +11,11 @@ export async function onRequestPost({ request, env }) {
   const idea = String(form.get("details") || "").trim();
   const piece = String(form.get("piece") || "").trim();
   const occasion = String(form.get("occasion") || "").trim();
+  const productReference = String(form.get("product_reference") || "").trim();
+  const productName = String(form.get("product_name") || "").trim();
   const quantity = Math.max(1, Math.min(20, Number(form.get("quantity") || 1)));
   const images = form.getAll("images").filter(value => typeof value !== "string" && value.size);
-  if (idea.length < 10 || idea.length > 4000 || piece.length < 2 || piece.length > 120 || occasion.length > 200 || !Number.isInteger(quantity)) {
+  if (idea.length < 10 || idea.length > 4000 || piece.length < 2 || piece.length > 120 || occasion.length > 200 || productName.length > 200 || (productReference && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(productReference)) || !Number.isInteger(quantity)) {
     return json(400, { error: "Revisa los datos del encargo" });
   }
   if (images.length > 4 || images.some(file => file.size > 4 * 1024 * 1024 || !ALLOWED_IMAGES.has(file.type))) {
@@ -24,6 +26,8 @@ export async function onRequestPost({ request, env }) {
   outbound.set("occasion", occasion);
   outbound.set("details", idea);
   outbound.set("quantity", String(quantity));
+  if (productReference) outbound.set("product_reference", productReference);
+  if (productName) outbound.set("product_name", productName);
   for (const file of images) outbound.append("images", file, file.name);
   try {
     const response = await privateFetch(env, "/api/sinprisa/commissions", {
@@ -39,4 +43,3 @@ export async function onRequestPost({ request, env }) {
     return json(502, { error: "El servicio de encargos no está disponible" });
   }
 }
-
