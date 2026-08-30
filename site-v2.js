@@ -40,6 +40,7 @@
 
   let catalogProducts = [];
   let catalogCollections = [];
+  let activeShopFilter = new URLSearchParams(window.location.search).get("categoria") || "todos";
   let refreshShopFilters = () => {};
   const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
@@ -214,7 +215,27 @@
     group.innerHTML = [
       { id: "todos", name: "Todo" },
       ...catalogCollections
-    ].map((collection, index) => `<button class="filter-button${index === 0 ? " is-active" : ""}" type="button" data-filter="${escapeHtml(collection.id)}">${escapeHtml(collection.name)}</button>`).join("");
+    ].map(collection => `<button class="filter-button${activeShopFilter === collection.id ? " is-active" : ""}" type="button" data-filter="${escapeHtml(collection.id)}">${escapeHtml(collection.name)}</button>`).join("");
+  }
+
+  function renderCategoryCovers() {
+    const root = $("[data-category-covers]");
+    if (!root) return;
+    const coverByCategory = {
+      bebe: "assets/category-covers/bebe-generica.webp",
+      regalo: "assets/category-covers/regalo-generica.webp",
+      hogar: "assets/category-covers/hogar-generica.webp",
+      encargo: "assets/category-covers/encargo-generica.webp",
+      "bautizos-comuniones": "assets/category-covers/bautizos-comuniones-generica.webp",
+      bodas: "assets/category-covers/bodas-generica.webp",
+      navidad: "assets/category-covers/navidad-generica.webp",
+      complementos: "assets/category-covers/complementos-generica.webp"
+    };
+    root.innerHTML = catalogCollections.map(collection => {
+      const cover = coverByCategory[collection.id];
+      if (!cover) return "";
+      return `<a class="category-cover" href="tienda.html?categoria=${encodeURIComponent(collection.id)}#catalogo"><img src="${cover}" alt="Inspiración para la categoría ${escapeHtml(collection.name)}" loading="lazy"><span>${escapeHtml(collection.name)}</span></a>`;
+    }).join("");
   }
 
   function setupShopFilters() {
@@ -223,10 +244,10 @@
     const filterGroup = $("[data-category-filters]");
     const search = $("#shop-search");
     const sort = $("#shop-sort");
-    let active = "todos";
+    if (!catalogCollections.some(collection => collection.id === activeShopFilter)) activeShopFilter = "todos";
     const update = () => {
       const term = (search?.value || "").trim().toLowerCase();
-      let products = getProducts().filter(p => p.stock !== false && (active === "todos" || p.category === active) && `${p.name} ${p.description}`.toLowerCase().includes(term));
+      let products = getProducts().filter(p => p.stock !== false && (activeShopFilter === "todos" || p.category === activeShopFilter) && `${p.name} ${p.description}`.toLowerCase().includes(term));
       if (sort?.value === "price-asc") products.sort((a,b) => (a.price ?? 9999) - (b.price ?? 9999));
       if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
       grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
@@ -234,7 +255,7 @@
     filterGroup?.addEventListener("click", event => {
       const button = event.target.closest("[data-filter]");
       if (!button || !filterGroup.contains(button)) return;
-      active = button.dataset.filter;
+      activeShopFilter = button.dataset.filter;
       $$("[data-filter]", filterGroup).forEach(item => item.classList.toggle("is-active", item === button));
       update();
     });
@@ -672,6 +693,7 @@
   (async () => {
     await Promise.all([loadCustomerSession(), loadCatalog()]);
     renderCategoryFilters();
+    renderCategoryCovers();
     renderProducts();
     refreshShopFilters();
     setupProductDetail();
