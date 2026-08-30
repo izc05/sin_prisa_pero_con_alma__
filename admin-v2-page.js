@@ -182,6 +182,15 @@
 
     $("#product-list-meta").textContent = `${filteredProducts.length} de ${products.length} ${products.length === 1 ? "pieza" : "piezas"}`;
     $("#admin-products").innerHTML = filteredProducts.length ? filteredProducts.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">No hay piezas que coincidan con los filtros.</div>`;
+    filteredProducts.forEach(product => {
+      const editor = $(`[data-product-editor="${CSS.escape(product.id)}"]`);
+      const grid = $(".form-grid", editor);
+      if (!grid) return;
+      const field = document.createElement("label");
+      field.className = "field";
+      field.innerHTML = `<span>Límite de unidades</span><input data-product-stock-limit type="number" min="0" max="9999" value="${Math.max(0, Number(product.stockLimit || 0))}"><small>0 = sin límite</small>`;
+      grid.prepend(field);
+    });
   }
 
   function renderProductCategoryOptions(collections) {
@@ -610,6 +619,7 @@
             priceMode,
             price: priceMode === "quote" ? null : rawPrice === "" ? Number.NaN : Number(rawPrice),
             stockMode: value("[data-product-stock-mode]"),
+            stockLimit: Math.max(0, Math.floor(Number(value("[data-product-stock-limit]")) || 0)),
             status: value("[data-product-edit-status]"),
             featured: Boolean(editor?.querySelector("[data-product-featured]")?.checked)
           });

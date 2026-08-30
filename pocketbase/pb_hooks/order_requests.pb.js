@@ -53,6 +53,18 @@ routerAdd("POST", "/api/sinprisa/order-requests", (e) => {
       if (product.getString("status") !== "published" || product.getString("stock_mode") === "sold_out" || product.getString("price_mode") === "quote") {
         throw new BadRequestError("Producto no disponible")
       }
+      const stockLimit = product.getInt("stock_limit")
+      if (stockLimit > 0) {
+        let reserved = 0
+        for (const line of txApp.findAllRecords("sinprisa_order_items")) {
+          if (!line || line.getString("product") !== product.id) continue
+          try {
+            const previousOrder = txApp.findRecordById("sinprisa_orders", line.getString("order"))
+            if (previousOrder.getString("status") !== "cancelled") reserved += line.getInt("quantity")
+          } catch (_) {}
+        }
+        if (reserved + quantity > stockLimit) throw new BadRequestError("Producto no disponible")
+      }
       const unitPrice = Number(product.get("price"))
       if (!Number.isFinite(unitPrice) || unitPrice < 0) throw new BadRequestError("Precio no disponible")
       subtotal += Math.round(unitPrice * 100) * quantity
@@ -95,6 +107,17 @@ routerAdd("POST", "/api/sinprisa/order-requests", (e) => {
       line.set("unit_price", item.unitPrice)
       line.set("customization", "")
       txApp.save(line)
+      const stockLimit = item.product.getInt("stock_limit")
+      if (stockLimit > 0) {
+        let reserved = 0
+        for (const savedLine of txApp.findAllRecords("sinprisa_order_items")) {
+          if (savedLine && savedLine.getString("product") === item.product.id) reserved += savedLine.getInt("quantity")
+        }
+        if (reserved >= stockLimit) {
+          item.product.set("stock_mode", "sold_out")
+          txApp.save(item.product)
+        }
+      }
     }
 
     responseData = { orderNumber: order.getString("number"), total: subtotal }

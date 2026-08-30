@@ -499,6 +499,7 @@
         priceMode,
         status: String(record.status || "draft"),
         stockMode: String(record.stock_mode || "available"),
+        stockLimit: Math.max(0, Number(record.stock_limit || 0)),
         stock: record.stock_mode !== "sold_out",
         featured: Boolean(record.featured),
         position: Number(record.sort_order || 0),
@@ -543,6 +544,7 @@
       }
       set("status", "status", value => String(value || "draft"));
       set("stockMode", "stock_mode", value => String(value || "available"));
+      set("stockLimit", "stock_limit", value => Math.max(0, Math.floor(Number(value) || 0)));
       set("featured", "featured", Boolean);
       set("position", "sort_order", value => Math.max(0, Number(value) || 0));
       set("publishedAt", "published_at", value => value || "");
