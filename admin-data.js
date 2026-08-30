@@ -679,6 +679,7 @@
         details: String(record.details || ""),
         quantity: Number(record.quantity || 1),
         status: String(record.status || "new"),
+        customerReply: String(record.customer_reply || ""),
         images: filenames.map(filename => ({ filename, src: fileSource(POCKETBASE_COLLECTIONS.commissions, record, filename, fileToken) })),
         createdAt: record.created || null
       };
@@ -910,6 +911,20 @@
         const current = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
         if (!current) return false;
         await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { status } });
+        return true;
+      },
+
+      async updateCommission(commissionId, patch = {}) {
+        const current = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
+        if (!current) return false;
+        const payload = {};
+        if (hasOwn(patch, "customerReply")) {
+          const reply = String(patch.customerReply || "").trim();
+          if (reply.length > 4000) throw new TypeError("La respuesta no puede superar 4.000 caracteres");
+          payload.customer_reply = reply;
+        }
+        if (!Object.keys(payload).length) return true;
+        await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: payload });
         return true;
       },
 

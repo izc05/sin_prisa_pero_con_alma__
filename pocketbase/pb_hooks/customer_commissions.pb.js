@@ -63,15 +63,17 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
 
 routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   const commissions = []
+  const accountId = String(e.auth.id || "")
   for (const record of e.app.findAllRecords("sinprisa_commissions")) {
-    if (!record || record.getString("account") !== e.auth.id) continue
+    if (!record || String(record.get("account") || "") !== accountId) continue
     commissions.push({
       reference: "ENC-" + record.id.toUpperCase(),
       piece: record.getString("idea"),
       details: record.getString("details"),
       quantity: record.getInt("quantity"),
       status: record.getString("status"),
-      createdAt: record.getString("created"),
+      createdAt: record.getString("event_date"),
+      reply: record.getString("customer_reply"),
     })
   }
   commissions.sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)))

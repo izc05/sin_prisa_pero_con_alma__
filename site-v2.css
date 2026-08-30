@@ -514,6 +514,13 @@ button { color: inherit; }
 .admin-commission-empty { margin: 0; padding: 18px; border: 1px dashed var(--line); color: var(--ink-soft); font-size: .82rem; }
 .admin-commission-status { position: sticky; top: 110px; padding: 18px; border: 1px solid var(--line); background: var(--ivory); }
 .admin-commission-status select { width: 100%; min-height: 48px; border: 1px solid var(--line); background: var(--paper); padding: 0 12px; color: var(--ink); }
+.admin-commission-reply { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.admin-commission-reply textarea { width: 100%; min-height: 130px; resize: vertical; border: 1px solid var(--line); background: var(--ivory); padding: 13px 14px; color: var(--ink); }
+.admin-commission-reply .button { justify-self: start; }
+.customer-commission-reply { margin-top: 18px; padding: 16px 18px; border-left: 3px solid var(--sage); background: rgba(124,141,112,.1); }
+.customer-commission-reply strong { font: 500 .68rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.customer-commission-reply p, .customer-commission-pending { margin: 9px 0 0; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
+.customer-commission-pending { font-size: .82rem; font-style: italic; }
 
 .site-footer { padding: 70px clamp(24px, 7vw, 128px) 28px; border-top: 1px solid var(--line); background: var(--ivory); }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(3, .7fr); gap: 50px; }
