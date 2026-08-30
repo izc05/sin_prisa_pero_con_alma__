@@ -280,7 +280,6 @@
       root.innerHTML = `<div class="detail-empty"><p class="eyebrow">La pieza no está disponible</p><h1 class="section-title">Volvamos a la colección.</h1><p class="section-copy">Puede que esta pieza ya haya encontrado su casa o que el enlace no sea correcto.</p><a class="button button--primary" href="tienda.html">Ver la tienda</a></div>`;
       return;
     }
-    const customUrl = `encargos.html?pieza=${encodeURIComponent(product.id)}#formulario`;
     const purchaseAction = product.price == null
       ? `<button class="button button--primary" type="button" data-open-personalizer>Personalizar esta pieza</button>`
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
