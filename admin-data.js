@@ -284,6 +284,16 @@
         return true;
       },
 
+      async updateOrder(orderId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const orders = await this.listOrders();
+        const order = orders.find(item => item.id === orderId);
+        if (!order) return false;
+        Object.assign(order, clone(patch), { id: order.id });
+        await this.saveOrders(orders);
+        return clone(order);
+      },
+
       async markMessageRead(messageId) {
         const messages = await this.listMessages();
         const message = messages.find(item => item.id === messageId);
@@ -325,6 +335,12 @@
     shipped: "Enviado",
     completed: "Completado",
     cancelled: "Cancelado"
+  });
+  const PAYMENT_STATUS_FROM_POCKETBASE = Object.freeze({
+    pending: "Pendiente de Bizum",
+    paid: "Pago confirmado",
+    failed: "Pago no confirmado",
+    refunded: "Reembolsado"
   });
   const MESSAGE_STATUS_TO_POCKETBASE = Object.freeze({
     Nuevo: "new",
@@ -617,7 +633,7 @@
         email: String(expandedCustomer?.email || ""),
         type: "Solicitud de pedido",
         status: ORDER_STATUS_FROM_POCKETBASE[record.status] || String(record.status || ""),
-        paymentStatus: String(record.payment_status || ""),
+        paymentStatus: PAYMENT_STATUS_FROM_POCKETBASE[record.payment_status] || String(record.payment_status || ""),
         subtotal: Number(record.subtotal || 0),
         shipping: Number(record.shipping || 0),
         total: Number(record.total || 0),
@@ -894,6 +910,17 @@
           body: { status: ORDER_STATUS_TO_POCKETBASE[status] || String(status) }
         });
         return true;
+      },
+
+      async updateOrder(orderId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const current = await findRecord(POCKETBASE_COLLECTIONS.orders, orderId);
+        if (!current) return false;
+        const updated = await request(recordsPath(POCKETBASE_COLLECTIONS.orders, orderId), {
+          method: "PATCH",
+          body: orderPayload(patch, true)
+        });
+        return mapOrder(updated);
       },
 
       async listMessages() {

@@ -98,12 +98,14 @@
     const details = order.items?.length
       ? order.items.map(item => `${escapeHtml(item.name)} × ${Number(item.quantity) || 1}`).join(" · ")
       : escapeHtml(order.details || "Encargo personalizado");
-    const options = ["Solicitud recibida", "Pendiente de Bizum", "En preparación", "Enviado", "Completado"];
+    const options = ["Solicitud recibida", "Pendiente de Bizum", "En preparación", "Enviado", "Completado", "Cancelado"];
     return `<article class="order-card">
       <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status ${statusTone(order.status)}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
       <p>${escapeHtml(order.type || "Pedido")} · ${dateText(order.createdAt)}${order.customerName ? ` · ${escapeHtml(order.customerName)}` : ""}${order.email ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
+      <label class="field"><span>Estado del pago</span><select data-order-payment-status="${escapeHtml(order.id)}"><option value="pending" ${order.paymentStatus === "Pendiente de Bizum" ? "selected" : ""}>Pendiente de Bizum</option><option value="paid" ${order.paymentStatus === "Pago confirmado" ? "selected" : ""}>Pago confirmado</option><option value="failed" ${order.paymentStatus === "Pago no confirmado" ? "selected" : ""}>Pago no confirmado</option><option value="refunded" ${order.paymentStatus === "Reembolsado" ? "selected" : ""}>Reembolsado</option></select></label>
       <label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}">${options.map(option => `<option ${order.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></label>
+      <label class="field admin-order-notes"><span>Notas internas del atelier</span><textarea maxlength="2000" data-order-notes="${escapeHtml(order.id)}" placeholder="Solo visibles en este panel…">${escapeHtml(order.internalNotes || "")}</textarea><button class="button button--quiet" type="button" data-save-order-notes="${escapeHtml(order.id)}">Guardar nota</button></label>
     </article>`;
   }
 
@@ -461,6 +463,7 @@
 
     document.addEventListener("change", async event => {
       const orderStatus = event.target.closest("[data-order-status]");
+      const orderPaymentStatus = event.target.closest("[data-order-payment-status]");
       const commissionStatus = event.target.closest("[data-commission-status]");
       const productStatus = event.target.closest("[data-product-status]");
       const collectionStatus = event.target.closest("[data-collection-status]");
@@ -469,6 +472,10 @@
       if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
         await renderAdmin();
         toast("Estado del pedido actualizado");
+      }
+      if (orderPaymentStatus && await adminData.updateOrder(orderPaymentStatus.dataset.orderPaymentStatus, { paymentStatus: orderPaymentStatus.value })) {
+        await renderAdmin();
+        toast("Estado del pago actualizado");
       }
       if (commissionStatus) {
         const commissionId = commissionStatus.dataset.commissionStatus;
@@ -530,6 +537,7 @@
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
+      const saveOrderNotes = event.target.closest("[data-save-order-notes]");
 
       if (imagePreview) {
         const dialog = document.createElement("dialog");
@@ -566,6 +574,18 @@
       if (readMessage && await adminData.markMessageRead(readMessage.dataset.readMessage)) {
         await renderAdmin();
         toast("Mensaje marcado como leído");
+      }
+
+      if (saveOrderNotes) {
+        const card = saveOrderNotes.closest(".order-card");
+        const notes = card?.querySelector("[data-order-notes]")?.value || "";
+        try {
+          await adminData.updateOrder(saveOrderNotes.dataset.saveOrderNotes, { internalNotes: notes.trim() });
+          await renderAdmin();
+          toast("Nota interna guardada");
+        } catch (error) {
+          toast(error.message || "No se pudo guardar la nota");
+        }
       }
 
       if (saveCollection) {
