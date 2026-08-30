@@ -203,15 +203,29 @@
     categoryInput.innerHTML = `<option value="">Selecciona una colección</option>${collections.map(collection => `<option value="${escapeHtml(collection.id)}" ${collection.id === selectedCollection ? "selected" : ""}>${escapeHtml(collection.name)}</option>`).join("")}`;
   }
 
+  function addContentView() {
+    if ($("#admin-view-content")) return;
+    const nav = $(".admin-nav");
+    const views = $(".admin-grid > div");
+    if (!nav || !views) return;
+    nav.insertAdjacentHTML("beforeend", `<button type="button" data-admin-view="content" aria-pressed="false">Contenido</button>`);
+    views.insertAdjacentHTML("beforeend", `<section class="admin-view panel" id="admin-view-content" hidden><div class="admin-view-head"><div><p class="admin-sidebar-kicker">Editorial</p><h2>Contenido</h2></div><p>Edita los textos de portada, marca y diario. Se guardan como contenido editorial, separado del catálogo.</p></div><div class="admin-content-list" id="admin-content"></div></section>`);
+  }
+
+  function contentMarkup(block) {
+    return `<article class="admin-content-card" data-content-block="${escapeHtml(block.id)}"><p class="admin-sidebar-kicker">${escapeHtml(block.key)}</p><label class="field"><span>Título</span><input maxlength="180" value="${escapeHtml(block.title)}" data-content-title></label><label class="field"><span>Texto</span><textarea maxlength="4000" data-content-body>${escapeHtml(block.body)}</textarea></label><label class="admin-check"><input type="checkbox" data-content-enabled ${block.enabled ? "checked" : ""}><span><strong>Mostrar este bloque</strong><small>Podrás publicarlo en la web durante la fase de publicación.</small></span></label><button class="button button--primary" type="button" data-save-content="${escapeHtml(block.id)}">Guardar contenido</button></article>`;
+  }
+
   async function renderAdmin() {
     const [products, collections] = await Promise.all([
       adminData.listProducts(),
       adminData.listCollections()
     ]);
-    const [orders, messages, commissions] = await Promise.all([
+    const [orders, messages, commissions, content] = await Promise.all([
       adminData.listOrders().catch(() => []),
       adminData.listMessages().catch(() => []),
-      adminData.listCommissions().catch(() => [])
+      adminData.listCommissions().catch(() => []),
+      adminData.listContent().catch(() => [])
     ]);
     const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
@@ -238,6 +252,7 @@
       ${message.status === "Leído" ? "" : `<button class="button button--quiet" type="button" data-read-message="${escapeHtml(message.id)}">Marcar como leído</button>`}
     </article>`).join("") : `<div class="empty-state">No hay mensajes todavía.</div>`;
     $("#admin-commissions").innerHTML = visibleCommissions.length ? visibleCommissions.map(commissionMarkup).join("") : `<div class="empty-state">No hay encargos en este grupo.</div>`;
+    $("#admin-content").innerHTML = content.length ? content.map(contentMarkup).join("") : `<div class="empty-state">Aún no hay bloques de contenido. Al iniciar PocketBase se crearán los textos base.</div>`;
   }
 
   async function unlockAdmin() {
@@ -538,6 +553,7 @@
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
       const saveOrderNotes = event.target.closest("[data-save-order-notes]");
+      const saveContent = event.target.closest("[data-save-content]");
 
       if (imagePreview) {
         const dialog = document.createElement("dialog");
@@ -585,6 +601,21 @@
           toast("Nota interna guardada");
         } catch (error) {
           toast(error.message || "No se pudo guardar la nota");
+        }
+      }
+
+      if (saveContent) {
+        const card = saveContent.closest("[data-content-block]");
+        try {
+          await adminData.updateContent(saveContent.dataset.saveContent, {
+            title: card?.querySelector("[data-content-title]")?.value || "",
+            body: card?.querySelector("[data-content-body]")?.value || "",
+            enabled: Boolean(card?.querySelector("[data-content-enabled]")?.checked)
+          });
+          await renderAdmin();
+          toast("Contenido guardado");
+        } catch (error) {
+          toast(error.message || "No se pudo guardar el contenido");
         }
       }
 
@@ -715,6 +746,7 @@
 
       setupNavigation();
       setupIdentity();
+      addContentView();
       setupAdmin();
       if (pocketBaseUser) await unlockAdmin();
     } catch (error) {

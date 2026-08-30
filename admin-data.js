@@ -5,7 +5,8 @@
     products: "alma-v2-products",
     collections: "alma-v2-collections",
     orders: "alma-v2-orders",
-    messages: "alma-v2-messages"
+    messages: "alma-v2-messages",
+    content: "alma-v2-content"
   });
   const PRODUCT_STATUSES = new Set(["draft", "published", "hidden", "archived"]);
   const PRICE_MODES = new Set(["fixed", "from", "quote"]);
@@ -141,6 +142,11 @@
       if (storage.getItem(keys.collections) == null) write(keys.collections, normalizeCollections(seedCollections));
       if (storage.getItem(keys.orders) == null) write(keys.orders, []);
       if (storage.getItem(keys.messages) == null) write(keys.messages, []);
+      if (storage.getItem(keys.content) == null) write(keys.content, [
+        { id: "home-notice", key: "home_notice", title: "Hecho despacio, pensado para durar", body: "Cada pieza se borda a mano en Jaén. Si buscas algo único, cuéntanos tu idea.", enabled: true },
+        { id: "brand-intro", key: "brand_intro", title: "Una historia en cada puntada", body: "Creamos piezas textiles con calma, intención y mucho cariño.", enabled: true },
+        { id: "journal-intro", key: "journal_intro", title: "Desde el cuaderno de taller", body: "Procesos, materiales e historias que acompañan cada bordado.", enabled: true }
+      ]);
     }
 
     ensureSeed();
@@ -166,6 +172,16 @@
 
       async saveCollections(collections) {
         return write(keys.collections, normalizeCollections(collections));
+      },
+
+      async listContent() { return safeArray(read(keys.content, [])); },
+      async updateContent(contentId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const content = await this.listContent();
+        const block = content.find(item => item.id === contentId);
+        if (!block) return false;
+        Object.assign(block, clone(patch), { id: block.id, key: block.key });
+        return write(keys.content, content).find(item => item.id === contentId);
       },
 
       async listOrders() {
@@ -316,6 +332,7 @@
     orders: "sinprisa_orders",
     orderItems: "sinprisa_order_items",
     messages: "sinprisa_messages",
+    content: "sinprisa_content_blocks",
     commissions: "sinprisa_commissions",
     commissionMessages: "sinprisa_commission_messages"
   });
@@ -674,6 +691,10 @@
       };
     }
 
+    function mapContent(record) {
+      return { id: String(record.id), key: String(record.key || ""), title: String(record.title || ""), body: String(record.body || ""), enabled: Boolean(record.enabled) };
+    }
+
     function messagePayload(message, partial = false) {
       if (!plainObject(message)) throw new TypeError("message debe ser un objeto");
       const payload = {};
@@ -926,6 +947,22 @@
       async listMessages() {
         const records = await listRecords(POCKETBASE_COLLECTIONS.messages);
         return records.map(mapMessage);
+      },
+
+      async listContent() {
+        const records = await listRecords(POCKETBASE_COLLECTIONS.content, { sort: "key" });
+        return records.map(mapContent);
+      },
+
+      async updateContent(contentId, patch) {
+        if (!plainObject(patch)) throw new TypeError("patch debe ser un objeto");
+        const current = await findRecord(POCKETBASE_COLLECTIONS.content, contentId);
+        if (!current) return false;
+        const payload = {};
+        if (hasOwn(patch, "title")) payload.title = String(patch.title || "").trim();
+        if (hasOwn(patch, "body")) payload.body = String(patch.body || "").trim();
+        if (hasOwn(patch, "enabled")) payload.enabled = Boolean(patch.enabled);
+        return mapContent(await request(recordsPath(POCKETBASE_COLLECTIONS.content, contentId), { method: "PATCH", body: payload }));
       },
 
       async listCommissions() {
