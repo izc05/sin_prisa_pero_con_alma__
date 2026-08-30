@@ -121,9 +121,9 @@
   function galleryMarkup(product) {
     const images = productImages(product);
     const items = images.map((image, index) => `<article class="admin-gallery__item">
-      <img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}">
+      <button class="admin-image-preview" type="button" data-image-preview="${escapeHtml(image.src)}" data-image-alt="${escapeHtml(image.alt || `Fotografía ${index + 1} de ${product.name}`)}"><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}"><span>Ampliar</span></button>
       <label class="field"><span>Texto alternativo</span><input maxlength="160" value="${escapeHtml(image.alt)}" data-image-alt="${escapeHtml(image.id)}" data-product-image-alt="${escapeHtml(product.id)}"></label>
-      <div class="admin-gallery__actions">${index === 0 ? `<span class="admin-product-state admin-product-state--featured">Portada</span>` : `<button class="button button--quiet" type="button" data-make-primary="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Portada</button>`}<button class="button danger" type="button" data-remove-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Quitar</button></div>
+      <div class="admin-gallery__actions">${index === 0 ? `<span class="admin-product-state admin-product-state--featured">Portada</span>` : `<button class="button button--quiet" type="button" data-make-primary="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Portada</button>`}${index > 0 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="backward" data-product-images="${escapeHtml(product.id)}">← Mover</button>` : ""}${index < images.length - 1 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="forward" data-product-images="${escapeHtml(product.id)}">Mover →</button>` : ""}<button class="button danger" type="button" data-remove-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Quitar</button></div>
     </article>`).join("");
     return `<div class="admin-gallery"><div class="admin-gallery__head"><strong>Galería</strong><label class="button button--quiet"><span>Añadir fotos</span><input type="file" accept="image/*" multiple data-add-product-images="${escapeHtml(product.id)}"></label></div>${items || `<p class="empty-state">Aún no hay fotografías.</p>`}</div>`;
   }
@@ -526,6 +526,7 @@
       const saveCollection = event.target.closest("[data-save-collection]");
       const removeCollection = event.target.closest("[data-delete-collection]");
       const makePrimary = event.target.closest("[data-make-primary]");
+      const moveImage = event.target.closest("[data-move-image]");
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
@@ -598,6 +599,21 @@
             await adminData.setProductImages(product.id, [selected, ...images.filter(image => image.id !== selected.id)]);
             await renderAdmin();
             toast("Portada actualizada");
+          }
+        }
+      }
+
+      if (moveImage) {
+        const product = (await adminData.listProducts()).find(item => item.id === moveImage.dataset.productImages);
+        if (product) {
+          const images = productImages(product);
+          const currentIndex = images.findIndex(image => image.id === moveImage.dataset.moveImage);
+          const nextIndex = moveImage.dataset.imageDirection === "backward" ? currentIndex - 1 : currentIndex + 1;
+          if (currentIndex >= 0 && images[nextIndex]) {
+            [images[currentIndex], images[nextIndex]] = [images[nextIndex], images[currentIndex]];
+            await adminData.setProductImages(product.id, images);
+            await renderAdmin();
+            toast("Orden de fotografías actualizado");
           }
         }
       }
