@@ -385,8 +385,8 @@ button { color: inherit; }
   gap: clamp(48px, 8vw, 130px);
   align-items: start;
 }
-.commission-list { display: grid; border-top: 1px solid var(--line); }
-.commission-list article {
+.commission-intro .commission-list { display: grid; border-top: 1px solid var(--line); }
+.commission-intro .commission-list article {
   display: grid;
   grid-template-columns: 48px minmax(160px, .7fr) 1fr;
   gap: 20px;
@@ -394,11 +394,11 @@ button { color: inherit; }
   padding: 28px 0;
   border-bottom: 1px solid var(--line);
 }
-.commission-list span,
+.commission-intro .commission-list span,
 .brand-principles span { color: var(--rose); font: 500 .68rem/1 var(--mono); }
-.commission-list h3,
+.commission-intro .commission-list h3,
 .brand-principles h3 { margin: 0; font: 500 1.65rem/1 var(--serif); }
-.commission-list p,
+.commission-intro .commission-list p,
 .brand-principles p { margin: 0; color: var(--ink-soft); font-size: .9rem; }
 
 .faq-section {
@@ -495,6 +495,25 @@ button { color: inherit; }
 .admin-product-copy strong { display: block; }
 .admin-product-copy small { color: var(--ink-soft); }
 .danger { border-color: #a84848; color: #873536; }
+.admin-commission-card { padding: 28px; border: 1px solid var(--line); background: var(--paper); }
+.admin-commission-card + .admin-commission-card { margin-top: 16px; }
+.admin-commission-card__head { display: flex; align-items: start; justify-content: space-between; gap: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+.admin-commission-card__head h3 { margin: 5px 0 10px; font: 500 2rem/1 var(--serif); overflow-wrap: anywhere; }
+.admin-commission-card__head > strong { white-space: nowrap; padding: 9px 12px; background: var(--rose-pale); color: var(--rose-dark); font: 500 .72rem/1 var(--mono); }
+.admin-commission-meta { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.admin-commission-meta div { display: grid; gap: 5px; min-width: 0; }
+.admin-commission-meta span, .admin-commission-status > span { color: var(--rose-dark); font: 500 .63rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.admin-commission-meta strong { font: 500 1.05rem/1.2 var(--sans); overflow-wrap: anywhere; }
+.admin-commission-meta small { color: var(--ink-soft); overflow-wrap: anywhere; }
+.admin-commission-card__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .36fr); gap: 28px; padding-top: 22px; align-items: start; }
+.admin-commission-card__body section { min-width: 0; }
+.admin-commission-details { max-width: 760px; margin: 8px 0 20px; color: var(--ink-soft); line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+.admin-commission-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 12px; }
+.admin-commission-gallery a { display: grid; gap: 7px; color: var(--ink-soft); font: 500 .62rem/1.2 var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+.admin-commission-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid var(--line); }
+.admin-commission-empty { margin: 0; padding: 18px; border: 1px dashed var(--line); color: var(--ink-soft); font-size: .82rem; }
+.admin-commission-status { position: sticky; top: 110px; padding: 18px; border: 1px solid var(--line); background: var(--ivory); }
+.admin-commission-status select { width: 100%; min-height: 48px; border: 1px solid var(--line); background: var(--paper); padding: 0 12px; color: var(--ink); }
 
 .site-footer { padding: 70px clamp(24px, 7vw, 128px) 28px; border-top: 1px solid var(--line); background: var(--ivory); }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(3, .7fr); gap: 50px; }
@@ -605,8 +624,13 @@ button { color: inherit; }
   .editorial-page-hero__content .display-title { font-size: clamp(3.1rem, 14vw, 4.8rem); }
   .editorial-page-hero__note { display: none; }
   .commission-intro, .faq-section, .brand-manifesto { gap: 44px; }
-  .commission-list article { grid-template-columns: 34px 1fr; }
-  .commission-list article p { grid-column: 2; }
+  .commission-intro .commission-list article { grid-template-columns: 34px 1fr; }
+  .commission-intro .commission-list article p { grid-column: 2; }
+  .admin-commission-card { padding: 20px; }
+  .admin-commission-card__head, .admin-commission-card__body { grid-template-columns: 1fr; }
+  .admin-commission-card__head { display: grid; }
+  .admin-commission-meta { grid-template-columns: 1fr; }
+  .admin-commission-status { position: static; }
   .brand-principles, .brand-cta { grid-template-columns: 1fr; }
   .brand-principles article,
   .brand-principles article:nth-child(2n) { min-height: 210px; border-right: 0; border-bottom: 1px solid var(--line); }
