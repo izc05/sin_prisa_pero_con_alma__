@@ -203,6 +203,19 @@ button { color: inherit; }
   -webkit-mask-image: radial-gradient(ellipse 78% 84% at center, #000 48%, rgba(0,0,0,.56) 72%, transparent 100%);
   mask-image: radial-gradient(ellipse 78% 84% at center, #000 48%, rgba(0,0,0,.56) 72%, transparent 100%);
 }
+.welcome-enter {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(24px, 5vh, 52px);
+  z-index: 2;
+  min-width: min(240px, calc(100vw - 48px));
+  border-color: rgba(76, 48, 47, .26);
+  background: rgba(255, 250, 243, .9);
+  box-shadow: 0 12px 34px rgba(76, 48, 47, .14);
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+.welcome-enter:hover { transform: translateX(-50%) translateY(-2px); }
 .welcome.is-hidden { visibility: hidden; opacity: 0; pointer-events: none; }
 
 .home-hero {

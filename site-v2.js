@@ -125,6 +125,7 @@
       closeWelcome();
       return;
     }
+    $("[data-welcome-enter]", welcome)?.addEventListener("click", closeWelcome, { once: true });
     video?.addEventListener("ended", closeWelcome, { once: true });
     video?.addEventListener("error", closeWelcome, { once: true });
     window.addEventListener("keydown", onKeydown);

@@ -6,6 +6,7 @@ const output = resolve(root, "dist-public");
 const requiredFiles = [
   "index.html",
   "tienda.html",
+  "producto.html",
   "encargos.html",
   "diario.html",
   "marca.html",
