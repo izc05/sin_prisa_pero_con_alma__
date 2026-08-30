@@ -1,17 +1,9 @@
-function requireCatalogSecret(e) {
+routerAdd("GET", "/api/sinprisa/catalog", (e) => {
   const expected = String($os.getenv("SINPRISA_ORDER_INTAKE_SECRET") || "")
   const provided = String(e.request.header.get("X-Sinprisa-Intake-Secret") || "")
   if (!expected || !$security.equal($security.sha256(provided), $security.sha256(expected))) {
     throw new ForbiddenError("Acceso denegado")
   }
-}
-
-function publicImagePath(imageId) {
-  return "/api/catalog-image?id=" + encodeURIComponent(imageId)
-}
-
-routerAdd("GET", "/api/sinprisa/catalog", (e) => {
-  requireCatalogSecret(e)
 
   const collectionRecords = e.app.findAllRecords("sinprisa_collections")
   const collectionsById = {}
@@ -34,7 +26,7 @@ routerAdd("GET", "/api/sinprisa/catalog", (e) => {
     if (!imagesByProduct[productId]) imagesByProduct[productId] = []
     imagesByProduct[productId].push({
       id: image.id,
-      src: publicImagePath(image.id),
+      src: "/api/catalog-image?id=" + encodeURIComponent(image.id),
       alt: image.getString("alt_text"),
       position: image.getInt("sort_order"),
       primary: image.getBool("is_cover"),
@@ -72,7 +64,11 @@ routerAdd("GET", "/api/sinprisa/catalog", (e) => {
 }, $apis.skipSuccessActivityLog())
 
 routerAdd("GET", "/api/sinprisa/catalog-image/{id}", (e) => {
-  requireCatalogSecret(e)
+  const expected = String($os.getenv("SINPRISA_ORDER_INTAKE_SECRET") || "")
+  const provided = String(e.request.header.get("X-Sinprisa-Intake-Secret") || "")
+  if (!expected || !$security.equal($security.sha256(provided), $security.sha256(expected))) {
+    throw new ForbiddenError("Acceso denegado")
+  }
   const id = String(e.request.pathValue("id") || "")
   if (!/^[a-z0-9]{15}$/.test(id)) throw new NotFoundError("Imagen no encontrada")
 
