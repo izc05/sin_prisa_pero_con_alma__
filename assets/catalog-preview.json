@@ -1,0 +1,13 @@
+{
+  "collections": [
+    {"id":"bebe","name":"Bebé"},
+    {"id":"regalo","name":"Regalo"},
+    {"id":"hogar","name":"Hogar"},
+    {"id":"encargo","name":"Encargo"}
+  ],
+  "products": [
+    {"id":"babero-danna","name":"Babero Danna","category":"bebe","description":"Lino lavado, volante y bordado de ocas y flores.","price":28,"priceMode":"fixed","stockMode":"available","featured":true,"image":"assets/babero-danna.jpeg","imageAlt":"Babero Danna bordado a mano"},
+    {"id":"bolsa-jardin","name":"Bolsa Jardín","category":"regalo","description":"Bolsa de lino bordada puntada a puntada.","price":22,"priceMode":"fixed","stockMode":"available","featured":false,"image":"assets/bolsa-flores.jpeg","imageAlt":"Bolsa Jardín bordada a mano"},
+    {"id":"bastidor-botanico","name":"Bastidor Botánico","category":"hogar","description":"Pequeño paisaje floral para guardar un recuerdo.","price":35,"priceMode":"fixed","stockMode":"available","featured":false,"image":"assets/detalle-bordado.jpeg","imageAlt":"Bastidor botánico bordado"}
+  ]
+}

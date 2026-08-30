@@ -102,8 +102,13 @@
         }))
         .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
     } catch {
-      catalogCollections = [];
-      catalogProducts = [];
+      if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+        try {
+          const preview = await fetch("assets/catalog-preview.json").then(response => response.ok ? response.json() : Promise.reject());
+          catalogCollections = preview.collections || [];
+          catalogProducts = (preview.products || []).map(product => ({ ...product, stock: product.stockMode !== "sold_out", badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Vista local" }));
+        } catch { catalogCollections = []; catalogProducts = []; }
+      } else { catalogCollections = []; catalogProducts = []; }
     }
     return catalogProducts;
   }
