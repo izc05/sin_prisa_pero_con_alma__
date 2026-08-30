@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node scripts/test-admin-data.mjs && node scripts/test-pocketbase-driver.mjs && node scripts/test-admin-auth.mjs && node scripts/test-order-request.mjs && node scripts/test-customer-commissions.mjs && node scripts/test-private-admin-server.mjs && node scripts/validate-admin-v2.mjs",
+    "test": "node scripts/test-admin-data.mjs && node scripts/test-pocketbase-driver.mjs && node scripts/test-admin-auth.mjs && node scripts/test-order-request.mjs && node scripts/test-customer-commissions.mjs && node scripts/test-public-catalog.mjs && node scripts/test-private-admin-server.mjs && node scripts/validate-admin-v2.mjs",
     "test:integration:pocketbase": "node scripts/test-pocketbase-integration.mjs",
     "build": "node scripts/build-public.mjs && node scripts/validate-public-build.mjs",
     "build:full": "node scripts/build.mjs",

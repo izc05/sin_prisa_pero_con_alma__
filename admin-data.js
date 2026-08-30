@@ -421,7 +421,19 @@
         throw createPocketBaseError("PocketBasePermissionError", "PocketBase denegó la operación", 403);
       }
       if (!response.ok) {
-        throw createPocketBaseError("PocketBaseRequestError", `PocketBase respondió con HTTP ${response.status} en ${path}`, response.status);
+        let detail = "";
+        try {
+          const payload = await response.json();
+          detail = Object.values(payload?.data || {})
+            .map(value => String(value?.message || ""))
+            .filter(Boolean)
+            .join(" · ");
+        } catch {}
+        throw createPocketBaseError(
+          "PocketBaseRequestError",
+          detail || `PocketBase respondió con HTTP ${response.status} en ${path}`,
+          response.status
+        );
       }
       if (response.status === 204) return null;
 
@@ -680,7 +692,7 @@
         const [products, images, fileAuth] = await Promise.all([
           listRecords(POCKETBASE_COLLECTIONS.products, { sort: "sort_order" }),
           listRecords(POCKETBASE_COLLECTIONS.images, { sort: "sort_order" }),
-          request("/api/files/token").catch(() => ({ token: "" }))
+          request("/api/files/token", { method: "POST" }).catch(() => ({ token: "" }))
         ]);
         return products.map(product => mapProduct(product, images, String(fileAuth?.token || "")));
       },
@@ -886,8 +898,8 @@
 
       async listCommissions() {
         const [records, fileAuth] = await Promise.all([
-          listRecords(POCKETBASE_COLLECTIONS.commissions, { expand: "customer", sort: "-created" }),
-          request("/api/files/token").catch(() => ({ token: "" }))
+          listRecords(POCKETBASE_COLLECTIONS.commissions, { expand: "customer" }),
+          request("/api/files/token", { method: "POST" }).catch(() => ({ token: "" }))
         ]);
         return records.map(record => mapCommission(record, String(fileAuth?.token || "")));
       },

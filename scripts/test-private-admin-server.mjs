@@ -6,9 +6,9 @@ import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import http from "node:http";
 
-function requestStatus(port, path, host) {
+function requestStatus(port, path, host, method = "GET") {
   return new Promise((resolve, reject) => {
-    const request = http.request({ hostname: "127.0.0.1", port, path, headers: { Host: host } }, response => {
+    const request = http.request({ hostname: "127.0.0.1", port, path, method, headers: { Host: host } }, response => {
       response.resume();
       response.once("end", () => resolve(response.statusCode));
     });
@@ -45,6 +45,10 @@ try {
 
   assert.equal(await requestStatus(port, "/", "pedidos-sinprisa.isivoltpro.com"), 404);
   assert.equal(await requestStatus(port, "/api/collections/sinprisa_orders/records", "pedidos-sinprisa.isivoltpro.com"), 404);
+  assert.equal(await requestStatus(port, "/api/sinprisa/catalog", "pedidos-sinprisa.isivoltpro.com"), 502);
+  assert.equal(await requestStatus(port, "/api/sinprisa/catalog-image/abcdefghijklmno", "pedidos-sinprisa.isivoltpro.com"), 502);
+  assert.equal(await requestStatus(port, "/api/sinprisa/catalog-image/not-valid", "pedidos-sinprisa.isivoltpro.com"), 404);
+  assert.equal(await requestStatus(port, "/api/sinprisa/catalog", "pedidos-sinprisa.isivoltpro.com", "POST"), 404);
 } finally {
   child.kill("SIGTERM");
 }

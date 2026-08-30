@@ -60,7 +60,7 @@ Para administrar o consultar el mini PC desde fuera:
 4. Crear una aplicación de Cloudflare Access y autorizar solo los correos de administración.
 5. Mantener cerrados los puertos del router y evitar publicar SSH o el panel directamente en Internet.
 
-El Admin privado usa el build completo `dist/`; PocketBase en `127.0.0.1:8092` es la fuente central de pedidos y encargos. El hostname de recepción admite únicamente las rutas exactas de pedidos, cuentas de clienta y encargos que utiliza Pages Functions; el resto devuelve `404`.
+El Admin privado usa el build completo `dist/`; PocketBase en `127.0.0.1:8092` es la fuente central del catálogo, pedidos y encargos. El hostname de recepción admite únicamente las rutas exactas de catálogo, imágenes públicas de productos, pedidos, cuentas de clienta y encargos que utiliza Pages Functions; el resto devuelve `404`. Las imágenes de referencia de encargos no forman parte del catálogo público.
 
 ## Antes de cobrar pedidos reales
 

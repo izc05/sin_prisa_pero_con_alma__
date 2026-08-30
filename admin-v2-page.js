@@ -190,12 +190,14 @@
   }
 
   async function renderAdmin() {
-    const [products, orders, messages, collections, commissions] = await Promise.all([
+    const [products, collections] = await Promise.all([
       adminData.listProducts(),
-      adminData.listOrders(),
-      adminData.listMessages(),
-      adminData.listCollections(),
-      adminData.listCommissions()
+      adminData.listCollections()
+    ]);
+    const [orders, messages, commissions] = await Promise.all([
+      adminData.listOrders().catch(() => []),
+      adminData.listMessages().catch(() => []),
+      adminData.listCommissions().catch(() => [])
     ]);
     const visibleProducts = products.filter(product => (product.status || "published") === "published" && product.stock !== false && product.stockMode !== "sold_out").length;
 
@@ -273,6 +275,11 @@
   }
 
   function setupAdmin() {
+    const initialCategory = $("#product-category");
+    if (initialCategory) {
+      initialCategory.required = true;
+      initialCategory.innerHTML = `<option value="">Inicia sesión para cargar las colecciones</option>`;
+    }
     const page = $("#admin-page");
     if (!page) return;
 
@@ -363,7 +370,7 @@
         await adminData.createProduct({
           id: uid("PROD"),
           name: String(data.get("name") || "").trim(),
-          category: String(data.get("category") || "regalo"),
+          category: String(data.get("category") || ""),
           description: String(data.get("description") || "").trim(),
           price: priceMode === "quote" || !data.get("price") ? null : Number(data.get("price")),
           priceMode,

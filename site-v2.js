@@ -37,9 +37,9 @@
   if (!localStorage.getItem(KEYS.orders)) write(KEYS.orders, []);
   if (!localStorage.getItem(KEYS.messages)) write(KEYS.messages, []);
 
-  // El catálogo público queda vacío hasta que Gestión sea su única fuente segura.
-  // Los antiguos ejemplos que pueda conservar el navegador no se vuelven a mostrar.
-  const getProducts = () => [];
+  let catalogProducts = [];
+  let refreshShopFilters = () => {};
+  const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
   let customerSession = null;
   const getSession = () => customerSession;
@@ -68,6 +68,32 @@
       customerSession = null;
     }
     return customerSession;
+  }
+
+  async function loadCatalog() {
+    try {
+      const payload = await apiJson("/api/catalog");
+      catalogProducts = (Array.isArray(payload.products) ? payload.products : [])
+        .filter(product => product && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(String(product.id || "")))
+        .map(product => ({
+          id: String(product.id),
+          name: String(product.name || ""),
+          category: String(product.category || ""),
+          description: String(product.description || ""),
+          price: product.price == null ? null : Number(product.price),
+          priceMode: String(product.priceMode || (product.price == null ? "quote" : "fixed")),
+          stockMode: String(product.stockMode || "available"),
+          stock: product.stockMode !== "sold_out",
+          featured: Boolean(product.featured),
+          image: String(product.image || ""),
+          imageAlt: String(product.imageAlt || product.name || ""),
+          badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Disponible"
+        }))
+        .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
+    } catch {
+      catalogProducts = [];
+    }
+    return catalogProducts;
   }
 
   function toast(message) {
@@ -148,7 +174,7 @@
       : `<div class="product-actions"><button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>${customLink}</div>`;
     return `<article class="product-card" data-category="${escapeHtml(product.category)}">
       <a class="product-image-wrap" href="${detailUrl}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
-        <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" loading="lazy">
+        <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}" loading="lazy">
         <span class="product-badge">${escapeHtml(product.badge || "Hecho a mano")}</span>
       </a>
       <div class="product-info">
@@ -191,6 +217,8 @@
     }));
     search?.addEventListener("input", update);
     sort?.addEventListener("change", update);
+    refreshShopFilters = update;
+    update();
   }
 
   function setupProductDetail() {
@@ -211,7 +239,7 @@
     const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
-        <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}"></div>
+        <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"></div>
         <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}<a class="button button--outline" href="${customUrl}">Personalizar esta pieza</a></div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
       </article>`;
   }
@@ -599,12 +627,15 @@
   setupStorageNotice();
   renderProducts();
   setupShopFilters();
-  setupProductDetail();
   renderCart();
   setupCartEvents();
   setupAdmin();
   (async () => {
-    await loadCustomerSession();
+    await Promise.all([loadCustomerSession(), loadCatalog()]);
+    renderProducts();
+    refreshShopFilters();
+    setupProductDetail();
+    renderCart();
     setupAccount();
     setupCustomOrder();
     updateIdentityLinks();

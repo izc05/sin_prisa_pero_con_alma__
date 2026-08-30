@@ -51,5 +51,11 @@ const publicScript = readFileSync(resolve(output, "site-v2.js"), "utf8");
 if (/pocketbase|CF_ACCESS_CLIENT_SECRET|ORDER_INTAKE_SECRET/i.test(publicScript)) {
   throw new Error("El JavaScript público contiene referencias a credenciales o PocketBase");
 }
+if (!publicScript.includes('apiJson("/api/catalog")') || !publicScript.includes("producto.html?pieza=")) {
+  throw new Error("El escaparate público no consume el catálogo seguro o no enlaza sus fichas");
+}
+for (const demoId of ["babero-danna", "bolsa-jardin", "bastidor-botanico", "encargo-personal"]) {
+  if (publicScript.includes(demoId)) throw new Error(`El catálogo público conserva el ejemplo ${demoId}`);
+}
 
 console.log("Build público sin Admin OK");

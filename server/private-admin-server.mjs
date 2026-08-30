@@ -10,13 +10,15 @@ const POCKETBASE_URL = new URL(process.env.SINPRISA_POCKETBASE_URL || "http://12
 const ORDER_INGRESS_HOST = process.env.SINPRISA_ORDER_INGRESS_HOST || "pedidos-sinprisa.isivoltpro.com";
 const ORDER_PATH = "/api/sinprisa/order-requests";
 const PUBLIC_SITE_URL = new URL(process.env.SINPRISA_PUBLIC_SITE_URL || "https://sinprisa.isivoltpro.com");
-const PUBLIC_API_PATHS = new Set([
+const PUBLIC_POST_PATHS = new Set([
   ORDER_PATH,
   "/api/sinprisa/commissions",
   "/api/collections/sinprisa_customer_accounts/records",
   "/api/collections/sinprisa_customer_accounts/auth-with-password",
   "/api/collections/sinprisa_customer_accounts/auth-refresh"
 ]);
+const PUBLIC_GET_PATHS = new Set(["/api/sinprisa/catalog"]);
+const PUBLIC_CATALOG_IMAGE_PATH = /^\/api\/sinprisa\/catalog-image\/[a-z0-9]{15}$/;
 const HOP_BY_HOP_HEADERS = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"]);
 
 const MIME_TYPES = new Map([
@@ -51,6 +53,12 @@ function isInsideDocumentRoot(filePath) {
 
 function requestHostname(request) {
   return String(request.headers.host || "").split(":", 1)[0].toLowerCase();
+}
+
+function allowedPublicIngress(method, pathname) {
+  if (method === "POST") return PUBLIC_POST_PATHS.has(pathname);
+  if (method === "GET") return PUBLIC_GET_PATHS.has(pathname) || PUBLIC_CATALOG_IMAGE_PATH.test(pathname);
+  return false;
 }
 
 function proxyToPocketBase(request, response) {
@@ -146,7 +154,7 @@ const server = http.createServer(async (request, response) => {
     catch { return ""; }
   })();
   const orderIngress = requestHostname(request) === ORDER_INGRESS_HOST;
-  if (orderIngress && (request.method !== "POST" || !PUBLIC_API_PATHS.has(pathname))) {
+  if (orderIngress && !allowedPublicIngress(request.method || "GET", pathname)) {
     sendText(response, 404, "Not Found\n");
     return;
   }

@@ -124,6 +124,9 @@ async function mockFetch(input, init) {
   assert.equal(init.headers.Authorization, "Bearer runtime-auth-value");
   requests.push({ path, search: url.search, method, body: init.body });
 
+  if (path === "/api/files/token" && method === "POST") {
+    return jsonResponse({ token: "temporary-file-token" });
+  }
   if (path === "/api/collections/sinprisa_products/records" && method === "GET") {
     return jsonResponse(list(products));
   }
@@ -203,6 +206,7 @@ assert.equal(listedProducts[0].price, 28.5);
 assert.equal(listedProducts[1].price, null);
 assert.equal(listedProducts[0].images[0].primary, true);
 assert.equal(listedProducts[0].image.includes("image-existing"), true);
+assert.equal(requests.some(request => request.path === "/api/files/token" && request.method === "POST"), true);
 
 const numericUpdate = await driver.updateProduct("product-null", { priceMode: "fixed", price: 19.75 });
 assert.equal(numericUpdate.price, 19.75);
