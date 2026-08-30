@@ -466,7 +466,7 @@ button { color: inherit; }
 .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
 .tab { padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; cursor: pointer; font: 500 .67rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
 .tab.is-active { border-color: var(--rose-dark); color: var(--rose-dark); }
-.auth-form[hidden], .account-dashboard[hidden], .admin-dashboard[hidden], .admin-lock[hidden], .admin-view[hidden] { display: none; }
+.account-layout[hidden], .auth-form[hidden], .account-dashboard[hidden], .admin-dashboard[hidden], .admin-lock[hidden], .admin-view[hidden] { display: none; }
 .order-list, .message-list, .admin-product-list { display: grid; gap: 12px; }
 .order-card, .message-card, .admin-product-row { padding: 18px; border: 1px solid var(--line); background: var(--paper); }
 .order-head, .admin-product-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }

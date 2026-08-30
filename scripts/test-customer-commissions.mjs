@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { onRequestPost as register } from "../functions/api/account/register.js";
 import { onRequestPost as login } from "../functions/api/account/login.js";
 import { onRequestGet as session } from "../functions/api/account/session.js";
+import { onRequestGet as customerCommissions } from "../functions/api/account/commissions.js";
 import { onRequestPost as commission } from "../functions/api/commissions.js";
 
 const env = {
@@ -19,6 +20,7 @@ globalThis.fetch = async (url, init) => {
     return Response.json({ token: "private-auth-token", record: { id: "account-1", name: "Ana", email: "ana@example.com" } });
   }
   if (String(url).endsWith("/api/sinprisa/commissions")) return Response.json({ reference: "ENC-TEST", images: 1 }, { status: 201 });
+  if (String(url).endsWith("/api/sinprisa/my-commissions")) return Response.json({ commissions: [{ reference: "ENC-TEST", piece: "Babero", status: "new", quantity: 1 }] });
   return Response.json({}, { status: 404 });
 };
 
@@ -76,6 +78,15 @@ try {
   const forwardedForm = forwarded.init.body;
   assert.equal(forwardedForm.get("product_reference"), "bastidor-botanico");
   assert.equal(forwardedForm.get("product_name"), "Bastidor Botánico");
+
+  const commissionsResponse = await customerCommissions({
+    env,
+    request: new Request("https://sinprisa.example/api/account/commissions", { headers: { Cookie: "sinprisa_customer_session=private-auth-token" } })
+  });
+  assert.equal(commissionsResponse.status, 200);
+  assert.equal((await commissionsResponse.json()).commissions[0].reference, "ENC-TEST");
+  const historyRequest = calls.find(call => String(call.url).endsWith("/api/sinprisa/my-commissions"));
+  assert.equal(historyRequest.init.headers.Authorization, "Bearer private-auth-token");
 
   const anonymous = await commission({
     env,

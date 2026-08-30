@@ -41,6 +41,7 @@
   let catalogProducts = [];
   let catalogCollections = [];
   let activeShopFilter = new URLSearchParams(window.location.search).get("categoria") || "todos";
+  let customerCommissions = [];
   let refreshShopFilters = () => {};
   const getProducts = () => catalogProducts;
   const getCart = () => read(KEYS.cart, []);
@@ -462,6 +463,26 @@
     if (!session) return;
     $("#account-name").textContent = session.name;
     $("#account-email").textContent = session.email;
+    const list = $("#customer-commissions");
+    if (list) {
+      const statusLabels = { new: "Solicitud recibida", reviewing: "En revisión", quoted: "Presupuesto enviado", accepted: "Aceptado", in_progress: "En preparación", completed: "Completado", rejected: "No viable", cancelled: "Cancelado" };
+      list.innerHTML = customerCommissions.length ? customerCommissions.map(commission => `<article class="order-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status">${escapeHtml(statusLabels[commission.status] || commission.status || "Solicitud recibida")}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p></article>`).join("") : `<div class="empty-state">Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí.</div>`;
+    }
+  }
+
+  async function loadCustomerCommissions() {
+    if (!getSession()) {
+      customerCommissions = [];
+      renderAccount();
+      return;
+    }
+    try {
+      const payload = await apiJson("/api/account/commissions");
+      customerCommissions = Array.isArray(payload.commissions) ? payload.commissions : [];
+    } catch {
+      customerCommissions = [];
+    }
+    renderAccount();
   }
 
   function setupAccount() {
@@ -491,6 +512,8 @@
         customerSession = payload.user;
         renderAccount();
         updateIdentityLinks();
+        feedback.textContent = "";
+        await loadCustomerCommissions();
         toast("Cuenta creada de forma segura");
         continueAfterAuth();
       } catch (error) {
@@ -511,6 +534,8 @@
         customerSession = payload.user;
         renderAccount();
         updateIdentityLinks();
+        feedback.textContent = "";
+        await loadCustomerCommissions();
         toast("Sesión iniciada");
         continueAfterAuth();
       } catch (error) {
@@ -699,6 +724,7 @@
     setupProductDetail();
     renderCart();
     setupAccount();
+    await loadCustomerCommissions();
     setupCustomOrder();
     updateIdentityLinks();
   })();

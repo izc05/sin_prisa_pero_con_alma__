@@ -46,6 +46,7 @@ try {
   assert.equal(await requestStatus(port, "/", "pedidos-sinprisa.isivoltpro.com"), 404);
   assert.equal(await requestStatus(port, "/api/collections/sinprisa_orders/records", "pedidos-sinprisa.isivoltpro.com"), 404);
   assert.equal(await requestStatus(port, "/api/sinprisa/catalog", "pedidos-sinprisa.isivoltpro.com"), 502);
+  assert.equal(await requestStatus(port, "/api/sinprisa/my-commissions", "pedidos-sinprisa.isivoltpro.com"), 502);
   assert.equal(await requestStatus(port, "/api/sinprisa/catalog-image/abcdefghijklmno", "pedidos-sinprisa.isivoltpro.com"), 502);
   assert.equal(await requestStatus(port, "/api/sinprisa/catalog-image/not-valid", "pedidos-sinprisa.isivoltpro.com"), 404);
   assert.equal(await requestStatus(port, "/api/sinprisa/catalog", "pedidos-sinprisa.isivoltpro.com", "POST"), 404);

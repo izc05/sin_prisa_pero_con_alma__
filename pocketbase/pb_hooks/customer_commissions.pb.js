@@ -60,3 +60,20 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
   })
   return e.json(201, responseData)
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.bodyLimit(18 * 1024 * 1024), $apis.skipSuccessActivityLog())
+
+routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
+  const commissions = []
+  for (const record of e.app.findAllRecords("sinprisa_commissions")) {
+    if (!record || record.getString("account") !== e.auth.id) continue
+    commissions.push({
+      reference: "ENC-" + record.id.toUpperCase(),
+      piece: record.getString("idea"),
+      details: record.getString("details"),
+      quantity: record.getInt("quantity"),
+      status: record.getString("status"),
+      createdAt: record.getString("created"),
+    })
+  }
+  commissions.sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)))
+  return e.json(200, { commissions: commissions })
+}, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
