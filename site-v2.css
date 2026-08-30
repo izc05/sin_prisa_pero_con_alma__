@@ -295,6 +295,8 @@ button { color: inherit; }
 .product-detail__note { margin-top: 42px; padding: 22px 0 0; border-top: 1px solid var(--line); }
 .product-detail__note strong { font: 500 1.42rem/1 var(--serif); }
 .product-detail__note p { margin: 9px 0 0; color: var(--ink-soft); font-size: .85rem; }
+.product-personalizer { max-width: 1280px; margin: 0 auto clamp(72px, 9vw, 120px); padding: clamp(24px, 4vw, 48px); }
+.product-personalizer > p { color: var(--ink-soft); }
 .detail-empty { max-width: 660px; padding: clamp(100px, 16vw, 190px) clamp(24px, 7vw, 128px); }
 .text-link { display: inline-block; margin-top: 15px; border-bottom: 1px solid var(--line); color: var(--rose-dark); font: 500 .65rem/1.5 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .status--solicitud-recibida, .status--new { background: #e4eff7; color: #155c7c; border-color: #a9cfe2; }

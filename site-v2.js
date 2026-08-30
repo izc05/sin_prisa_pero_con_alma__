@@ -282,15 +282,38 @@
     }
     const customUrl = `encargos.html?pieza=${encodeURIComponent(product.id)}#formulario`;
     const purchaseAction = product.price == null
-      ? `<a class="button button--primary" href="${customUrl}">Personalizar esta pieza</a>`
+      ? `<button class="button button--primary" type="button" data-open-personalizer>Personalizar esta pieza</button>`
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
-    const customAction = product.price == null ? "" : `<a class="button button--outline" href="${customUrl}">Personalizar esta pieza</a>`;
+    const customAction = product.price == null ? "" : `<button class="button button--outline" type="button" data-open-personalizer>Personalizar esta pieza</button>`;
     const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
         <div class="product-detail__image"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"></div>
         <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}${customAction}</div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
-      </article>`;
+      </article><section class="product-personalizer panel" id="product-personalizer" hidden></section>`;
+    const personalizer = $("#product-personalizer", root);
+    root.addEventListener("click", event => {
+      if (!event.target.closest("[data-open-personalizer]")) return;
+      const session = getSession();
+      if (!session) {
+        personalizer.hidden = false;
+        personalizer.innerHTML = `<h2 class="section-title">Personaliza esta pieza</h2><p>Para guardar tu idea y tus imágenes de forma privada, entra primero en tu cuenta.</p><a class="button button--primary" href="cuenta.html?continuar=${encodeURIComponent(`producto.html?pieza=${product.id}`)}">Entrar o crear una cuenta</a>`;
+      } else {
+        personalizer.hidden = false;
+        personalizer.innerHTML = `<p class="eyebrow">Personalizar ${escapeHtml(product.name)}</p><h2 class="section-title">Cuéntanos cómo la imaginas.</h2><form class="form-grid" id="product-custom-form"><input type="hidden" name="product_reference" value="${escapeHtml(product.id)}"><input type="hidden" name="product_name" value="${escapeHtml(product.name)}"><div class="field"><label>Tipo de pieza<input name="piece" value="${escapeHtml(product.name)}" readonly></label></div><div class="field"><label>Cantidad<input name="quantity" type="number" min="1" max="20" value="1" required></label></div><div class="field field--full"><label>Fecha u ocasión<input name="occasion" maxlength="200" placeholder="Nacimiento, regalo, boda…"></label></div><div class="field field--full"><label>Tu idea<textarea name="details" minlength="10" maxlength="4000" required placeholder="Cuéntanos colores, nombre, historia o cambios…"></textarea></label></div><div class="field field--full"><label>Imágenes de referencia<input name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple><small>Hasta 4 imágenes de 4 MB cada una.</small></label></div><div class="field field--full"><button class="button button--primary" type="submit">Enviar solicitud privada</button><p class="form-feedback" role="status"></p></div></form>`;
+      }
+      personalizer.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    root.addEventListener("submit", async event => {
+      const form = event.target.closest("#product-custom-form"); if (!form) return;
+      event.preventDefault(); const feedback = $(".form-feedback", form); const submit = $("button[type=submit]", form); const data = new FormData(form);
+      const files = data.getAll("images").filter(file => file && file.size);
+      if (files.length > 4 || files.some(file => file.size > 4 * 1024 * 1024)) { feedback.textContent = "Máximo 4 imágenes de 4 MB cada una."; return; }
+      submit.disabled = true; feedback.textContent = "Enviando tu idea de forma privada…";
+      try { const payload = await apiJson("/api/commissions", { method: "POST", body: data }); feedback.textContent = `Solicitud ${payload.reference} recibida. Te responderemos pronto.`; form.reset(); }
+      catch (error) { feedback.textContent = error.message || "No se pudo enviar la solicitud"; }
+      finally { submit.disabled = false; }
+    });
   }
 
   function addToCart(id) {
@@ -513,7 +536,7 @@
   function setupAccount() {
     if (!$("#account-page")) return;
     const continuation = new URLSearchParams(window.location.search).get("continuar") || "";
-    const safeContinuation = /^encargos\.html\?pieza=[a-z0-9]+(?:-[a-z0-9]+)*#formulario$/.test(continuation) ? continuation : "";
+    const safeContinuation = /^(?:encargos\.html\?pieza=[a-z0-9]+(?:-[a-z0-9]+)*#formulario|producto\.html\?pieza=[a-z0-9]+(?:-[a-z0-9]+)*)$/.test(continuation) ? continuation : "";
     const continueAfterAuth = () => {
       if (safeContinuation) window.location.assign(safeContinuation);
     };
