@@ -10,7 +10,7 @@ const POCKETBASE_URL = new URL(process.env.SINPRISA_POCKETBASE_URL || "http://12
 const ORDER_INGRESS_HOST = process.env.SINPRISA_ORDER_INGRESS_HOST || "pedidos-sinprisa.isivoltpro.com";
 const ORDER_PATH = "/api/sinprisa/order-requests";
 const PUBLIC_SITE_URL = new URL(process.env.SINPRISA_PUBLIC_SITE_URL || "https://sinprisa.isivoltpro.com");
-const PUBLIC_POST_PATHS = new Set([
+const PUBLIC_WRITE_PATHS = new Set([
   ORDER_PATH,
   "/api/sinprisa/commissions",
   "/api/sinprisa/commission-messages",
@@ -57,7 +57,7 @@ function requestHostname(request) {
 }
 
 function allowedPublicIngress(method, pathname) {
-  if (method === "POST") return PUBLIC_POST_PATHS.has(pathname);
+  if (method === "POST" || method === "DELETE") return PUBLIC_WRITE_PATHS.has(pathname);
   if (method === "GET") return PUBLIC_GET_PATHS.has(pathname) || PUBLIC_CATALOG_IMAGE_PATH.test(pathname);
   return false;
 }

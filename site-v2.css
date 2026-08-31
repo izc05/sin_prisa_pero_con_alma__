@@ -524,10 +524,10 @@ button { color: inherit; }
 .admin-commission-empty { margin: 0; padding: 18px; border: 1px dashed var(--line); color: var(--ink-soft); font-size: .82rem; }
 .admin-commission-status { position: sticky; top: 110px; padding: 18px; border: 1px solid var(--line); background: var(--ivory); }
 .admin-commission-status select { width: 100%; min-height: 48px; border: 1px solid var(--line); background: var(--paper); padding: 0 12px; color: var(--ink); }
-.admin-commission-reply { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.admin-commission-reply { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
 .admin-commission-reply textarea { width: 100%; min-height: 130px; resize: vertical; border: 1px solid var(--line); background: var(--ivory); padding: 13px 14px; color: var(--ink); }
 .admin-commission-reply .button { justify-self: start; }
-.admin-commission-thread { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
+.admin-commission-thread { margin-top: 24px; border: 1px solid var(--line); background: rgba(255, 250, 243, .68); }
 .admin-commission-conversation, .customer-commission-conversation { display: grid; gap: 10px; margin: 12px 0 18px; }
 .admin-chat-message, .customer-chat-message { max-width: min(620px, 92%); padding: 13px 15px; background: var(--ivory); border: 1px solid var(--line); }
 .admin-chat-message.is-atelier, .customer-chat-message.is-atelier { justify-self: end; background: var(--rose-pale); }
@@ -537,12 +537,20 @@ button { color: inherit; }
 .customer-commission-reply strong { font: 500 .68rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
 .customer-commission-reply p, .customer-commission-pending { margin: 9px 0 0; color: var(--ink-soft); line-height: 1.55; white-space: pre-wrap; }
 .customer-commission-pending { font-size: .82rem; font-style: italic; }
-.customer-commission-thread { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
-.customer-commission-thread > strong { font: 500 .7rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.customer-commission-thread { margin-top: 20px; border: 1px solid var(--line); background: rgba(255, 250, 243, .52); }
+.customer-commission-thread summary, .admin-commission-thread summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 17px; cursor: pointer; list-style: none; font: 500 .7rem/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.customer-commission-thread summary::-webkit-details-marker, .admin-commission-thread summary::-webkit-details-marker { display: none; }
+.customer-commission-thread summary::before, .admin-commission-thread summary::before { content: "+"; color: var(--rose-dark); font-size: 1rem; }
+.customer-commission-thread[open] summary::before, .admin-commission-thread[open] summary::before { content: "−"; }
+.customer-commission-thread summary span, .admin-commission-thread summary span { margin-right: auto; }
+.customer-commission-thread summary small, .admin-commission-thread summary small { color: var(--ink-soft); font: 400 .58rem/1 var(--mono); letter-spacing: .04em; }
+.customer-commission-thread__content, .admin-commission-thread__content { padding: 0 17px 17px; border-top: 1px solid var(--line); }
+.admin-commission-thread__content { padding-top: 16px; }
 .customer-commission-thread form { display: grid; gap: 10px; margin-top: 14px; }
 .customer-commission-thread label { display: grid; gap: 8px; color: var(--ink-soft); font: 500 .62rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .customer-commission-thread textarea { min-height: 88px; resize: vertical; border: 1px solid var(--line); background: var(--ivory); padding: 12px; color: var(--ink); }
 .customer-commission-thread .button { justify-self: start; }
+.customer-clear-conversation { margin: 0 0 14px; }
 
 .site-footer { padding: 70px clamp(24px, 7vw, 128px) 28px; border-top: 1px solid var(--line); background: var(--ivory); }
 .footer-grid { display: grid; grid-template-columns: 1.3fr repeat(3, .7fr); gap: 50px; }

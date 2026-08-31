@@ -3,7 +3,7 @@ import { onRequestPost as register } from "../functions/api/account/register.js"
 import { onRequestPost as login } from "../functions/api/account/login.js";
 import { onRequestGet as session } from "../functions/api/account/session.js";
 import { onRequestGet as customerCommissions } from "../functions/api/account/commissions.js";
-import { onRequestPost as commissionMessage } from "../functions/api/account/commission-messages.js";
+import { onRequestDelete as clearCommissionMessages, onRequestPost as commissionMessage } from "../functions/api/account/commission-messages.js";
 import { onRequestPost as commission } from "../functions/api/commissions.js";
 
 const env = {
@@ -102,6 +102,18 @@ try {
   assert.equal((await messageResponse.json()).message.author, "customer");
   const messageRequest = calls.find(call => String(call.url).endsWith("/api/sinprisa/commission-messages"));
   assert.equal(messageRequest.init.headers.Authorization, "Bearer private-auth-token");
+
+  const clearResponse = await clearCommissionMessages({
+    env,
+    request: new Request("https://sinprisa.example/api/account/commission-messages", {
+      method: "DELETE",
+      headers: { Origin: "https://sinprisa.example", Cookie: "sinprisa_customer_session=private-auth-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ commission: "abcdefghijklmno" })
+    })
+  });
+  assert.equal(clearResponse.status, 200);
+  const clearRequest = calls.filter(call => String(call.url).endsWith("/api/sinprisa/commission-messages")).at(-1);
+  assert.equal(clearRequest.init.method, "DELETE");
 
   const anonymous = await commission({
     env,

@@ -135,3 +135,23 @@ routerAdd("POST", "/api/sinprisa/commission-messages", (e) => {
   e.app.save(message)
   return e.json(201, { message: { author: "customer", body: messageBody, sentAt: message.getString("sent_at") } })
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
+
+routerAdd("DELETE", "/api/sinprisa/commission-messages", (e) => {
+  const accountId = String(e.auth.id || "")
+  const body = e.requestInfo().body || {}
+  const commissionId = String(body.commission || "").trim()
+  if (!/^[a-z0-9]{15}$/.test(commissionId)) throw new BadRequestError("Conversación no válida")
+  let commission
+  try { commission = e.app.findRecordById("sinprisa_commissions", commissionId) } catch (_) { throw new NotFoundError("Encargo no encontrado") }
+  if (commission.getString("account") !== accountId) throw new NotFoundError("Encargo no encontrado")
+  e.app.runInTransaction((txApp) => {
+    for (const message of txApp.findAllRecords("sinprisa_commission_messages")) {
+      if (message && message.getString("commission") === commissionId && message.getString("account") === accountId) txApp.delete(message)
+    }
+    if (commission.getString("customer_reply")) {
+      commission.set("customer_reply", "")
+      txApp.save(commission)
+    }
+  })
+  return e.json(200, { cleared: true })
+}, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
