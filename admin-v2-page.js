@@ -95,6 +95,33 @@
     });
   }
 
+  async function rotateImageDataUrl(source) {
+    const response = await fetch(source);
+    if (!response.ok) throw new Error("No se pudo leer la fotografía");
+    const imageBlob = await response.blob();
+    const objectUrl = URL.createObjectURL(imageBlob);
+
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const element = new Image();
+        element.onload = () => resolve(element);
+        element.onerror = () => reject(new Error("No se pudo abrir la fotografía"));
+        element.src = objectUrl;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalHeight;
+      canvas.height = image.naturalWidth;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo preparar la fotografía");
+      context.translate(canvas.width / 2, canvas.height / 2);
+      context.rotate(Math.PI / 2);
+      context.drawImage(image, -image.naturalWidth / 2, -image.naturalHeight / 2);
+      return canvas.toDataURL("image/jpeg", 0.92);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   function orderMarkup(order) {
     const details = order.items?.length
       ? order.items.map(item => `${escapeHtml(item.name)} × ${Number(item.quantity) || 1}`).join(" · ")
@@ -138,7 +165,7 @@
     const items = images.map((image, index) => `<article class="admin-gallery__item">
       <button class="admin-image-preview" type="button" data-image-preview="${escapeHtml(image.src)}" data-image-alt="${escapeHtml(image.alt || `Fotografía ${index + 1} de ${product.name}`)}"><img src="${escapeHtml(image.src)}" alt="${escapeHtml(image.alt)}"><span>Ampliar</span></button>
       <label class="field"><span>Texto alternativo</span><input maxlength="160" value="${escapeHtml(image.alt)}" data-image-alt="${escapeHtml(image.id)}" data-product-image-alt="${escapeHtml(product.id)}"></label>
-      <div class="admin-gallery__actions">${index === 0 ? `<span class="admin-product-state admin-product-state--featured">Portada</span>` : `<button class="button button--quiet" type="button" data-make-primary="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Portada</button>`}${index > 0 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="backward" data-product-images="${escapeHtml(product.id)}">← Mover</button>` : ""}${index < images.length - 1 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="forward" data-product-images="${escapeHtml(product.id)}">Mover →</button>` : ""}<button class="button danger" type="button" data-remove-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Quitar</button></div>
+      <div class="admin-gallery__actions">${index === 0 ? `<span class="admin-product-state admin-product-state--featured">Portada</span>` : `<button class="button button--quiet" type="button" data-make-primary="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Portada</button>`}<button class="button button--quiet" type="button" data-rotate-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">↻ Girar 90°</button>${index > 0 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="backward" data-product-images="${escapeHtml(product.id)}">← Mover</button>` : ""}${index < images.length - 1 ? `<button class="button button--quiet" type="button" data-move-image="${escapeHtml(image.id)}" data-image-direction="forward" data-product-images="${escapeHtml(product.id)}">Mover →</button>` : ""}<button class="button danger" type="button" data-remove-image="${escapeHtml(image.id)}" data-product-images="${escapeHtml(product.id)}">Quitar</button></div>
     </article>`).join("");
     return `<div class="admin-gallery"><div class="admin-gallery__head"><strong>Galería</strong><label class="button button--quiet"><span>Añadir fotos</span><input type="file" accept="image/*" multiple data-add-product-images="${escapeHtml(product.id)}"></label></div>${items || `<p class="empty-state">Aún no hay fotografías.</p>`}</div>`;
   }
@@ -640,6 +667,7 @@
       const saveCollection = event.target.closest("[data-save-collection]");
       const removeCollection = event.target.closest("[data-delete-collection]");
       const makePrimary = event.target.closest("[data-make-primary]");
+      const rotateImage = event.target.closest("[data-rotate-image]");
       const moveImage = event.target.closest("[data-move-image]");
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
@@ -744,6 +772,26 @@
             await renderAdmin();
             toast("Portada actualizada");
           }
+        }
+      }
+
+      if (rotateImage) {
+        rotateImage.disabled = true;
+        rotateImage.textContent = "Girando…";
+        try {
+          const product = (await adminData.listProducts()).find(item => item.id === rotateImage.dataset.productImages);
+          if (!product) throw new Error("No se encontró la pieza");
+          const images = productImages(product);
+          const selected = images.find(image => image.id === rotateImage.dataset.rotateImage);
+          if (!selected) throw new Error("No se encontró la fotografía");
+          const rotatedSource = await rotateImageDataUrl(selected.src);
+          await adminData.setProductImages(product.id, images.map(image => image.id === selected.id ? { ...image, src: rotatedSource } : image));
+          await renderAdmin();
+          toast("Fotografía girada y guardada");
+        } catch (error) {
+          rotateImage.disabled = false;
+          rotateImage.textContent = "↻ Girar 90°";
+          toast(error.message || "No se pudo girar la fotografía");
         }
       }
 

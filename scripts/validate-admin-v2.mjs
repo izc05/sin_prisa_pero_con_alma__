@@ -41,7 +41,7 @@ const requiredAdminFragments = [
   'src="admin-data.js?v=8"',
   'src="admin-auth.js"',
   'src="admin-runtime-config-loader.js?v=2"',
-  'src="admin-v2-page.js?v=15"'
+  'src="admin-v2-page.js?v=16"'
 ];
 
 for (const fragment of requiredAdminFragments) {
@@ -73,6 +73,7 @@ const requiredControllerFragments = [
   'adminData.setProductImages(',
   'data-add-product-images',
   'data-make-primary',
+  'data-rotate-image',
   'data-remove-image',
   'adminData.updateProduct(',
   'adminData.deleteProduct(',
