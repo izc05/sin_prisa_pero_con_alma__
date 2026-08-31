@@ -9,7 +9,9 @@ migrate((app) => {
   ]) {
     try { app.findFirstRecordByData("sinprisa_content_blocks", "key", block.key); continue } catch (_) {}
     const record = new Record(blocks)
-    record.set(block)
+    record.set("key", block.key)
+    record.set("title", block.title)
+    record.set("body", block.body)
     record.set("enabled", true)
     app.save(record)
   }
