@@ -16,7 +16,9 @@ const requiredFiles = [
   "site-v2.js",
   "_headers",
   "_routes.json",
-  ".nojekyll"
+  ".nojekyll",
+  "robots.txt",
+  "sitemap.xml"
 ];
 const forbiddenFiles = [
   "admin.html",

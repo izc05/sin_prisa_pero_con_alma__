@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /cuenta.html
+Disallow: /admin.html
+Sitemap: https://sinprisa.isivoltpro.com/sitemap.xml
