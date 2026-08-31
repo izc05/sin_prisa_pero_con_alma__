@@ -539,6 +539,32 @@
         if (profileForm.elements[field]) profileForm.elements[field].value = session[field] || (field === "country" ? "España" : "");
       }
     }
+    const activeOrders = customerOrders.filter(order => !/cancelado|completado/i.test(String(order.status || "")));
+    const activeCommissions = customerCommissions.filter(commission => !["cancelled", "rejected", "completed"].includes(String(commission.status || "")));
+    const setAccountText = (selector, value) => { const node = $(selector); if (node) node.textContent = value; };
+    setAccountText("#account-order-count", customerOrders.length);
+    setAccountText("#account-order-copy", customerOrders.length ? `${activeOrders.length} ${activeOrders.length === 1 ? "en curso" : "en curso"}` : "Aún no tienes pedidos");
+    setAccountText("#account-commission-count", customerCommissions.length);
+    setAccountText("#account-commission-copy", customerCommissions.length ? `${activeCommissions.length} ${activeCommissions.length === 1 ? "activo" : "activos"}` : "Aún no tienes encargos");
+    const pendingQuote = customerCommissions.find(commission => String(commission.status) === "quoted");
+    const pendingReview = customerCommissions.find(commission => ["new", "reviewing"].includes(String(commission.status)));
+    const activeCommission = customerCommissions.find(commission => ["accepted", "in_progress"].includes(String(commission.status)));
+    if (pendingQuote) {
+      setAccountText("#account-next-title", "Tienes un presupuesto");
+      setAccountText("#account-next-copy", `Revisa la conversación de ${pendingQuote.reference} para continuar.`);
+    } else if (pendingReview) {
+      setAccountText("#account-next-title", "Estamos revisando tu idea");
+      setAccountText("#account-next-copy", `Te escribiremos en ${pendingReview.reference} cuando haya novedades.`);
+    } else if (activeCommission) {
+      setAccountText("#account-next-title", "Tu encargo está en marcha");
+      setAccountText("#account-next-copy", `Puedes consultar el progreso de ${activeCommission.reference} abajo.`);
+    } else if (activeOrders.length) {
+      setAccountText("#account-next-title", "Tienes un pedido en curso");
+      setAccountText("#account-next-copy", "Consulta abajo el estado actualizado.");
+    } else {
+      setAccountText("#account-next-title", "Todo al día");
+      setAccountText("#account-next-copy", "Aquí verás las novedades de tus pedidos y encargos.");
+    }
     const ordersList = $("#customer-orders");
     if (ordersList) {
       ordersList.innerHTML = customerOrders.length ? customerOrders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">${customerOrdersError ? `No hemos podido cargar tus pedidos ahora mismo. ${escapeHtml(customerOrdersError)}` : "Aún no tienes pedidos. Cuando confirmes uno, verás aquí su estado."}</div>`;

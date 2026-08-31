@@ -472,6 +472,13 @@ button { color: inherit; }
 
 .account-layout { display: grid; grid-template-columns: 350px 1fr; gap: 28px; align-items: start; }
 .account-overview { display: grid; grid-template-columns: minmax(240px, .72fr) minmax(0, 1.28fr); gap: 18px; margin-bottom: 18px; }
+.account-at-a-glance { display: grid; grid-template-columns: .65fr .65fr 1.7fr; gap: 1px; margin-bottom: 18px; border: 1px solid var(--line); background: var(--line); }
+.account-at-a-glance article { display: grid; align-content: center; gap: 4px; min-height: 118px; padding: 18px 20px; background: var(--ivory); }
+.account-at-a-glance span { color: var(--rose-dark); font: 500 .6rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.account-at-a-glance strong { font: 500 2.2rem/1 var(--serif); }
+.account-at-a-glance small { color: var(--ink-soft); font-size: .76rem; }
+.account-at-a-glance .account-next-action { background: #f7eee5; }
+.account-at-a-glance .account-next-action strong { font-size: 1.45rem; }
 .account-profile-form { display: grid; gap: 18px; }
 .account-profile-form .section-copy { margin: 0; font-size: .84rem; }
 .account-profile-form .form-grid { gap: 14px; }
@@ -622,6 +629,8 @@ button { color: inherit; }
   .category-card:last-child { grid-column: 1/-1; }
   .process-grid { grid-template-columns: repeat(2, 1fr); }
   .account-layout, .account-overview, .admin-grid { grid-template-columns: 1fr; }
+  .account-at-a-glance { grid-template-columns: 1fr 1fr; }
+  .account-at-a-glance .account-next-action { grid-column: 1 / -1; }
   .customer-commission-card .customer-progress__steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
   .admin-sidebar { position: static; }
   .admin-nav { grid-template-columns: repeat(3, 1fr); }
