@@ -100,10 +100,19 @@
       ? order.items.map(item => `${escapeHtml(item.name)} × ${Number(item.quantity) || 1}`).join(" · ")
       : escapeHtml(order.details || "Encargo personalizado");
     const options = ["Solicitud recibida", "Pendiente de Bizum", "En preparación", "Enviado", "Completado", "Cancelado"];
+    const nextStep = {
+      "Solicitud recibida": ["Revisar disponibilidad", "Comprueba las piezas y confirma a la clienta los datos de pago."],
+      "Pendiente de Bizum": ["Esperar confirmación", "Cuando recibas el pago, marca “Pago confirmado” y pasa el pedido a preparación."],
+      "En preparación": ["Preparar la pieza", "Revisa el pedido, prepara el embalaje y actualiza a “Enviado” cuando salga del atelier."],
+      "Enviado": ["Confirmar entrega", "Conserva cualquier dato de envío en las notas internas y cierra el pedido cuando esté entregado."],
+      "Completado": ["Pedido cerrado", "No requiere más acciones. El historial se conserva en la cuenta de la clienta."],
+      "Cancelado": ["Pedido cancelado", "La reserva se libera y el pedido queda guardado como historial."]
+    }[order.status] || ["Revisar pedido", "Comprueba el estado y la información de la clienta."];
     return `<article class="order-card">
       <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status ${statusTone(order.status)}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
       <p>${escapeHtml(order.type || "Pedido")} · ${dateText(order.createdAt)}${order.customerName ? ` · ${escapeHtml(order.customerName)}` : ""}${order.email ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
+      <div class="admin-order-next"><span>Siguiente paso</span><strong>${escapeHtml(nextStep[0])}</strong><p>${escapeHtml(nextStep[1])}</p></div>
       <label class="field"><span>Estado del pago</span><select data-order-payment-status="${escapeHtml(order.id)}"><option value="pending" ${order.paymentStatus === "Pendiente de Bizum" ? "selected" : ""}>Pendiente de Bizum</option><option value="paid" ${order.paymentStatus === "Pago confirmado" ? "selected" : ""}>Pago confirmado</option><option value="failed" ${order.paymentStatus === "Pago no confirmado" ? "selected" : ""}>Pago no confirmado</option><option value="refunded" ${order.paymentStatus === "Reembolsado" ? "selected" : ""}>Reembolsado</option></select></label>
       <label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}">${options.map(option => `<option ${order.status === option ? "selected" : ""}>${option}</option>`).join("")}</select></label>
       <label class="field admin-order-notes"><span>Notas internas del atelier</span><textarea maxlength="2000" data-order-notes="${escapeHtml(order.id)}" placeholder="Solo visibles en este panel…">${escapeHtml(order.internalNotes || "")}</textarea><button class="button button--quiet" type="button" data-save-order-notes="${escapeHtml(order.id)}">Guardar nota</button></label>

@@ -398,6 +398,10 @@ body[data-page="admin"] .empty-state {
 
 .admin-order-notes { margin-top: 14px; }
 .admin-order-notes textarea { min-height: 82px; }
+.admin-order-next { margin: 18px 0; padding: 14px 16px; border-left: 5px solid #1d5d88; background: #eaf3f8; }
+.admin-order-next span { display: block; margin-bottom: 6px; color: #1d5d88; font: 500 .6rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.admin-order-next strong { font-size: .9rem; }
+.admin-order-next p { margin: 5px 0 0; color: #31505f; font-size: .78rem; line-height: 1.45; }
 .admin-content-list { display: grid; gap: 16px; }
 .admin-content-card { display: grid; gap: 12px; padding: 20px; border: 1px solid var(--line); background: #fffefa; }
 .admin-content-card .field { margin: 0; }
