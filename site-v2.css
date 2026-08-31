@@ -505,6 +505,12 @@ button { color: inherit; }
 .customer-progress__steps .is-current i { background: var(--rose-dark); }
 .customer-progress > p, .customer-status-note { margin: 12px 0 0 !important; color: var(--ink-soft); font-size: .78rem !important; }
 .customer-status-note { padding: 12px 14px; border-left: 3px solid #a1252b; background: #fff0ef; }
+.customer-status-history { margin-top: 12px; border: 1px solid var(--line); }
+.customer-status-history summary { padding: 11px 13px; cursor: pointer; color: var(--ink-soft); font: 500 .62rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+.customer-status-history summary small { float: right; }
+.customer-status-history ol { display: grid; gap: 8px; margin: 0; padding: 12px; border-top: 1px solid var(--line); list-style: none; }
+.customer-status-history li { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.customer-status-history time { color: var(--ink-soft); font-size: .73rem; }
 .status { display: inline-block; padding: 6px 9px; background: var(--rose-pale); color: var(--rose-dark); font: 500 .61rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .empty-state { padding: 44px 20px; border: 1px dashed var(--line); text-align: center; color: var(--ink-soft); }
 

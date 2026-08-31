@@ -334,7 +334,8 @@
     messages: "sinprisa_messages",
     content: "sinprisa_content_blocks",
     commissions: "sinprisa_commissions",
-    commissionMessages: "sinprisa_commission_messages"
+    commissionMessages: "sinprisa_commission_messages",
+    commissionEvents: "sinprisa_commission_events"
   });
   const ORDER_STATUS_TO_POCKETBASE = Object.freeze({
     "Solicitud recibida": "pending",
@@ -707,7 +708,7 @@
       return payload;
     }
 
-    function mapCommission(record, fileToken = "", messages = []) {
+    function mapCommission(record, fileToken = "", messages = [], events = []) {
       const customer = record.expand?.customer || {};
       const filenames = safeArray(record.reference_images, []);
       return {
@@ -722,6 +723,7 @@
         status: String(record.status || "new"),
         customerReply: String(record.customer_reply || ""),
         messages: messages.filter(message => String(message.commission || "") === String(record.id)).map(message => ({ author: String(message.author || ""), body: String(message.body || ""), sentAt: String(message.sent_at || "") })).sort((left, right) => left.sentAt.localeCompare(right.sentAt)),
+        history: events.filter(event => String(event.commission || "") === String(record.id)).map(event => ({ status: String(event.status || ""), createdAt: String(event.created_at || "") })).sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
         images: filenames.map(filename => ({ filename, src: fileSource(POCKETBASE_COLLECTIONS.commissions, record, filename, fileToken) })),
         createdAt: record.created || null
       };
@@ -967,12 +969,13 @@
       },
 
       async listCommissions() {
-        const [records, fileAuth, messages] = await Promise.all([
+        const [records, fileAuth, messages, events] = await Promise.all([
           listRecords(POCKETBASE_COLLECTIONS.commissions, { expand: "customer" }),
           request("/api/files/token", { method: "POST" }).catch(() => ({ token: "" })),
-          listRecords(POCKETBASE_COLLECTIONS.commissionMessages).catch(() => [])
+          listRecords(POCKETBASE_COLLECTIONS.commissionMessages).catch(() => []),
+          listRecords(POCKETBASE_COLLECTIONS.commissionEvents).catch(() => [])
         ]);
-        return records.map(record => mapCommission(record, String(fileAuth?.token || ""), messages));
+        return records.map(record => mapCommission(record, String(fileAuth?.token || ""), messages, events));
       },
 
       async updateCommissionStatus(commissionId, status) {
@@ -981,6 +984,7 @@
         const current = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
         if (!current) return false;
         await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { status } });
+        await request(recordsPath(POCKETBASE_COLLECTIONS.commissionEvents), { method: "POST", body: { commission: commissionId, account: String(current.account || ""), status, created_at: new Date().toISOString() } });
         return true;
       },
 

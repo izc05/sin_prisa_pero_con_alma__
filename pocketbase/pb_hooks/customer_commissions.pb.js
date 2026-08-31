@@ -48,6 +48,12 @@ routerAdd("POST", "/api/sinprisa/commissions", (e) => {
     commission.set("status", "new")
     if (files.length) commission.set("reference_images", files)
     txApp.save(commission)
+    const statusEvent = new Record(txApp.findCollectionByNameOrId("sinprisa_commission_events"))
+    statusEvent.set("commission", commission.id)
+    statusEvent.set("account", account.id)
+    statusEvent.set("status", "new")
+    statusEvent.set("created_at", new Date().toISOString())
+    txApp.save(statusEvent)
 
     const message = new Record(txApp.findCollectionByNameOrId("sinprisa_messages"))
     message.set("name", name)
@@ -65,6 +71,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
   const commissions = []
   const accountId = String(e.auth.id || "")
   const messagesByCommission = {}
+  const historyByCommission = {}
   try {
     for (const message of e.app.findAllRecords("sinprisa_commission_messages")) {
       if (!message || message.getString("account") !== accountId) continue
@@ -75,6 +82,14 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
         body: message.getString("body"),
         sentAt: message.getString("sent_at"),
       })
+    }
+  } catch (_) {}
+  try {
+    for (const event of e.app.findAllRecords("sinprisa_commission_events")) {
+      if (!event || event.getString("account") !== accountId) continue
+      const commissionId = event.getString("commission")
+      if (!historyByCommission[commissionId]) historyByCommission[commissionId] = []
+      historyByCommission[commissionId].push({ status: event.getString("status"), createdAt: event.getString("created_at") })
     }
   } catch (_) {}
   for (const record of e.app.findAllRecords("sinprisa_commissions")) {
@@ -89,6 +104,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
       createdAt: record.getString("event_date") || record.getString("created"),
       reply: record.getString("customer_reply"),
       messages: messagesByCommission[record.id] || [],
+      history: historyByCommission[record.id] || [{ status: record.getString("status"), createdAt: record.getString("created") }],
     })
   }
   for (const commission of commissions) {
