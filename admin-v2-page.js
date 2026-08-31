@@ -253,9 +253,13 @@
     const orderFilter = $("#order-filter-status")?.value || "";
     const commissionFilter = $("#commission-filter-status")?.value || "active";
     const messageFilter = $("#message-filter-status")?.value || "";
-    const visibleOrders = orders.filter(order => !orderFilter || order.status === orderFilter);
-    const visibleCommissions = commissions.filter(commission => commissionFilter === "active" ? !["completed", "rejected", "cancelled"].includes(commission.status) : !commissionFilter || commission.status === commissionFilter);
-    const visibleMessages = messages.filter(message => !messageFilter || message.status === messageFilter);
+    const orderSearch = String($("#order-search")?.value || "").trim().toLocaleLowerCase("es-ES");
+    const commissionSearch = String($("#commission-search")?.value || "").trim().toLocaleLowerCase("es-ES");
+    const messageSearch = String($("#message-search")?.value || "").trim().toLocaleLowerCase("es-ES");
+    const includesText = (value, term) => !term || String(value || "").toLocaleLowerCase("es-ES").includes(term);
+    const visibleOrders = orders.filter(order => (!orderFilter || order.status === orderFilter) && includesText(`${order.number || order.id} ${order.customerName} ${order.email} ${order.details}`, orderSearch));
+    const visibleCommissions = commissions.filter(commission => (commissionFilter === "active" ? !["completed", "rejected", "cancelled"].includes(commission.status) : !commissionFilter || commission.status === commissionFilter) && includesText(`${commission.reference} ${commission.name} ${commission.email} ${commission.idea} ${commission.details}`, commissionSearch));
+    const visibleMessages = messages.filter(message => (!messageFilter || message.status === messageFilter) && includesText(`${message.subject} ${message.name} ${message.email} ${message.body}`, messageSearch));
     $("#admin-orders").innerHTML = visibleOrders.length ? visibleOrders.map(orderMarkup).join("") : `<div class="empty-state">No hay pedidos con este estado.</div>`;
     $("#admin-messages").innerHTML = visibleMessages.length ? visibleMessages.map(message => `<article class="message-card">
       <span class="status ${statusTone(message.status || "Nuevo")}">${escapeHtml(message.status || "Nuevo")}</span>
@@ -489,8 +493,8 @@
       toast(isPocketBaseMode() ? "Colección creada en PocketBase" : "Colección creada en el catálogo local");
     });
 
-    ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock", "#order-filter-status", "#commission-filter-status", "#message-filter-status"].forEach(selector => {
-      $(selector)?.addEventListener(selector === "#product-search" ? "input" : "change", async () => {
+    ["#product-search", "#product-filter-collection", "#product-filter-status", "#product-filter-stock", "#order-search", "#order-filter-status", "#commission-search", "#commission-filter-status", "#message-search", "#message-filter-status"].forEach(selector => {
+      $(selector)?.addEventListener(["#product-search", "#order-search", "#commission-search", "#message-search"].includes(selector) ? "input" : "change", async () => {
         await renderAdmin();
       });
     });
