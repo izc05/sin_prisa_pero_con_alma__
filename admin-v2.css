@@ -391,6 +391,9 @@ body[data-page="admin"] .empty-state {
 .status--completado { background: #28733d !important; color: #fff !important; border-color: #28733d !important; }
 .status--cancelado, .status--cancelled, .status--rejected { background: #a1252b !important; color: #fff !important; border-color: #a1252b !important; }
 .admin-clear-conversation { margin: 0 0 16px; }
+.admin-commission-status { display: grid; align-content: start; gap: 10px; min-width: 260px; }
+.admin-commission-status .field { margin: 0; }
+.admin-cancellation-notice { width: 100%; border-color: #a1252b !important; color: #8d2026 !important; }
 
 .admin-order-notes { margin-top: 14px; }
 .admin-order-notes textarea { min-height: 82px; }
