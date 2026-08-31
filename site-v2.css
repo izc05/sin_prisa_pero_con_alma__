@@ -273,6 +273,8 @@ button { color: inherit; }
 .product-info h3 a { color: inherit; }
 .product-info h3 a:hover { color: var(--rose-dark); }
 .product-info p { grid-column: 1/-1; margin: 0; color: var(--ink-soft); font-size: .84rem; }
+.product-availability { grid-column: 1/-1; width: fit-content; padding: 5px 7px; background: #e5f0e6; color: #28633a; font: 500 .57rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; }
+.product-availability--made_to_order { background: #fff0c9; color: #805500; }
 .product-price { font: 500 .78rem/1.4 var(--mono); }
 .product-card .button { grid-column: 1/-1; margin-top: 8px; }
 .product-actions { display: grid; grid-column: 1/-1; gap: 10px; margin-top: 8px; }

@@ -201,6 +201,7 @@
     const action = product.price == null
       ? `<a class="button button--outline" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Contar mi idea</a>`
       : `<div class="product-actions"><button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>${customLink}</div>`;
+    const availability = product.stockMode === "made_to_order" ? "Bajo pedido · lo preparamos para ti" : "Disponible ahora";
     return `<article class="product-card" data-category="${escapeHtml(product.category)}">
       <a class="product-image-wrap" href="${detailUrl}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
         <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}" loading="lazy">
@@ -210,6 +211,7 @@
         <h3><a href="${detailUrl}">${escapeHtml(product.name)}</a></h3>
         <span class="product-price">${money(product.price)}</span>
         <p>${escapeHtml(product.description)}</p>
+        <small class="product-availability product-availability--${escapeHtml(product.stockMode)}">${availability}</small>
         ${action}
       </div>
     </article>`;
@@ -296,7 +298,7 @@
       ? `<button class="button button--primary" type="button" data-open-personalizer>Personalizar esta pieza</button>`
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
     const customAction = product.price == null ? "" : `<button class="button button--outline" type="button" data-open-personalizer>Personalizar esta pieza</button>`;
-    const availability = product.price == null ? "Diseñamos esta pieza contigo" : "Disponible · confirmaremos el pedido contigo";
+    const availability = product.stockMode === "made_to_order" || product.price == null ? "Bajo pedido · diseñamos y preparamos esta pieza contigo" : "Disponible ahora · confirmaremos el pedido contigo";
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
         <button class="product-detail__image" type="button" data-product-image-zoom aria-label="Ampliar imagen de ${escapeHtml(product.name)}"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"><span>Ampliar imagen</span></button>
