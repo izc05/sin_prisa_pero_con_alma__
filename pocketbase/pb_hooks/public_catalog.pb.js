@@ -59,8 +59,18 @@ routerAdd("GET", "/api/sinprisa/catalog", (e) => {
 
   collections.sort((left, right) => left.position - right.position)
   products.sort((left, right) => Number(right.featured) - Number(left.featured) || left.position - right.position)
+  const content = []
+  for (const record of e.app.findAllRecords("sinprisa_content_blocks")) {
+    if (!record || !record.getBool("enabled")) continue
+    content.push({
+      key: record.getString("key"),
+      title: record.getString("title"),
+      body: record.getString("body"),
+    })
+  }
+  content.sort((left, right) => left.key.localeCompare(right.key))
   e.response.header().set("Cache-Control", "no-store")
-  return e.json(200, { collections: collections, products: products })
+  return e.json(200, { collections: collections, products: products, content: content })
 }, $apis.skipSuccessActivityLog())
 
 routerAdd("GET", "/api/sinprisa/catalog-image/{id}", (e) => {

@@ -17,7 +17,8 @@ try {
     if (String(url).endsWith("/api/sinprisa/catalog")) {
       return Response.json({
         collections: [{ id: "bebe", name: "Bebé", position: 0 }],
-        products: [{ id: "babero-real", name: "Babero real", image: "/api/catalog-image?id=abcdefghijklmno" }]
+        products: [{ id: "babero-real", name: "Babero real", image: "/api/catalog-image?id=abcdefghijklmno" }],
+        content: [{ key: "home_notice", title: "Desde el atelier", body: "Un texto editorial publicado." }]
       });
     }
     if (String(url).endsWith("/api/sinprisa/catalog-image/abcdefghijklmno")) {
@@ -30,6 +31,7 @@ try {
   assert.equal(catalogResponse.status, 200);
   const catalog = await catalogResponse.json();
   assert.equal(catalog.products[0].id, "babero-real");
+  assert.equal(catalog.content[0].key, "home_notice");
   assert.equal(calls[0].url, "https://private.example/api/sinprisa/catalog");
   assert.equal(calls[0].init.headers["CF-Access-Client-Id"], "test-client-id");
   assert.equal(calls[0].init.headers["X-Sinprisa-Intake-Secret"], "test-intake-secret");

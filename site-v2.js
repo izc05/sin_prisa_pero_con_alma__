@@ -45,6 +45,7 @@
 
   let catalogProducts = [];
   let catalogCollections = [];
+  let catalogContent = [];
   const shopParams = new URLSearchParams(window.location.search);
   let activeShopFilter = shopParams.get("categoria") || "todos";
   let activeAvailabilityFilter = shopParams.get("disponibilidad") || "all";
@@ -94,7 +95,7 @@
       if (!payload && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
         try { payload = await fetch("assets/catalog-preview.json").then(response => response.ok ? response.json() : Promise.reject()); } catch {}
       }
-      if (!payload) { catalogCollections = []; catalogProducts = []; return catalogProducts; }
+      if (!payload) { catalogCollections = []; catalogProducts = []; catalogContent = []; return catalogProducts; }
     }
     try {
       catalogCollections = (Array.isArray(payload.collections) ? payload.collections : [])
@@ -119,8 +120,21 @@
           badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Disponible"
         }))
         .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
-    } catch { catalogCollections = []; catalogProducts = []; }
+      catalogContent = (Array.isArray(payload.content) ? payload.content : [])
+        .filter(block => block && /^[a-z0-9_]+$/.test(String(block.key || "")))
+        .map(block => ({ key: String(block.key), title: String(block.title || ""), body: String(block.body || "") }));
+      applyEditorialContent(catalogContent);
+    } catch { catalogCollections = []; catalogProducts = []; catalogContent = []; }
     return catalogProducts;
+  }
+
+  function applyEditorialContent(blocks) {
+    for (const block of blocks) {
+      const title = document.querySelector(`[data-editorial-title="${block.key}"]`);
+      const body = document.querySelector(`[data-editorial-body="${block.key}"]`);
+      if (title && block.title) title.textContent = block.title;
+      if (body && block.body) body.textContent = block.body;
+    }
   }
 
   function toast(message) {

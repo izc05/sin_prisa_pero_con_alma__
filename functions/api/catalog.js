@@ -12,7 +12,8 @@ export async function onRequestGet({ env }) {
   const payload = await safePayload(upstream);
   return json(200, {
     collections: Array.isArray(payload.collections) ? payload.collections : [],
-    products: Array.isArray(payload.products) ? payload.products : []
+    products: Array.isArray(payload.products) ? payload.products : [],
+    content: Array.isArray(payload.content) ? payload.content : []
   }, { "Cache-Control": "public, max-age=30, s-maxage=60" });
 }
 
