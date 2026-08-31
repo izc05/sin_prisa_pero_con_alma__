@@ -143,16 +143,20 @@
     return `<div class="admin-gallery"><div class="admin-gallery__head"><strong>Galería</strong><label class="button button--quiet"><span>Añadir fotos</span><input type="file" accept="image/*" multiple data-add-product-images="${escapeHtml(product.id)}"></label></div>${items || `<p class="empty-state">Aún no hay fotografías.</p>`}</div>`;
   }
 
-  function productMarkup(product, collections) {
+  function productMarkup(product, collections, reservedUnits = 0) {
     const available = product.stock !== false && product.stockMode !== "sold_out";
     const status = product.status || "published";
     const priceMode = product.priceMode || (product.price == null ? "quote" : "fixed");
     const stockMode = product.stockMode || (available ? "available" : "sold_out");
     const imageCount = productImages(product).length;
+    const stockLimit = Math.max(0, Number(product.stockLimit || 0));
+    const remainingUnits = stockLimit ? Math.max(0, stockLimit - reservedUnits) : null;
+    const inventoryText = stockLimit ? `${remainingUnits} libre${remainingUnits === 1 ? "" : "s"} de ${stockLimit}` : "Sin límite";
     return `<article class="admin-product-row">
       <img src="${escapeHtml(product.image || "assets/detalle-bordado.jpeg")}" alt="">
       <div class="admin-product-copy"><strong>${escapeHtml(product.name)}</strong><small>${escapeHtml(product.category || "sin categoría")} · ${priceMode === "quote" ? "Consultar" : `${priceModeLabel(priceMode)} · ${money(product.price)}`} · ${imageCount} ${imageCount === 1 ? "foto" : "fotos"}</small><div class="admin-product-tags"><span class="admin-product-state admin-product-state--stock-${escapeHtml(stockMode)} ${available ? "" : "is-hidden"}">${stockModeLabel(stockMode)}</span><span class="admin-product-state admin-product-state--status admin-product-state--status-${escapeHtml(status)}">${statusLabel(status)}</span>${product.featured ? `<span class="admin-product-state admin-product-state--featured">Destacado</span>` : ""}</div></div>
       <label class="admin-row-field"><span>Estado</span><select data-product-status="${escapeHtml(product.id)}"><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option><option value="archived" ${status === "archived" ? "selected" : ""}>Archivado</option></select></label>
+      <label class="admin-row-field"><span>Unidades</span><input type="number" min="0" max="9999" value="${stockLimit}" data-product-stock-limit-direct="${escapeHtml(product.id)}"><small>${inventoryText}</small></label>
       <button class="button button--outline admin-stock-action" type="button" data-toggle-stock="${escapeHtml(product.id)}">${available ? "Marcar agotado" : "Reactivar"}</button>
       ${product.custom ? `<button class="button danger" type="button" data-delete-product="${escapeHtml(product.id)}">Eliminar</button>` : ""}
       <details class="admin-product-editor" data-product-editor="${escapeHtml(product.id)}"><summary>Editar pieza</summary><div class="form-grid"><div class="field"><label>Nombre<input data-product-name value="${escapeHtml(product.name)}"></label></div><div class="field"><label>Colección<select data-product-category><option value="">Sin colección</option>${collections.map(collection => `<option value="${escapeHtml(collection.id)}" ${product.category === collection.id ? "selected" : ""}>${escapeHtml(collection.name)}</option>`).join("")}</select></label></div><div class="field"><label>Tipo de precio<select data-product-price-mode><option value="fixed" ${priceMode === "fixed" ? "selected" : ""}>Precio fijo</option><option value="from" ${priceMode === "from" ? "selected" : ""}>Desde</option><option value="quote" ${priceMode === "quote" ? "selected" : ""}>Consultar</option></select></label></div><div class="field"><label>Precio<input data-product-price type="number" min="0" step="0.01" value="${product.price == null ? "" : escapeHtml(product.price)}"></label></div><div class="field"><label>Disponibilidad<select data-product-stock-mode><option value="available" ${stockMode === "available" ? "selected" : ""}>Disponible</option><option value="made_to_order" ${stockMode === "made_to_order" ? "selected" : ""}>Bajo pedido</option><option value="sold_out" ${stockMode === "sold_out" ? "selected" : ""}>Agotado</option></select></label></div><div class="field"><label>Estado<select data-product-edit-status><option value="draft" ${status === "draft" ? "selected" : ""}>Borrador</option><option value="published" ${status === "published" ? "selected" : ""}>Publicado</option><option value="hidden" ${status === "hidden" ? "selected" : ""}>Oculto</option><option value="archived" ${status === "archived" ? "selected" : ""}>Archivado</option></select></label></div><div class="field field--full"><label>Descripción<textarea data-product-description>${escapeHtml(product.description || "")}</textarea></label></div><label class="admin-check field--full"><input data-product-featured type="checkbox" ${product.featured ? "checked" : ""}><span><strong>Destacar esta pieza</strong></span></label><div class="field field--full"><button class="button button--primary" type="button" data-save-product="${escapeHtml(product.id)}">Guardar cambios</button></div></div></details>
@@ -175,7 +179,7 @@
     </article>`;
   }
 
-  function renderProductCatalog(products, collections) {
+  function renderProductCatalog(products, collections, orders = []) {
     const search = String($("#product-search")?.value || "").trim().toLocaleLowerCase("es-ES");
     const selectedCollection = $("#product-filter-collection")?.value || "";
     const selectedStatus = $("#product-filter-status")?.value || "";
@@ -196,14 +200,19 @@
     });
 
     $("#product-list-meta").textContent = `${filteredProducts.length} de ${products.length} ${products.length === 1 ? "pieza" : "piezas"}`;
-    $("#admin-products").innerHTML = filteredProducts.length ? filteredProducts.map(product => productMarkup(product, collections)).join("") : `<div class="empty-state">No hay piezas que coincidan con los filtros.</div>`;
+    const reservedByProduct = new Map();
+    for (const order of orders) {
+      if (order.status === "Cancelado") continue;
+      for (const item of order.items || []) reservedByProduct.set(item.product, (reservedByProduct.get(item.product) || 0) + (Number(item.quantity) || 0));
+    }
+    $("#admin-products").innerHTML = filteredProducts.length ? filteredProducts.map(product => productMarkup(product, collections, reservedByProduct.get(product.id) || 0)).join("") : `<div class="empty-state">No hay piezas que coincidan con los filtros.</div>`;
     filteredProducts.forEach(product => {
       const editor = $(`[data-product-editor="${CSS.escape(product.id)}"]`);
       const grid = $(".form-grid", editor);
       if (!grid) return;
       const field = document.createElement("label");
       field.className = "field";
-      field.innerHTML = `<span>Límite de unidades</span><input data-product-stock-limit type="number" min="0" max="9999" value="${Math.max(0, Number(product.stockLimit || 0))}"><small>0 = sin límite</small>`;
+      field.innerHTML = `<span>Unidades disponibles</span><input data-product-stock-limit type="number" min="0" max="9999" value="${Math.max(0, Number(product.stockLimit || 0))}"><small>1 = pieza única · 0 = sin límite</small>`;
       grid.prepend(field);
     });
   }
@@ -259,7 +268,7 @@
     if (priorityRoot) priorityRoot.innerHTML = priorities.length
       ? priorities.map(item => `<button class="admin-priority admin-priority--${item.tone}" type="button" data-admin-priority-view="${item.view}"><strong>${item.title}</strong><span>${item.detail}</span><b>Ver</b></button>`).join("")
       : `<p class="admin-priorities-empty">Todo está al día. No hay solicitudes ni mensajes pendientes.</p>`;
-    renderProductCatalog(products, collections);
+    renderProductCatalog(products, collections, orders);
     renderProductCategoryOptions(collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
     const orderFilter = $("#order-filter-status")?.value || "";
@@ -449,6 +458,7 @@
           badge: "Nueva pieza",
           stock: stockMode !== "sold_out",
           stockMode,
+          stockLimit: Math.max(0, Math.floor(Number(data.get("stockLimit")) || 0)),
           status: String(data.get("status") || "draft"),
           featured: data.get("featured") === "on",
           custom: true
@@ -516,6 +526,7 @@
       const orderPaymentStatus = event.target.closest("[data-order-payment-status]");
       const commissionStatus = event.target.closest("[data-commission-status]");
       const productStatus = event.target.closest("[data-product-status]");
+      const productStockLimit = event.target.closest("[data-product-stock-limit-direct]");
       const collectionStatus = event.target.closest("[data-collection-status]");
       const imageAlt = event.target.closest("[data-image-alt]");
       const imageFiles = event.target.closest("[data-add-product-images]");
@@ -569,6 +580,25 @@
       if (productStatus && await adminData.updateProduct(productStatus.dataset.productStatus, { status: productStatus.value })) {
         await renderAdmin();
         toast("Estado de publicación actualizado");
+      }
+      if (productStockLimit) {
+        const requested = Math.max(0, Math.floor(Number(productStockLimit.value) || 0));
+        const [product, orders] = await Promise.all([
+          adminData.listProducts().then(items => items.find(item => item.id === productStockLimit.dataset.productStockLimitDirect)),
+          adminData.listOrders()
+        ]);
+        const reserved = orders.filter(order => order.status !== "Cancelado").flatMap(order => order.items || []).filter(item => item.product === product?.id).reduce((total, item) => total + (Number(item.quantity) || 0), 0);
+        if (requested > 0 && requested < reserved) {
+          productStockLimit.value = String(product?.stockLimit || 0);
+          toast(`No puedes fijar menos de ${reserved} unidades: ya están reservadas.`);
+          return;
+        }
+        if (product) {
+          const stockMode = requested > 0 && requested <= reserved ? "sold_out" : product.stockMode === "sold_out" && requested > reserved ? "available" : product.stockMode;
+          await adminData.updateProduct(product.id, { stockLimit: requested, stockMode, stock: stockMode !== "sold_out" });
+          await renderAdmin();
+          toast("Unidades disponibles actualizadas");
+        }
       }
       if (collectionStatus && await adminData.updateCollection(collectionStatus.dataset.collectionStatus, { status: collectionStatus.value })) {
         await renderAdmin();

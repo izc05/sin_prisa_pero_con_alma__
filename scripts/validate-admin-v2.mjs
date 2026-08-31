@@ -41,7 +41,7 @@ const requiredAdminFragments = [
   'src="admin-data.js?v=8"',
   'src="admin-auth.js"',
   'src="admin-runtime-config-loader.js?v=2"',
-  'src="admin-v2-page.js?v=14"'
+  'src="admin-v2-page.js?v=15"'
 ];
 
 for (const fragment of requiredAdminFragments) {
@@ -61,7 +61,7 @@ const requiredControllerFragments = [
   'window.sessionStorage',
   'function setupAdmin()',
   'async function renderAdmin()',
-  'function productMarkup(product, collections)',
+  'function productMarkup(product, collections, reservedUnits = 0)',
   'data-save-product',
   'adminData.listProducts()',
   'adminData.listOrders()',
@@ -80,11 +80,12 @@ const requiredControllerFragments = [
   'adminData.markMessageRead(',
   'metric-visible',
   'product-list-meta',
-  'renderProductCatalog(products, collections)',
+  'renderProductCatalog(products, collections, orders)',
   'renderProductCategoryOptions(collections)',
   'product-filter-collection',
   'priceMode',
   'stockMode',
+  'data-product-stock-limit-direct',
   'featured'
 ];
 
