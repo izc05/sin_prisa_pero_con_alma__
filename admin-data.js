@@ -712,6 +712,7 @@
       const filenames = safeArray(record.reference_images, []);
       return {
         id: String(record.id),
+        account: String(record.account || ""),
         reference: `ENC-${String(record.id).toUpperCase()}`,
         name: String(customer.name || ""),
         email: String(customer.email || ""),
