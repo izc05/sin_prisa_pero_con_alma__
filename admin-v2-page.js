@@ -235,6 +235,18 @@
     $("#metric-orders").textContent = orders.length;
     $("#metric-messages").textContent = messages.filter(item => item.status !== "Leído").length;
     $("#metric-commissions").textContent = commissions.filter(item => !["completed", "rejected", "cancelled"].includes(item.status)).length;
+    const pendingOrders = orders.filter(order => ["Solicitud recibida", "Pendiente de Bizum"].includes(String(order.status || "")));
+    const pendingCommissions = commissions.filter(commission => ["new", "reviewing", "quoted"].includes(String(commission.status || "")));
+    const unreadMessages = messages.filter(message => message.status !== "Leído");
+    const priorities = [
+      pendingOrders.length && { view: "orders", tone: "orders", title: `${pendingOrders.length} ${pendingOrders.length === 1 ? "pedido por revisar" : "pedidos por revisar"}`, detail: "Confirmar disponibilidad o pago." },
+      pendingCommissions.length && { view: "commissions", tone: "commissions", title: `${pendingCommissions.length} ${pendingCommissions.length === 1 ? "encargo espera respuesta" : "encargos esperan respuesta"}`, detail: "Revisar idea, presupuesto o conversación." },
+      unreadMessages.length && { view: "messages", tone: "messages", title: `${unreadMessages.length} ${unreadMessages.length === 1 ? "mensaje nuevo" : "mensajes nuevos"}`, detail: "Atención pendiente de lectura." }
+    ].filter(Boolean);
+    const priorityRoot = $("#admin-priorities");
+    if (priorityRoot) priorityRoot.innerHTML = priorities.length
+      ? priorities.map(item => `<button class="admin-priority admin-priority--${item.tone}" type="button" data-admin-priority-view="${item.view}"><strong>${item.title}</strong><span>${item.detail}</span><b>Ver</b></button>`).join("")
+      : `<p class="admin-priorities-empty">Todo está al día. No hay solicitudes ni mensajes pendientes.</p>`;
     renderProductCatalog(products, collections);
     renderProductCategoryOptions(collections);
     $("#admin-collections").innerHTML = collections.length ? collections.map(collectionMarkup).join("") : `<div class="empty-state">Todavía no hay colecciones.</div>`;
@@ -381,6 +393,12 @@
       });
       $$(".admin-view").forEach(view => { view.hidden = view.id !== `admin-view-${button.dataset.adminView}`; });
     }));
+
+    $("#admin-priorities")?.addEventListener("click", event => {
+      const target = event.target.closest("[data-admin-priority-view]");
+      if (!target) return;
+      $(`[data-admin-view="${CSS.escape(target.dataset.adminPriorityView)}"]`)?.click();
+    });
 
     $("#product-form")?.addEventListener("submit", async event => {
       event.preventDefault();

@@ -225,6 +225,18 @@ body[data-page="admin"] .metric span {
   text-transform: uppercase;
 }
 
+.admin-priorities { margin: 28px 0 8px; padding-top: 24px; border-top: 1px solid var(--line); }
+.admin-priorities h3 { margin: 5px 0 16px; font: 500 1.65rem/1 var(--serif); }
+#admin-priorities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.admin-priority { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; padding: 16px; border: 1px solid var(--line); background: #fffefa; color: var(--ink); cursor: pointer; text-align: left; }
+.admin-priority strong { font-size: .88rem; }
+.admin-priority span { grid-column: 1 / -1; color: var(--ink-soft); font-size: .75rem; line-height: 1.45; }
+.admin-priority b { color: var(--rose-dark); font: 500 .64rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.admin-priority--orders { border-left: 5px solid #1d5d88; }
+.admin-priority--commissions { border-left: 5px solid #9a6500; }
+.admin-priority--messages { border-left: 5px solid #6b3e99; }
+.admin-priorities-empty { margin: 0; padding: 16px; border: 1px solid #28733d; background: #edf7ee; color: #245d34; font-size: .82rem; }
+
 .admin-form-shell {
   margin-bottom: 34px;
   padding: 24px;
@@ -388,6 +400,7 @@ body[data-page="admin"] .empty-state {
 
 @media (max-width: 1100px) {
   body[data-page="admin"] .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #admin-priorities { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
