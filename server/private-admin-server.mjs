@@ -14,6 +14,7 @@ const PUBLIC_WRITE_PATHS = new Set([
   ORDER_PATH,
   "/api/sinprisa/commissions",
   "/api/sinprisa/commission-messages",
+  "/api/sinprisa/my-profile",
   "/api/collections/sinprisa_customer_accounts/records",
   "/api/collections/sinprisa_customer_accounts/auth-with-password",
   "/api/collections/sinprisa_customer_accounts/auth-refresh"
@@ -57,7 +58,7 @@ function requestHostname(request) {
 }
 
 function allowedPublicIngress(method, pathname) {
-  if (method === "POST" || method === "DELETE") return PUBLIC_WRITE_PATHS.has(pathname);
+  if (method === "POST" || method === "DELETE" || method === "PATCH") return PUBLIC_WRITE_PATHS.has(pathname);
   if (method === "GET") return PUBLIC_GET_PATHS.has(pathname) || PUBLIC_CATALOG_IMAGE_PATH.test(pathname);
   return false;
 }

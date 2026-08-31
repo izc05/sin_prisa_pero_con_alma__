@@ -4,6 +4,7 @@ import { onRequestPost as login } from "../functions/api/account/login.js";
 import { onRequestGet as session } from "../functions/api/account/session.js";
 import { onRequestGet as customerCommissions } from "../functions/api/account/commissions.js";
 import { onRequestDelete as clearCommissionMessages, onRequestPost as commissionMessage } from "../functions/api/account/commission-messages.js";
+import { onRequestPatch as updateProfile } from "../functions/api/account/profile.js";
 import { onRequestPost as commission } from "../functions/api/commissions.js";
 
 const env = {
@@ -21,6 +22,7 @@ globalThis.fetch = async (url, init) => {
     return Response.json({ token: "private-auth-token", record: { id: "account-1", name: "Ana", email: "ana@example.com" } });
   }
   if (String(url).endsWith("/api/sinprisa/commissions")) return Response.json({ reference: "ENC-TEST", images: 1 }, { status: 201 });
+  if (String(url).endsWith("/api/sinprisa/my-profile")) return Response.json({ user: { id: "account-1", name: "Ana García", email: "ana@example.com", city: "Jaén" } });
   if (String(url).endsWith("/api/sinprisa/my-commissions")) return Response.json({ commissions: [{ id: "abcdefghijklmno", reference: "ENC-TEST", piece: "Babero", status: "new", quantity: 1 }] });
   if (String(url).endsWith("/api/sinprisa/commission-messages")) return Response.json({ message: { author: "customer", body: "Me gustaría añadir flores", sentAt: "2026-08-30T12:00:00.000Z" } }, { status: 201 });
   return Response.json({}, { status: 404 });
@@ -54,7 +56,19 @@ try {
     request: new Request("https://sinprisa.example/api/account/session", { headers: { Cookie: "sinprisa_customer_session=private-auth-token" } })
   });
   assert.equal(sessionResponse.status, 200);
-  assert.deepEqual((await sessionResponse.json()).user, { id: "account-1", name: "Ana", email: "ana@example.com" });
+  assert.equal((await sessionResponse.json()).user.name, "Ana");
+
+  const profileResponse = await updateProfile({
+    env,
+    request: new Request("https://sinprisa.example/api/account/profile", {
+      method: "PATCH",
+      headers: { Origin: "https://sinprisa.example", Cookie: "sinprisa_customer_session=private-auth-token", "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Ana García", phone: "600 000 000", address_line1: "Calle Luna 4", address_line2: "2º A", postal_code: "23001", city: "Jaén", province: "Jaén", country: "España" })
+    })
+  });
+  assert.equal(profileResponse.status, 200);
+  const profileRequest = calls.find(call => String(call.url).endsWith("/api/sinprisa/my-profile"));
+  assert.equal(profileRequest.init.method, "PATCH");
 
   const form = new FormData();
   form.set("piece", "Bastidor");

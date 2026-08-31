@@ -509,6 +509,12 @@
     if (!session) return;
     $("#account-name").textContent = session.name;
     $("#account-email").textContent = session.email;
+    const profileForm = $("#account-profile-form");
+    if (profileForm) {
+      for (const field of ["name", "phone", "address_line1", "address_line2", "postal_code", "city", "province", "country"]) {
+        if (profileForm.elements[field]) profileForm.elements[field].value = session[field] || (field === "country" ? "España" : "");
+      }
+    }
     const ordersList = $("#customer-orders");
     if (ordersList) {
       ordersList.innerHTML = customerOrders.length ? customerOrders.map(order => orderMarkup(order)).join("") : `<div class="empty-state">${customerOrdersError ? `No hemos podido cargar tus pedidos ahora mismo. ${escapeHtml(customerOrdersError)}` : "Aún no tienes pedidos. Cuando confirmes uno, verás aquí su estado."}</div>`;
@@ -617,6 +623,27 @@
       customerSession = null;
       renderAccount();
       updateIdentityLinks();
+    });
+    $("#account-profile-form")?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const feedback = $("#profile-feedback");
+      const submit = $("button[type=submit]", form);
+      feedback.textContent = "Guardando tus datos…";
+      submit.disabled = true;
+      try {
+        const data = new FormData(form);
+        const body = Object.fromEntries(["name", "phone", "address_line1", "address_line2", "postal_code", "city", "province", "country"].map(field => [field, data.get(field)]));
+        const payload = await apiJson("/api/account/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+        customerSession = payload.user || customerSession;
+        renderAccount();
+        updateIdentityLinks();
+        feedback.textContent = "Tus datos se han guardado.";
+      } catch (error) {
+        feedback.textContent = error.message || "No se pudieron guardar tus datos";
+      } finally {
+        submit.disabled = false;
+      }
     });
     $("#customer-commissions")?.addEventListener("submit", async event => {
       const form = event.target.closest("[data-customer-commission-chat]");

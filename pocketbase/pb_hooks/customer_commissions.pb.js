@@ -155,3 +155,24 @@ routerAdd("DELETE", "/api/sinprisa/commission-messages", (e) => {
   })
   return e.json(200, { cleared: true })
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
+
+routerAdd("PATCH", "/api/sinprisa/my-profile", (e) => {
+  const body = e.requestInfo().body || {}
+  const limits = { name: 120, phone: 32, address_line1: 160, address_line2: 160, postal_code: 16, city: 120, province: 120, country: 80 }
+  const profile = {}
+  for (const [field, max] of Object.entries(limits)) {
+    const value = String(body[field] || "").trim().replace(/\s+/g, " ")
+    if (value.length > max) throw new BadRequestError("El campo " + field + " es demasiado largo")
+    profile[field] = value
+  }
+  if (profile.name.length < 2) throw new BadRequestError("Escribe tu nombre")
+  const account = e.auth
+  for (const [field, value] of Object.entries(profile)) account.set(field, value)
+  e.app.save(account)
+  try {
+    const customer = e.app.findFirstRecordByData("sinprisa_customers", "email", account.getString("email").trim().toLowerCase())
+    customer.set("name", profile.name)
+    e.app.save(customer)
+  } catch (_) {}
+  return e.json(200, { user: { id: account.id, email: account.getString("email"), ...profile } })
+}, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())

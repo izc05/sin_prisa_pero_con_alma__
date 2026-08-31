@@ -471,6 +471,11 @@ button { color: inherit; }
 .brand-cta > div { display: grid; align-content: center; padding: clamp(54px, 8vw, 120px); background: var(--ivory); }
 
 .account-layout { display: grid; grid-template-columns: 350px 1fr; gap: 28px; align-items: start; }
+.account-overview { display: grid; grid-template-columns: minmax(240px, .72fr) minmax(0, 1.28fr); gap: 18px; margin-bottom: 18px; }
+.account-profile-form { display: grid; gap: 18px; }
+.account-profile-form .section-copy { margin: 0; font-size: .84rem; }
+.account-profile-form .form-grid { gap: 14px; }
+.account-profile-form .form-feedback { display: inline-block; margin: 0 0 0 12px; color: var(--ink-soft); font-size: .8rem; }
 .panel { padding: 28px; border: 1px solid var(--line); background: var(--ivory); }
 .panel h2, .panel h3 { margin: 0 0 20px; font: 500 2rem/1 var(--serif); }
 .tabs { display: flex; gap: 8px; margin-bottom: 22px; }
@@ -605,7 +610,7 @@ button { color: inherit; }
   .product-detail { grid-template-columns: 1fr 1fr; gap: 44px; }
   .category-card:last-child { grid-column: 1/-1; }
   .process-grid { grid-template-columns: repeat(2, 1fr); }
-  .account-layout, .admin-grid { grid-template-columns: 1fr; }
+  .account-layout, .account-overview, .admin-grid { grid-template-columns: 1fr; }
   .admin-sidebar { position: static; }
   .admin-nav { grid-template-columns: repeat(3, 1fr); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
