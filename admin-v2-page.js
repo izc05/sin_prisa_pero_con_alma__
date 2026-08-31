@@ -519,9 +519,18 @@
       const collectionStatus = event.target.closest("[data-collection-status]");
       const imageAlt = event.target.closest("[data-image-alt]");
       const imageFiles = event.target.closest("[data-add-product-images]");
-      if (orderStatus && await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
-        await renderAdmin();
-        toast("Estado del pedido actualizado");
+      if (orderStatus) {
+        const currentOrder = (await adminData.listOrders()).find(item => item.id === orderStatus.dataset.orderStatus);
+        const requiresConfirmedPayment = ["En preparación", "Enviado", "Completado"].includes(orderStatus.value);
+        if (requiresConfirmedPayment && currentOrder?.paymentStatus !== "Pago confirmado") {
+          orderStatus.value = currentOrder?.status || "Solicitud recibida";
+          toast("Confirma primero el pago antes de avanzar el pedido.");
+          return;
+        }
+        if (await adminData.updateOrderStatus(orderStatus.dataset.orderStatus, orderStatus.value)) {
+          await renderAdmin();
+          toast("Estado del pedido actualizado");
+        }
       }
       if (orderPaymentStatus && await adminData.updateOrder(orderPaymentStatus.dataset.orderPaymentStatus, { paymentStatus: orderPaymentStatus.value })) {
         await renderAdmin();

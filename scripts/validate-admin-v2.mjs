@@ -41,7 +41,7 @@ const requiredAdminFragments = [
   'src="admin-data.js?v=8"',
   'src="admin-auth.js"',
   'src="admin-runtime-config-loader.js?v=2"',
-  'src="admin-v2-page.js?v=13"'
+  'src="admin-v2-page.js?v=14"'
 ];
 
 for (const fragment of requiredAdminFragments) {
