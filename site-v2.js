@@ -487,13 +487,37 @@
     return Array.from(new Uint8Array(bytes)).map(byte => byte.toString(16).padStart(2, "0")).join("");
   }
 
+  function progressMarkup(stages, currentIndex, note = "") {
+    const safeIndex = Math.max(0, Math.min(stages.length - 1, Number(currentIndex) || 0));
+    return `<div class="customer-progress" aria-label="Progreso: ${escapeHtml(stages[safeIndex])}"><div class="customer-progress__steps">${stages.map((stage, index) => `<span class="${index <= safeIndex ? "is-done" : ""} ${index === safeIndex ? "is-current" : ""}"><i aria-hidden="true"></i>${escapeHtml(stage)}</span>`).join("")}</div>${note ? `<p>${escapeHtml(note)}</p>` : ""}</div>`;
+  }
+
+  function orderProgress(order) {
+    const stages = ["Recibido", "Preparación", "Completado"];
+    const status = String(order.status || "").toLowerCase();
+    if (status.includes("cancel")) return `<p class="customer-status-note is-cancelled">Este pedido fue cancelado. Si tienes dudas, escríbenos desde tu encargo o por contacto.</p>`;
+    const current = status.includes("complet") || status.includes("enviado") ? 2 : status.includes("prepar") ? 1 : 0;
+    const note = current === 0 ? "Hemos recibido tu solicitud y la revisaremos contigo." : current === 1 ? "Tu pedido está siendo preparado con calma." : "El pedido ha completado esta fase.";
+    return progressMarkup(stages, current, note);
+  }
+
+  function commissionProgress(commission) {
+    const stages = ["Recibido", "Presupuesto", "Aceptado", "En proceso", "Terminado"];
+    const status = String(commission.status || "new");
+    if (status === "cancelled" || status === "rejected") return `<p class="customer-status-note is-cancelled">Este encargo está cerrado. Puedes crear otro cuando quieras.</p>`;
+    const position = { new: 0, reviewing: 0, quoted: 1, accepted: 2, in_progress: 3, completed: 4 }[status] ?? 0;
+    const notes = ["Hemos recibido tu idea y la estamos revisando.", "Te enviaremos los detalles del presupuesto en la conversación.", "El encargo está reservado para ti.", "Estamos preparando tu pieza.", "Tu encargo está terminado."];
+    return progressMarkup(stages, position, notes[position]);
+  }
+
   function orderMarkup(order, admin = false) {
     const tone = String(order.status || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-");
     const details = order.items?.length ? order.items.map(item => `${escapeHtml(item.name)} × ${item.quantity}`).join(" · ") : escapeHtml(order.details || "Encargo personalizado");
     return `<article class="order-card">
-      <div class="order-head"><div><h3>${escapeHtml(order.id)}</h3><span class="status status--${tone}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
+      <div class="order-head"><div><h3>${escapeHtml(order.number || order.id)}</h3><span class="status status--${tone}">${escapeHtml(order.status)}</span></div><strong>${money(order.total)}</strong></div>
       <p>${escapeHtml(order.type)} · ${dateText(order.createdAt)}${admin ? ` · ${escapeHtml(order.email)}` : ""}</p>
       <p>${details}</p>
+      ${admin ? "" : orderProgress(order)}
       ${admin ? `<label class="field"><span>Actualizar estado</span><select data-order-status="${escapeHtml(order.id)}"><option ${order.status === "Solicitud recibida" ? "selected" : ""}>Solicitud recibida</option><option ${order.status === "Pendiente de Bizum" ? "selected" : ""}>Pendiente de Bizum</option><option ${order.status === "En preparación" ? "selected" : ""}>En preparación</option><option ${order.status === "Enviado" ? "selected" : ""}>Enviado</option><option ${order.status === "Completado" ? "selected" : ""}>Completado</option></select></label>` : ""}
     </article>`;
   }
@@ -528,7 +552,7 @@
         const conversation = messages.length ? `<div class="customer-commission-conversation">${messages.map(message => `<article class="customer-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Tú"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="customer-commission-pending">Todavía no hay mensajes. Puedes añadir un detalle si lo necesitas.</p>`;
         const visibleStatus = statusLabels[commission.status] || commission.status || "Solicitud recibida";
         const clearButton = messageCount ? `<button class="button danger customer-clear-conversation" type="button" data-clear-customer-commission="${escapeHtml(commission.id || "")}">Eliminar conversación</button>` : "";
-        return `<article class="order-card customer-commission-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status || "new")}">${escapeHtml(visibleStatus)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p><details class="customer-commission-thread"><summary><span>Conversación con el atelier</span><small>${messageCount ? `${messageCount} ${messageCount === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="customer-commission-thread__content">${conversation}${clearButton}<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form></div></details></article>`;
+        return `<article class="order-card customer-commission-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status || "new")}">${escapeHtml(visibleStatus)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p>${commissionProgress(commission)}<details class="customer-commission-thread"><summary><span>Conversación con el atelier</span><small>${messageCount ? `${messageCount} ${messageCount === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="customer-commission-thread__content">${conversation}${clearButton}<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form></div></details></article>`;
       }).join("") : `<div class="empty-state">${customerCommissionsError ? `No hemos podido cargar tus encargos ahora mismo. ${escapeHtml(customerCommissionsError)} Recarga la página e inténtalo de nuevo.` : "Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí."}</div>`;
     }
   }

@@ -487,6 +487,17 @@ button { color: inherit; }
 .order-head, .admin-product-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .order-card h3 { margin: 0; font: 600 1rem/1.3 var(--sans); }
 .order-card p, .message-card p { margin: 8px 0 0; color: var(--ink-soft); font-size: .84rem; }
+.customer-progress { margin-top: 18px; padding: 14px 15px; border: 1px solid var(--line); background: rgba(255, 250, 243, .62); }
+.customer-progress__steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.customer-commission-card .customer-progress__steps { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.customer-progress__steps span { display: grid; gap: 7px; color: #8b7772; font: 500 .56rem/1.15 var(--mono); letter-spacing: .04em; text-align: center; text-transform: uppercase; }
+.customer-progress__steps i { display: block; height: 5px; background: #ddd2c9; }
+.customer-progress__steps .is-done { color: #2c633e; }
+.customer-progress__steps .is-done i { background: #28733d; }
+.customer-progress__steps .is-current { color: var(--ink); }
+.customer-progress__steps .is-current i { background: var(--rose-dark); }
+.customer-progress > p, .customer-status-note { margin: 12px 0 0 !important; color: var(--ink-soft); font-size: .78rem !important; }
+.customer-status-note { padding: 12px 14px; border-left: 3px solid #a1252b; background: #fff0ef; }
 .status { display: inline-block; padding: 6px 9px; background: var(--rose-pale); color: var(--rose-dark); font: 500 .61rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 .empty-state { padding: 44px 20px; border: 1px dashed var(--line); text-align: center; color: var(--ink-soft); }
 
@@ -611,6 +622,7 @@ button { color: inherit; }
   .category-card:last-child { grid-column: 1/-1; }
   .process-grid { grid-template-columns: repeat(2, 1fr); }
   .account-layout, .account-overview, .admin-grid { grid-template-columns: 1fr; }
+  .customer-commission-card .customer-progress__steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 14px; }
   .admin-sidebar { position: static; }
   .admin-nav { grid-template-columns: repeat(3, 1fr); }
   .footer-grid { grid-template-columns: 1fr 1fr; }
