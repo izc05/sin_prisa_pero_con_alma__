@@ -113,6 +113,7 @@
           featured: Boolean(product.featured),
           image: String(product.image || ""),
           imageAlt: String(product.imageAlt || product.name || ""),
+          images: (Array.isArray(product.images) ? product.images : []).map(image => ({ src: String(image.src || ""), alt: String(image.alt || product.name || "") })).filter(image => image.src),
           badge: product.stockMode === "made_to_order" ? "Bajo pedido" : "Disponible"
         }))
         .filter(product => product.name && product.category && product.image && (product.price == null || Number.isFinite(product.price)));
@@ -299,20 +300,28 @@
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
     const customAction = product.price == null ? "" : `<button class="button button--outline" type="button" data-open-personalizer>Personalizar esta pieza</button>`;
     const availability = product.stockMode === "made_to_order" || product.price == null ? "Bajo pedido · diseñamos y preparamos esta pieza contigo" : "Disponible ahora · confirmaremos el pedido contigo";
+    const gallery = product.images?.length ? product.images : [{ src: product.image, alt: product.imageAlt || product.name }];
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
-        <button class="product-detail__image" type="button" data-product-image-zoom aria-label="Ampliar imagen de ${escapeHtml(product.name)}"><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}"><span>Ampliar imagen</span></button>
+        <div class="product-detail__gallery"><button class="product-detail__image" type="button" data-product-image-zoom aria-label="Ampliar imagen de ${escapeHtml(product.name)}"><img data-product-main-image src="${escapeHtml(gallery[0].src)}" alt="${escapeHtml(gallery[0].alt)}"><span>Ampliar imagen</span></button>${gallery.length > 1 ? `<div class="product-detail__thumbs">${gallery.map((image, index) => `<button type="button" class="${index === 0 ? "is-active" : ""}" data-product-image-select="${index}" aria-label="Ver imagen ${index + 1}"><img src="${escapeHtml(image.src)}" alt=""></button>`).join("")}</div>` : ""}</div>
         <div class="product-detail__content"><p class="eyebrow">${escapeHtml(product.badge || "Hecho a mano")}</p><h1 class="display-title">${escapeHtml(product.name)}</h1><p class="product-detail__price">${money(product.price)}</p><p class="section-copy">${escapeHtml(product.description)}</p><p class="product-detail__availability">${availability}</p><div class="product-detail__actions">${purchaseAction}${customAction}</div><div class="product-detail__note"><strong>Hecho con calma.</strong><p>Cada pieza se prepara y se revisa a mano. Si tienes dudas sobre medidas, materiales o envío, escríbenos antes de pedirla.</p><a class="text-link" href="https://www.instagram.com/sin_prisa_pero_con_alma__/" target="_blank" rel="noreferrer">Hablar por Instagram</a></div></div>
       </article><section class="product-personalizer panel" id="product-personalizer" hidden></section>`;
     const personalizer = $("#product-personalizer", root);
     $("[data-product-image-zoom]", root)?.addEventListener("click", () => {
       const dialog = document.createElement("dialog");
       dialog.className = "product-image-lightbox";
-      dialog.innerHTML = `<button class="button button--quiet" type="button">Cerrar</button><img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}">`;
+      const image = $("[data-product-main-image]", root);
+      dialog.innerHTML = `<button class="button button--quiet" type="button">Cerrar</button><img src="${escapeHtml(image?.src || product.image)}" alt="${escapeHtml(image?.alt || product.imageAlt || product.name)}">`;
       dialog.addEventListener("click", event => { if (event.target === dialog || event.target.closest("button")) dialog.close(); });
       dialog.addEventListener("close", () => dialog.remove());
       document.body.appendChild(dialog); dialog.showModal();
     });
+    $$("[data-product-image-select]", root).forEach(button => button.addEventListener("click", () => {
+      const selected = gallery[Number(button.dataset.productImageSelect) || 0];
+      const image = $("[data-product-main-image]", root);
+      if (image && selected) { image.src = selected.src; image.alt = selected.alt; }
+      $$("[data-product-image-select]", root).forEach(item => item.classList.toggle("is-active", item === button));
+    }));
     root.addEventListener("click", event => {
       if (!event.target.closest("[data-open-personalizer]")) return;
       const session = getSession();
