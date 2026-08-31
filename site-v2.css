@@ -383,6 +383,7 @@ button { color: inherit; }
 .filter-button.is-active { border-color: var(--rose-dark); background: var(--rose-dark); color: white; }
 .field-inline { display: flex; gap: 10px; }
 .field-inline input, .field-inline select { min-height: 42px; border: 1px solid var(--line); background: var(--ivory); padding: 0 14px; color: var(--ink); }
+.shop-results { min-height: 1.2em; margin: -20px 0 20px; color: var(--ink-soft); font: 500 .68rem/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
 
 .split-section { display: grid; grid-template-columns: 1fr 1fr; min-height: 650px; }
 .split-image { min-height: 540px; }

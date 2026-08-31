@@ -45,7 +45,9 @@
 
   let catalogProducts = [];
   let catalogCollections = [];
-  let activeShopFilter = new URLSearchParams(window.location.search).get("categoria") || "todos";
+  const shopParams = new URLSearchParams(window.location.search);
+  let activeShopFilter = shopParams.get("categoria") || "todos";
+  let activeAvailabilityFilter = shopParams.get("disponibilidad") || "all";
   let customerCommissions = [];
   let customerCommissionsError = "";
   let customerOrders = [];
@@ -262,13 +264,18 @@
     if (!grid) return;
     const filterGroup = $("[data-category-filters]");
     const search = $("#shop-search");
+    const availability = $("#shop-availability");
     const sort = $("#shop-sort");
+    const results = $("#shop-results");
     if (!catalogCollections.some(collection => collection.id === activeShopFilter)) activeShopFilter = "todos";
+    if (!["all", "available", "made_to_order"].includes(activeAvailabilityFilter)) activeAvailabilityFilter = "all";
+    if (availability) availability.value = activeAvailabilityFilter;
     const update = () => {
       const term = (search?.value || "").trim().toLowerCase();
-      let products = getProducts().filter(p => p.stock !== false && (activeShopFilter === "todos" || p.category === activeShopFilter) && `${p.name} ${p.description}`.toLowerCase().includes(term));
+      let products = getProducts().filter(p => p.stock !== false && (activeShopFilter === "todos" || p.category === activeShopFilter) && (activeAvailabilityFilter === "all" || p.stockMode === activeAvailabilityFilter) && `${p.name} ${p.description}`.toLowerCase().includes(term));
       if (sort?.value === "price-asc") products.sort((a,b) => (a.price ?? 9999) - (b.price ?? 9999));
       if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
+      if (results) results.textContent = `${products.length} ${products.length === 1 ? "pieza encontrada" : "piezas encontradas"}`;
       grid.innerHTML = products.length ? products.map(productCard).join("") : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
     };
     filterGroup?.addEventListener("click", event => {
@@ -279,6 +286,7 @@
       update();
     });
     search?.addEventListener("input", update);
+    availability?.addEventListener("change", () => { activeAvailabilityFilter = availability.value; update(); });
     sort?.addEventListener("change", update);
     refreshShopFilters = update;
     update();

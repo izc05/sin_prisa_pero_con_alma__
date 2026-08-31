@@ -6,7 +6,7 @@
   <title>Tienda — Sin prisa, pero con alma</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="site-v2.css?v=13"><script src="site-v2.js?v=23" defer></script>
+  <link rel="stylesheet" href="site-v2.css?v=14"><script src="site-v2.js?v=24" defer></script>
 </head>
 <body data-page="shop">
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -28,8 +28,9 @@
       <div class="category-cover-grid" data-category-covers aria-label="Categorías de la tienda"></div>
       <div class="shop-toolbar">
         <div class="filter-group" aria-label="Filtrar productos" data-category-filters><button class="filter-button is-active" type="button" data-filter="todos">Todo</button></div>
-        <div class="field-inline"><input id="shop-search" type="search" placeholder="Buscar una pieza" aria-label="Buscar productos"><select id="shop-sort" aria-label="Ordenar productos"><option value="featured">Destacados</option><option value="price-asc">Precio: menor a mayor</option><option value="price-desc">Precio: mayor a menor</option></select></div>
+        <div class="field-inline"><input id="shop-search" type="search" placeholder="Buscar una pieza" aria-label="Buscar productos"><select id="shop-availability" aria-label="Filtrar por disponibilidad"><option value="all">Toda disponibilidad</option><option value="available">Disponible ahora</option><option value="made_to_order">Bajo pedido</option></select><select id="shop-sort" aria-label="Ordenar productos"><option value="featured">Destacados</option><option value="price-asc">Precio: menor a mayor</option><option value="price-desc">Precio: mayor a menor</option></select></div>
       </div>
+      <p class="shop-results" id="shop-results" aria-live="polite"></p>
       <div class="product-grid" id="shop-grid" data-product-grid></div>
     </section>
     <section class="purchase-steps" aria-labelledby="purchase-steps-title"><div><p class="eyebrow">Comprar, sin complicaciones</p><h2 class="section-title" id="purchase-steps-title">Tu pieza, paso a paso.</h2><p class="section-copy">Queremos que sepas qué ocurre antes de que tu bordado salga hacia ti.</p></div><ol><li><span>01</span><div><strong>Elige con calma</strong><p>Consulta la ficha, añade la pieza a la cesta o pide una versión personalizada.</p></div></li><li><span>02</span><div><strong>Confirma tu pedido</strong><p>Revisamos la disponibilidad y te indicamos los datos de pago antes de prepararlo.</p></div></li><li><span>03</span><div><strong>Lo preparamos para ti</strong><p>Recibes la confirmación cuando la pieza esté lista para acompañarte.</p></div></li></ol></section>
