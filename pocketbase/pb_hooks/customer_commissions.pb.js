@@ -86,7 +86,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
       details: record.getString("details"),
       quantity: record.getInt("quantity"),
       status: record.getString("status"),
-      createdAt: record.getString("event_date"),
+      createdAt: record.getString("event_date") || record.getString("created"),
       reply: record.getString("customer_reply"),
       messages: messagesByCommission[record.id] || [],
     })
