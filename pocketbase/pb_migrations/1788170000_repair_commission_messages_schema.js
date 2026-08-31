@@ -3,19 +3,19 @@ migrate((app) => {
   const accounts = app.findCollectionByNameOrId("sinprisa_customer_accounts")
   const commissions = app.findCollectionByNameOrId("sinprisa_commissions")
 
-  try { messages.fields.getByName("commission") } catch (_) {
+  if (!messages.fields.getByName("commission")) {
     messages.fields.add(new RelationField({ name: "commission", required: true, maxSelect: 1, collectionId: commissions.id, cascadeDelete: true }))
   }
-  try { messages.fields.getByName("account") } catch (_) {
+  if (!messages.fields.getByName("account")) {
     messages.fields.add(new RelationField({ name: "account", required: true, maxSelect: 1, collectionId: accounts.id, cascadeDelete: true }))
   }
-  try { messages.fields.getByName("author") } catch (_) {
+  if (!messages.fields.getByName("author")) {
     messages.fields.add(new TextField({ name: "author", required: true, max: 16 }))
   }
-  try { messages.fields.getByName("body") } catch (_) {
+  if (!messages.fields.getByName("body")) {
     messages.fields.add(new TextField({ name: "body", required: true, max: 4000 }))
   }
-  try { messages.fields.getByName("sent_at") } catch (_) {
+  if (!messages.fields.getByName("sent_at")) {
     messages.fields.add(new TextField({ name: "sent_at", required: true, max: 40 }))
   }
   app.save(messages)
