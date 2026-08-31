@@ -377,6 +377,7 @@ body[data-page="admin"] .empty-state {
 .status--enviado { background: #08746b !important; color: #fff !important; border-color: #08746b !important; }
 .status--completado { background: #28733d !important; color: #fff !important; border-color: #28733d !important; }
 .status--cancelado, .status--cancelled, .status--rejected { background: #a1252b !important; color: #fff !important; border-color: #a1252b !important; }
+.admin-clear-conversation { margin: 0 0 16px; }
 
 .admin-order-notes { margin-top: 14px; }
 .admin-order-notes textarea { min-height: 82px; }

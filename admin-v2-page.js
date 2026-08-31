@@ -117,7 +117,8 @@
       : `<p class="admin-commission-empty">Sin imágenes de referencia.</p>`;
     const messages = [...(commission.messages || []), ...(commission.customerReply ? [{ author: "atelier", body: commission.customerReply, sentAt: "" }] : [])];
     const conversation = messages.length ? `<div class="admin-commission-conversation">${messages.map(message => `<article class="admin-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Clienta"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="admin-commission-empty">Aún no hay mensajes en esta conversación.</p>`;
-    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status)}">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<div class="admin-commission-thread"><p class="admin-sidebar-kicker">Conversación</p>${conversation}<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label></div></section><label class="field admin-commission-status"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label></div></article>`;
+    const clearConversation = messages.length ? `<button class="button danger admin-clear-conversation" type="button" data-clear-commission-messages="${escapeHtml(commission.id)}">Vaciar conversación</button>` : "";
+    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status)}">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<div class="admin-commission-thread"><p class="admin-sidebar-kicker">Conversación</p>${conversation}${clearConversation}<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label></div></section><label class="field admin-commission-status"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label></div></article>`;
   }
 
   function galleryMarkup(product) {
@@ -552,6 +553,7 @@
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
+      const clearCommissionMessages = event.target.closest("[data-clear-commission-messages]");
       const saveOrderNotes = event.target.closest("[data-save-order-notes]");
       const saveContent = event.target.closest("[data-save-content]");
 
@@ -711,6 +713,16 @@
           toast("Respuesta enviada al chat de la clienta");
         } catch (error) {
           toast(error.message || "No se pudo enviar la respuesta");
+        }
+      }
+      if (clearCommissionMessages) {
+        if (!window.confirm("Se eliminarán todos los mensajes de esta conversación para el atelier y la clienta. Esta acción no se puede deshacer. ¿Continuar?")) return;
+        try {
+          await adminData.clearCommissionMessages(clearCommissionMessages.dataset.clearCommissionMessages);
+          await renderAdmin();
+          toast("Conversación vaciada");
+        } catch (error) {
+          toast(error.message || "No se pudo vaciar la conversación");
         }
       }
     });

@@ -1007,6 +1007,17 @@
         return true;
       },
 
+      async clearCommissionMessages(commissionId) {
+        const commission = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
+        if (!commission) return false;
+        const messages = (await listRecords(POCKETBASE_COLLECTIONS.commissionMessages)).filter(message => String(message.commission || "") === String(commissionId));
+        await Promise.all(messages.map(message => request(recordsPath(POCKETBASE_COLLECTIONS.commissionMessages, message.id), { method: "DELETE" })));
+        if (String(commission.customer_reply || "")) {
+          await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { customer_reply: "" } });
+        }
+        return true;
+      },
+
       async saveMessages(messages) {
         if (!Array.isArray(messages)) throw new TypeError("messages debe ser un array");
         const saved = [];
