@@ -101,6 +101,7 @@ routerAdd("GET", "/api/sinprisa/my-commissions", (e) => {
       details: record.getString("details"),
       quantity: record.getInt("quantity"),
       status: record.getString("status"),
+      archived: !!record.getString("conversation_archived_at"),
       createdAt: record.getString("event_date") || record.getString("created"),
       reply: record.getString("customer_reply"),
       messages: messagesByCommission[record.id] || [],
@@ -160,16 +161,9 @@ routerAdd("DELETE", "/api/sinprisa/commission-messages", (e) => {
   let commission
   try { commission = e.app.findRecordById("sinprisa_commissions", commissionId) } catch (_) { throw new NotFoundError("Encargo no encontrado") }
   if (commission.getString("account") !== accountId) throw new NotFoundError("Encargo no encontrado")
-  e.app.runInTransaction((txApp) => {
-    for (const message of txApp.findAllRecords("sinprisa_commission_messages")) {
-      if (message && message.getString("commission") === commissionId && message.getString("account") === accountId) txApp.delete(message)
-    }
-    if (commission.getString("customer_reply")) {
-      commission.set("customer_reply", "")
-      txApp.save(commission)
-    }
-  })
-  return e.json(200, { cleared: true })
+  commission.set("conversation_archived_at", new Date().toISOString())
+  e.app.save(commission)
+  return e.json(200, { archived: true })
 }, $apis.requireAuth("sinprisa_customer_accounts"), $apis.skipSuccessActivityLog())
 
 routerAdd("PATCH", "/api/sinprisa/my-profile", (e) => {

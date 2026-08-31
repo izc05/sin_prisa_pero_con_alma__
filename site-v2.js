@@ -596,10 +596,11 @@
         const messageCount = messages.length;
         const conversation = messages.length ? `<div class="customer-commission-conversation">${messages.map(message => `<article class="customer-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Tú"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="customer-commission-pending">Todavía no hay mensajes. Puedes añadir un detalle si lo necesitas.</p>`;
         const visibleStatus = statusLabels[commission.status] || commission.status || "Solicitud recibida";
-        const clearButton = messageCount ? `<button class="button danger customer-clear-conversation" type="button" data-clear-customer-commission="${escapeHtml(commission.id || "")}">Eliminar conversación</button>` : "";
+        const archiveNote = commission.archived ? `<p class="customer-status-note">Conversación archivada: conservamos este historial para ti.</p>` : "";
+        const messageComposer = commission.archived ? "" : `<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form>`;
         const history = Array.isArray(commission.history) ? commission.history : [];
         const historyMarkup = history.length ? `<details class="customer-status-history"><summary>Historial de estados <small>${history.length}</small></summary><ol>${history.map(item => `<li><span class="status ${statusTone(item.status || "new")}">${escapeHtml(statusLabels[item.status] || item.status)}</span><time>${escapeHtml(dateText(item.createdAt))}</time></li>`).join("")}</ol></details>` : "";
-        return `<article class="order-card customer-commission-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status || "new")}">${escapeHtml(visibleStatus)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p>${commissionProgress(commission)}${historyMarkup}<details class="customer-commission-thread"><summary><span>Conversación con el atelier</span><small>${messageCount ? `${messageCount} ${messageCount === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="customer-commission-thread__content">${conversation}${clearButton}<form data-customer-commission-chat="${escapeHtml(commission.id || "")}"><label><span>Añadir un mensaje</span><textarea name="message" maxlength="4000" required placeholder="Escribe aquí cualquier detalle o respuesta…"></textarea></label><button class="button button--outline" type="submit">Enviar mensaje</button><p class="form-feedback" role="status"></p></form></div></details></article>`;
+        return `<article class="order-card customer-commission-card"><div class="order-head"><div><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status || "new")}">${escapeHtml(visibleStatus)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></div><p>${escapeHtml(commission.piece || "Encargo personalizado")} · ${dateText(commission.createdAt)}</p><p>${escapeHtml(commission.details || "Tu solicitud está guardada de forma privada.")}</p>${commissionProgress(commission)}${historyMarkup}<details class="customer-commission-thread"><summary><span>Conversación con el atelier</span><small>${messageCount ? `${messageCount} ${messageCount === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="customer-commission-thread__content">${conversation}${archiveNote}${messageComposer}</div></details></article>`;
       }).join("") : `<div class="empty-state">${customerCommissionsError ? `No hemos podido cargar tus encargos ahora mismo. ${escapeHtml(customerCommissionsError)} Recarga la página e inténtalo de nuevo.` : "Aún no tienes encargos. Cuando envíes una solicitud, aparecerá aquí."}</div>`;
     }
   }
@@ -731,19 +732,6 @@
       } catch (error) {
         feedback.textContent = error.message || "No se pudo enviar el mensaje";
         submit.disabled = false;
-      }
-    });
-    $("#customer-commissions")?.addEventListener("click", async event => {
-      const clear = event.target.closest("[data-clear-customer-commission]");
-      if (!clear) return;
-      if (!window.confirm("Se eliminarán todos los mensajes de esta conversación. No se puede deshacer. ¿Continuar?")) return;
-      clear.disabled = true;
-      try {
-        await apiJson("/api/account/commission-messages", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ commission: clear.dataset.clearCustomerCommission }) });
-        await loadCustomerCommissions();
-      } catch (error) {
-        clear.disabled = false;
-        window.alert(error.message || "No se pudo eliminar la conversación");
       }
     });
     renderAccount();

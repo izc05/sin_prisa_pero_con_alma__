@@ -721,6 +721,8 @@
         details: String(record.details || ""),
         quantity: Number(record.quantity || 1),
         status: String(record.status || "new"),
+        archived: Boolean(record.conversation_archived_at),
+        conversationArchivedAt: String(record.conversation_archived_at || ""),
         customerReply: String(record.customer_reply || ""),
         messages: messages.filter(message => String(message.commission || "") === String(record.id)).map(message => ({ author: String(message.author || ""), body: String(message.body || ""), sentAt: String(message.sent_at || "") })).sort((left, right) => left.sentAt.localeCompare(right.sentAt)),
         history: events.filter(event => String(event.commission || "") === String(record.id)).map(event => ({ status: String(event.status || ""), createdAt: String(event.created_at || "") })).sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
@@ -983,7 +985,7 @@
         if (!allowed.has(String(status))) throw new TypeError("Estado de encargo inválido");
         const current = await findRecord(POCKETBASE_COLLECTIONS.commissions, commissionId);
         if (!current) return false;
-        await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { status } });
+        await request(recordsPath(POCKETBASE_COLLECTIONS.commissions, commissionId), { method: "PATCH", body: { status, conversation_archived_at: status === "cancelled" ? new Date().toISOString() : "" } });
         await request(recordsPath(POCKETBASE_COLLECTIONS.commissionEvents), { method: "POST", body: { commission: commissionId, account: String(current.account || ""), status, created_at: new Date().toISOString() } });
         return true;
       },

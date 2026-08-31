@@ -394,6 +394,7 @@ body[data-page="admin"] .empty-state {
 .admin-commission-status { display: grid; align-content: start; gap: 10px; min-width: 260px; }
 .admin-commission-status .field { margin: 0; }
 .admin-cancellation-notice { width: 100%; border-color: #a1252b !important; color: #8d2026 !important; }
+.admin-conversation-archived { margin: 14px 0 0; padding: 12px; border-left: 4px solid #6b3e99; background: #f0ebf8; color: #4d2873; font-size: .78rem; line-height: 1.45; }
 
 .admin-order-notes { margin-top: 14px; }
 .admin-order-notes textarea { min-height: 82px; }

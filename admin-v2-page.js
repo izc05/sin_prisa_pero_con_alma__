@@ -118,10 +118,10 @@
       : `<p class="admin-commission-empty">Sin imágenes de referencia.</p>`;
     const messages = [...(commission.messages || []), ...(commission.customerReply ? [{ author: "atelier", body: commission.customerReply, sentAt: "" }] : [])];
     const conversation = messages.length ? `<div class="admin-commission-conversation">${messages.map(message => `<article class="admin-chat-message ${message.author === "atelier" ? "is-atelier" : "is-customer"}"><strong>${message.author === "atelier" ? "Atelier" : "Clienta"}</strong><p>${escapeHtml(message.body)}</p></article>`).join("")}</div>` : `<p class="admin-commission-empty">Aún no hay mensajes en esta conversación.</p>`;
-    const clearConversation = messages.length ? `<button class="button danger admin-clear-conversation" type="button" data-clear-commission-messages="${escapeHtml(commission.id)}">Vaciar conversación</button>` : "";
     const hasAtelierNotice = messages.some(message => message.author === "atelier");
     const cancellationNotice = commission.status === "cancelled" && !hasAtelierNotice ? `<button class="button button--outline admin-cancellation-notice" type="button" data-send-cancellation-notice="${escapeHtml(commission.id)}">Enviar aviso de cancelación</button>` : "";
-    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status)}">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<details class="admin-commission-thread"><summary><span>Conversación</span><small>${messages.length ? `${messages.length} ${messages.length === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="admin-commission-thread__content">${conversation}${clearConversation}<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label></div></details></section><div class="admin-commission-status"><label class="field"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label>${cancellationNotice}</div></div></article>`;
+    const archiveNotice = commission.archived ? `<p class="admin-conversation-archived">Conversación archivada: se conserva como historial y ya no admite nuevos mensajes.</p>` : `<label class="field admin-commission-reply"><span>Responder a la clienta</span><textarea maxlength="4000" data-commission-message placeholder="Escribe una respuesta para que aparezca en su cuenta…"></textarea><button class="button button--primary" type="button" data-send-commission-message="${escapeHtml(commission.id)}">Enviar al chat</button></label>`;
+    return `<article class="admin-commission-card"><header class="admin-commission-card__head"><div><p class="admin-sidebar-kicker">Solicitud privada</p><h3>${escapeHtml(commission.reference)}</h3><span class="status ${statusTone(commission.status)}">${escapeHtml(labels[commission.status] || commission.status)}</span></div><strong>${Number(commission.quantity) || 1} ud.</strong></header><div class="admin-commission-meta"><div><span>Clienta</span><strong>${escapeHtml(commission.name || "Sin nombre")}</strong><small>${escapeHtml(commission.email || "Sin correo")}</small></div><div><span>Recibido</span><strong>${dateText(commission.createdAt)}</strong></div><div><span>Tipo de pieza</span><strong>${escapeHtml(commission.idea || "Encargo personalizado")}</strong></div></div><div class="admin-commission-card__body"><section><p class="admin-sidebar-kicker">Su idea</p><p class="admin-commission-details">${escapeHtml(commission.details || "La clienta no añadió más detalles.")}</p>${images}<details class="admin-commission-thread"><summary><span>Conversación</span><small>${messages.length ? `${messages.length} ${messages.length === 1 ? "mensaje" : "mensajes"}` : "Sin mensajes"}</small></summary><div class="admin-commission-thread__content">${conversation}${archiveNotice}</div></details></section><div class="admin-commission-status"><label class="field"><span>Estado del encargo</span><select data-commission-status="${escapeHtml(commission.id)}">${options}</select></label>${cancellationNotice}</div></div></article>`;
   }
 
   function galleryMarkup(product) {
@@ -596,7 +596,6 @@
       const removeImage = event.target.closest("[data-remove-image]");
       const saveProduct = event.target.closest("[data-save-product]");
       const sendCommissionMessage = event.target.closest("[data-send-commission-message]");
-      const clearCommissionMessages = event.target.closest("[data-clear-commission-messages]");
       const sendCancellationNotice = event.target.closest("[data-send-cancellation-notice]");
       const saveOrderNotes = event.target.closest("[data-save-order-notes]");
       const saveContent = event.target.closest("[data-save-content]");
@@ -769,16 +768,6 @@
           toast("Aviso de cancelación enviado a la clienta");
         } catch (error) {
           toast(error.message || "No se pudo enviar el aviso");
-        }
-      }
-      if (clearCommissionMessages) {
-        if (!window.confirm("Se eliminarán todos los mensajes de esta conversación para el atelier y la clienta. Esta acción no se puede deshacer. ¿Continuar?")) return;
-        try {
-          await adminData.clearCommissionMessages(clearCommissionMessages.dataset.clearCommissionMessages);
-          await renderAdmin();
-          toast("Conversación vaciada");
-        } catch (error) {
-          toast(error.message || "No se pudo vaciar la conversación");
         }
       }
     });
