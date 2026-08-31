@@ -35,7 +35,7 @@ routerAdd("GET", "/api/sinprisa/catalog", (e) => {
 
   const products = []
   for (const record of e.app.findAllRecords("sinprisa_products")) {
-    if (!record || record.getString("status") !== "published" || record.getString("stock_mode") === "sold_out") continue
+    if (!record || record.getString("status") !== "published") continue
     const collection = collectionsById[record.getString("collection")]
     const images = imagesByProduct[record.id] || []
     images.sort((left, right) => Number(right.primary) - Number(left.primary) || left.position - right.position)
@@ -80,7 +80,7 @@ routerAdd("GET", "/api/sinprisa/catalog-image/{id}", (e) => {
   } catch (_) {
     throw new NotFoundError("Imagen no encontrada")
   }
-  if (product.getString("status") !== "published" || product.getString("stock_mode") === "sold_out") {
+  if (product.getString("status") !== "published") {
     throw new NotFoundError("Imagen no encontrada")
   }
 

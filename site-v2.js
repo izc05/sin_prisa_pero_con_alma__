@@ -200,11 +200,14 @@
 
   function productCard(product) {
     const detailUrl = `producto.html?pieza=${encodeURIComponent(product.id)}`;
+    const soldOut = product.stockMode === "sold_out";
     const customLink = `<a class="product-custom-link" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Personalizar esta pieza</a>`;
-    const action = product.price == null
+    const action = soldOut
+      ? `<button class="button button--outline" type="button" disabled>Agotado</button>`
+      : product.price == null
       ? `<a class="button button--outline" href="encargos.html#formulario?pieza=${encodeURIComponent(product.id)}">Contar mi idea</a>`
       : `<div class="product-actions"><button class="button button--outline" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>${customLink}</div>`;
-    const availability = product.stockMode === "made_to_order" ? "Bajo pedido · lo preparamos para ti" : "Disponible ahora";
+    const availability = soldOut ? "Agotado · sin unidades actualmente" : product.stockMode === "made_to_order" ? "Bajo pedido · lo preparamos para ti" : "Disponible ahora";
     return `<article class="product-card" data-category="${escapeHtml(product.category)}">
       <a class="product-image-wrap" href="${detailUrl}" aria-label="Ver ficha de ${escapeHtml(product.name)}">
         <img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || product.name)}" loading="lazy">
@@ -223,7 +226,7 @@
   function renderProducts() {
     $$("[data-product-grid]").forEach(grid => {
       const limit = Number(grid.dataset.limit || 0);
-      const products = getProducts().filter(product => product.stock !== false);
+      const products = getProducts();
       grid.innerHTML = products.length
         ? (limit ? products.slice(0, limit) : products).map(productCard).join("")
         : `<div class="empty-state catalog-empty"><strong>Estamos preparando nuevas piezas.</strong><p>Muy pronto aparecerán aquí. Mientras tanto, puedes contarnos tu idea para crear algo único.</p><a class="button button--primary" href="encargos.html">Crear un encargo</a></div>`;
@@ -268,11 +271,11 @@
     const sort = $("#shop-sort");
     const results = $("#shop-results");
     if (!catalogCollections.some(collection => collection.id === activeShopFilter)) activeShopFilter = "todos";
-    if (!["all", "available", "made_to_order"].includes(activeAvailabilityFilter)) activeAvailabilityFilter = "all";
+    if (!["all", "available", "made_to_order", "sold_out"].includes(activeAvailabilityFilter)) activeAvailabilityFilter = "all";
     if (availability) availability.value = activeAvailabilityFilter;
     const update = () => {
       const term = (search?.value || "").trim().toLowerCase();
-      let products = getProducts().filter(p => p.stock !== false && (activeShopFilter === "todos" || p.category === activeShopFilter) && (activeAvailabilityFilter === "all" || p.stockMode === activeAvailabilityFilter) && `${p.name} ${p.description}`.toLowerCase().includes(term));
+      let products = getProducts().filter(p => (activeShopFilter === "todos" || p.category === activeShopFilter) && (activeAvailabilityFilter === "all" || p.stockMode === activeAvailabilityFilter) && `${p.name} ${p.description}`.toLowerCase().includes(term));
       if (sort?.value === "price-asc") products.sort((a,b) => (a.price ?? 9999) - (b.price ?? 9999));
       if (sort?.value === "price-desc") products.sort((a,b) => (b.price ?? -1) - (a.price ?? -1));
       if (results) results.textContent = `${products.length} ${products.length === 1 ? "pieza encontrada" : "piezas encontradas"}`;
@@ -298,16 +301,19 @@
     const hash = window.location.hash.slice(1);
     const hashParams = hash.includes("?") ? hash.slice(hash.indexOf("?") + 1) : hash;
     const selectedProductId = new URLSearchParams(window.location.search).get("pieza") || new URLSearchParams(hashParams).get("pieza");
-    const product = getProducts().find(item => item.id === selectedProductId && item.stock !== false);
+    const product = getProducts().find(item => item.id === selectedProductId);
     if (!product) {
       root.innerHTML = `<div class="detail-empty"><p class="eyebrow">La pieza no está disponible</p><h1 class="section-title">Volvamos a la colección.</h1><p class="section-copy">Puede que esta pieza ya haya encontrado su casa o que el enlace no sea correcto.</p><a class="button button--primary" href="tienda.html">Ver la tienda</a></div>`;
       return;
     }
-    const purchaseAction = product.price == null
+    const soldOut = product.stockMode === "sold_out";
+    const purchaseAction = soldOut
+      ? `<button class="button button--primary" type="button" disabled>Agotado · sin unidades</button>`
+      : product.price == null
       ? `<button class="button button--primary" type="button" data-open-personalizer>Personalizar esta pieza</button>`
       : `<button class="button button--primary" type="button" data-add-cart="${escapeHtml(product.id)}">Añadir a la cesta</button>`;
-    const customAction = product.price == null ? "" : `<button class="button button--outline" type="button" data-open-personalizer>Personalizar esta pieza</button>`;
-    const availability = product.stockMode === "made_to_order" || product.price == null ? "Bajo pedido · diseñamos y preparamos esta pieza contigo" : "Disponible ahora · confirmaremos el pedido contigo";
+    const customAction = soldOut || product.price == null ? "" : `<button class="button button--outline" type="button" data-open-personalizer>Personalizar esta pieza</button>`;
+    const availability = soldOut ? "Agotado · esta pieza ya no tiene unidades disponibles" : product.stockMode === "made_to_order" || product.price == null ? "Bajo pedido · diseñamos y preparamos esta pieza contigo" : "Disponible ahora · confirmaremos el pedido contigo";
     const gallery = product.images?.length ? product.images : [{ src: product.image, alt: product.imageAlt || product.name }];
     root.innerHTML = `<nav class="breadcrumb" aria-label="Ruta"><a href="tienda.html">Tienda</a><span aria-hidden="true">/</span><span>${escapeHtml(product.name)}</span></nav>
       <article class="product-detail">
